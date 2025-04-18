@@ -24,10 +24,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            //ValidIssuer = "https://localhost:7247",
-            //ValidAudience = "https://localhost:7247",
-            ValidIssuer = "https://192.168.1.145:7247",
-            ValidAudience = "https://192.168.1.145:7247",
+            ValidIssuer = "https://localhost:7247",
+            ValidAudience = "https://localhost:7247",
+            //ValidIssuer = "https://192.168.1.145:7247",
+            //ValidAudience = "https://192.168.1.145:7247",
 
 
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SuperSecretkey12345!@#$%^&*()_+6789"))
@@ -58,23 +58,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-//config cors
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
-});
-
-
-
-
 
 var app = builder.Build();
-app.UseCors("AllowAll");
 
 
 // Configure the HTTP request pipeline.
