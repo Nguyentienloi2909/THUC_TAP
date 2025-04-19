@@ -1,0 +1,79 @@
+.login-register-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease;
+}
+
+.login-register-box {
+    background-color: var(--background-paper, #fff);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-register-box h4 {
+    margin: 0 0 24px;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary, #000);
+}
+
+.login-register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.login-register-form .MuiTextField-root {
+    margin-bottom: 8px;
+}
+
+.login-register-form .MuiButton-root {
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: none;
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.error-message {
+    color: #d32f2f;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .login-register-box {
+        padding: 24px;
+        max-width: 90%;
+    }
+
+    .login-register-box h4 {
+        font-size: 24px;
+    }
+
+    .login-register-form .MuiButton-root {
+        padding: 10px;
+    }
+}
+
+/* Support for dark mode */
+@media (prefers-color-scheme: dark) {
+    .login-register-box {
+        background-color: var(--background-paper, #1e1e1e);
+    }
+
+    .login-register-box h4 {
+        color: var(--text-primary, #fff);
+    }
+}
