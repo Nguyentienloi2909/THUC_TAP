@@ -51,12 +51,12 @@ const Login = ({ setIsAuthenticated }) => {
                     maxWidth: '400px',
                     padding: '32px !important',
                     borderRadius: '16px !important',
-                    backgroundColor: `#ffffff !important`, // nền trắng rõ
+                    backgroundColor: `#ffffff !important`,
                     boxSizing: 'border-box !important',
                 }}
             >
-                <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
-                    Đăng Nhập
+                <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 'bold', color: 'black' }}>
+                    ĐĂNG NHẬP
                 </Typography>
                 <Formik
                     initialValues={{ username: '', password: '' }}
@@ -77,7 +77,26 @@ const Login = ({ setIsAuthenticated }) => {
                                 autoComplete="username"
                                 InputProps={{
                                     style: {
-                                        backgroundColor: '#fff !important',
+                                        backgroundColor: '#ccc',
+                                        color: 'black',
+                                    },
+                                }}
+                                InputLabelProps={{
+                                    style: {
+                                        color: 'black',
+                                    },
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': {
+                                            borderColor: 'black',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: 'black',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: 'black',
+                                        },
                                     },
                                 }}
                             />
@@ -94,7 +113,26 @@ const Login = ({ setIsAuthenticated }) => {
                                 autoComplete="current-password"
                                 InputProps={{
                                     style: {
-                                        backgroundColor: '#fff !important',
+                                        backgroundColor: '#ccc',
+                                        color: 'black',
+                                    },
+                                }}
+                                InputLabelProps={{
+                                    style: {
+                                        color: 'black',
+                                    },
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': {
+                                            borderColor: 'black',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: 'black',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: 'black',
+                                        },
                                     },
                                 }}
                             />
