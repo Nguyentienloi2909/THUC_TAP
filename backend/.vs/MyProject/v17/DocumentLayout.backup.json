@@ -1,13 +1,13 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Documents\\WORKING\\BACKEND_THUCTAP\\backend\\",
+  "WorkspaceRootPath": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\backend_thuctap\\backend\\myproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\backend_thuctap\\backend\\myproject\\fileuser.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\fileuser.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\fileuser.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
   ],
@@ -32,9 +32,9 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Program.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\BACKEND_THUCTAP\\backend\\MyProject\\Program.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Program.cs",
               "RelativeDocumentMoniker": "MyProject\\Program.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\BACKEND_THUCTAP\\backend\\MyProject\\Program.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Program.cs",
               "RelativeToolTip": "MyProject\\Program.cs",
               "ViewState": "AgIAAEsAAAAAAAAAAAAAAFQAAABjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -45,14 +45,13 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "fileUser.txt",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\BACKEND_THUCTAP\\backend\\MyProject\\fileUser.txt",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\fileUser.txt",
               "RelativeDocumentMoniker": "MyProject\\fileUser.txt",
-              "ToolTip": "D:\\Documents\\WORKING\\BACKEND_THUCTAP\\backend\\MyProject\\fileUser.txt",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\fileUser.txt",
               "RelativeToolTip": "MyProject\\fileUser.txt",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2025-05-08T04:24:57.297Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-08T04:24:57.297Z"
             }
           ]
         },
