@@ -36,8 +36,8 @@ namespace MyProject.Service.impl
             {
                 return false;
             }
-
-            _dbContext.Roles.Remove(role);
+            role.Display = false;
+            _dbContext.Roles.Update(role);
             await _dbContext.SaveChangesAsync();
             return true;
         }
@@ -45,6 +45,7 @@ namespace MyProject.Service.impl
         public async Task<List<RoleDto>> GetAllRole()
         {
             return await _dbContext.Roles
+                .Where(r => r.Display == true)
                 .Select(role => new RoleDto
                 {
                     Id = role.Id,
@@ -55,6 +56,7 @@ namespace MyProject.Service.impl
         public async Task<RoleDto?> GetRoleById(int id)
         {
             var role = await _dbContext.Roles
+                .Where(r => r.Display == true)
                 .Include(r => r.Users)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -76,6 +78,7 @@ namespace MyProject.Service.impl
             }
 
             role.RoleName = dto.RoleName ?? role.RoleName;
+            role.Display = true;
             await _dbContext.SaveChangesAsync();
 
             return new RoleDto
