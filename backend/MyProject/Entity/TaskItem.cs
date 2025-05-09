@@ -14,5 +14,7 @@ namespace MyProject.Entity
 
         public int? AssignedToId { get; set;}
         public User? AssignedTo { get; set; }
+
+        public bool Display { get; set; } = true;
     }
 }

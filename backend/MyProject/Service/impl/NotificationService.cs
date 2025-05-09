@@ -66,14 +66,15 @@ namespace MyProject.Service.impl
         public async Task<List<NotificationDto>> GetAllNotificationsAsync()
         {
             var notifications = await _dbContext.Notifications
-            .OrderByDescending(n => n.SentAt)
-            .Select(n => new NotificationDto
-            {
-                Id = n.Id,
-                Title = n.Title,
-                Description = n.Description,
-                SentAt = n.SentAt
-            }).ToListAsync();
+                .Where(n => n.Display == true)
+                .OrderByDescending(n => n.SentAt)
+                .Select(n => new NotificationDto
+                {
+                    Id = n.Id,
+                    Title = n.Title,
+                    Description = n.Description,
+                    SentAt = n.SentAt
+                }).ToListAsync();
 
             return notifications;
         }
