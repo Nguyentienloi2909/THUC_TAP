@@ -32,7 +32,8 @@ namespace MyProject.Service.impl
             {
                 Title = request.Title,
                 Description = request.Description,
-                SentAt = DateTime.Now
+                SentAt = DateTime.Now,
+                Display = true
             };
             _dbContext.Notifications.Add(notification);
             await _dbContext.SaveChangesAsync();

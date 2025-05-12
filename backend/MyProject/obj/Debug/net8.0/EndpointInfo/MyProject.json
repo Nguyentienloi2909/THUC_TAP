@@ -5,16 +5,23 @@
     "version": "1.0"
   },
   "paths": {
-    "/api/Attendance/attendance/{userId}": {
+    "/api/Attendance/attendance": {
       "get": {
         "tags": [
           "Attendance"
         ],
         "parameters": [
           {
-            "name": "userId",
-            "in": "path",
-            "required": true,
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
             "schema": {
               "type": "integer",
               "format": "int32"

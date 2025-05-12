@@ -81,6 +81,7 @@ namespace MyProject.Service.impl
                     NumberOfWorkingDays = 0,
                     TotalSalary = 0,
                     MonthSalary = user?.MonthSalary ?? 0,
+                    Display = true,
                 };
                 _dbContext.Salaries.Add(salary);
                 await _dbContext.SaveChangesAsync();

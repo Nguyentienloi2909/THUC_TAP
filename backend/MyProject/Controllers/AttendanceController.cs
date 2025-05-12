@@ -20,31 +20,42 @@ namespace MyProject.Controllers
             _userService = userService;
         }
 
-        [HttpGet("attendance/{userId}")]
-        public async Task<IActionResult> GetAttendance(int userId)
+
+        [HttpGet("attendance")]
+        public async Task<IActionResult> GetAttendance([FromQuery] int? month, [FromQuery] int? year)
         {
+            var email = GetUsernameFromToken();
+            var user = await _userService.GetMyInfo(email);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Người dùng không tồn tại." });
+            }
+
             try
             {
-                var attendance = await _attendanceService.GetAttendanceByUserId(userId);
+                var targetMonth = month ?? DateTime.Now.Month;
+                var targetYear = year ?? DateTime.Now.Year;
 
-                if (attendance == null)
+                var attendances = await _attendanceService.GetAttendanceByUserIdInMonthAsync(user.Id ?? 0, targetMonth, targetYear);
+
+                if (attendances == null || !attendances.Any())
                 {
-                    return NotFound(new { message = $"Không tìm thấy chấm công cho userId: {userId} trong ngày hôm nay." });
+                    return NotFound(new { message = $"Không tìm thấy chấm công cho user: {user.FullName} trong tháng {targetMonth}/{targetYear}." });
                 }
 
-                return Ok(attendance);
+                return Ok(attendances);
             }
             catch (Exception ex)
             {
-                // Ghi log nếu cần: _logger.LogError(ex, "Lỗi khi lấy dữ liệu chấm công.");
                 return StatusCode(500, new
                 {
                     message = "Đã xảy ra lỗi trong quá trình xử lý yêu cầu.",
                     error = ex.Message,
-                    stackTrace = ex.StackTrace // chỉ nên trả về trong môi trường dev
+                    stackTrace = ex.StackTrace
                 });
             }
         }
+
 
 
         // Check-in

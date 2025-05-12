@@ -19,7 +19,7 @@ namespace MyProject.Controllers
         }
 
         [HttpPost("send")]
-        //[Authorize(Policy = "ADMIN")]
+        [Authorize(Policy = "ADMIN")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationDto request)
         {
             var result =  await _notificationService.SendNotificationAsync(request);
@@ -27,7 +27,7 @@ namespace MyProject.Controllers
         }
 
         [HttpGet("all")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetAllNotifications()
         {
             var notifications = await _notificationService.GetAllNotificationsAsync();

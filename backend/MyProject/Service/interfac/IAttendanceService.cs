@@ -4,7 +4,7 @@ namespace MyProject.Service.interfac
 {
     public interface IAttendanceService
     {
-        Task<AttendanceDto?> GetAttendanceByUserId(int userId);
+        Task<List<AttendanceDto>> GetAttendanceByUserIdInMonthAsync(int userId, int month, int year);
         public Task<(bool IsSuccess, string? ErrorMessage)> CheckIn(int userId);
         public Task<(bool IsSuccess, string? ErrorMessage)> CheckOut(int userId);
         public Task<(bool IsSuccess, string? ErrorMessage)> UpdateStatus(int userId, string status, string note = "");

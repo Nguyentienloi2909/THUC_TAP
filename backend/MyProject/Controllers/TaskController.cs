@@ -52,7 +52,7 @@ namespace MyProject.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMIN, LEADER")]
+        [Authorize]
         public async Task<IActionResult> GetTaskById(int id)
         {
             try

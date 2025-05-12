@@ -113,16 +113,19 @@ namespace MyProject.Service.impl
             return attendanceDtos;
         }
 
-        public async Task<AttendanceDto?> GetAttendanceByUserId(int userId)
+        public async Task<List<AttendanceDto>> GetAttendanceByUserIdInMonthAsync(int userId, int month, int year)
         {
-            var today = DateTime.Now.Date;
-            var attendance = await _dbContext.Attendances
+            var firstDayOfMonth = new DateTime(year, month, 1);
+            var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
+
+            var attendances = await _dbContext.Attendances
                 .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.UserId == userId && a.Workday.Date == today);
-            if (attendance == null)
-                return null;
-            return Mappers.MapperToDto.ToDto(attendance);
+                .Where(a => a.UserId == userId && a.Workday >= firstDayOfMonth && a.Workday < firstDayOfNextMonth)
+                .ToListAsync();
+
+            return attendances.Select(Mappers.MapperToDto.ToDto).ToList();
         }
+
 
         public async Task<(bool IsSuccess, string? ErrorMessage)> UpdateStatus(int userId, string status, string note = "")
         {
