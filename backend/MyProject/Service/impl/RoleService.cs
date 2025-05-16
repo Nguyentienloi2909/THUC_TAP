@@ -19,7 +19,8 @@ namespace MyProject.Service.impl
         {
             var role = new Role
             {
-                RoleName = dto.RoleName
+                RoleName = dto.RoleName,
+                Display = true,
             };
 
             _dbContext.Roles.Add(role);

@@ -15,8 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddSignalR();
 
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IStatusNotificationService, StatusNotificationService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISalaryService, SalaryService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
@@ -26,6 +28,9 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<JwtService, JwtService>();
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt"));
+
 
 // config token
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -40,9 +45,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"], // Lấy từ appsettings.json
             ValidAudience = builder.Configuration["Jwt:Audience"],
-
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-            //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SuperSecretkey12345!@#$%^&*()_+6789"))
         };
     });
 
@@ -116,6 +119,7 @@ var app = builder.Build();
 
 // Map Hub vào endpoint
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<ChatHub>("/chatHub");
 
 app.UseCors("AllowFrontend");
 // Configure the HTTP request pipeline.

@@ -62,7 +62,8 @@ namespace MyProject.Service.impl
         {
             var department = new Department
             {
-                DepartmentName = dto.DepartmentName
+                DepartmentName = dto.DepartmentName,
+                Display = true,
             };
 
             _dbContext.Departments.Add(department);
@@ -81,6 +82,7 @@ namespace MyProject.Service.impl
             }
 
             department.DepartmentName = dto.DepartmentName ?? department.DepartmentName;
+            department.Display = true;
             await _dbContext.SaveChangesAsync();
 
             return new DepartmentDto

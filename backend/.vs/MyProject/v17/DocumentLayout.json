@@ -3,56 +3,40 @@
   "WorkspaceRootPath": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\commentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\commentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Migrations\\20250509012921_update table.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:MyProject\\Migrations\\20250509012921_update table.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\utils\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\utils\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\departmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\departmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\groupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\groupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\roleservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\roleservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\interfac\\inotificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\interfac\\inotificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\salaryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\salaryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\entity\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\entity\\message.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\messagecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\messagecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\taskservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\taskservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\taskcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\taskcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\messageservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\messageservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,125 +46,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 115,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": ".gitignore",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\.gitignore",
-              "RelativeDocumentMoniker": "MyProject\\.gitignore",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\.gitignore",
-              "RelativeToolTip": "MyProject\\.gitignore",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2025-05-09T01:43:07.107Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "20250509012921_update table.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Migrations\\20250509012921_update table.cs",
-              "RelativeDocumentMoniker": "MyProject\\Migrations\\20250509012921_update table.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Migrations\\20250509012921_update table.cs",
-              "RelativeToolTip": "MyProject\\Migrations\\20250509012921_update table.cs",
-              "ViewState": "AgIAAD0AAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:29:21.704Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Utils\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "MyProject\\Utils\\ApplicationDbContext.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Utils\\ApplicationDbContext.cs",
-              "RelativeToolTip": "MyProject\\Utils\\ApplicationDbContext.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAUwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:29:19.08Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "AttendanceService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAowAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:28:44.498Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "CommentService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\CommentService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\CommentService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\CommentService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\CommentService.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAAAgwBAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:28:38.793Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "DepartmentService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\DepartmentService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\DepartmentService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\DepartmentService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\DepartmentService.cs",
-              "ViewState": "AgIAACQAAAAAAAAAAAAowAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:28:34.715Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "EmailService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\EmailService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\EmailService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\EmailService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\EmailService.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAowAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:28:30.821Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "GroupService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\GroupService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\GroupService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\GroupService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\GroupService.cs",
-              "ViewState": "AgIAAEkAAAAAAAAAAAAUwF4AAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:27:53.072Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "NotificationService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\NotificationService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\NotificationService.cs",
-              "ViewState": "AgIAADMAAAAAAAAAAAAowEQAAAAuAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:27:29.328Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
@@ -191,55 +58,112 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "RoleService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\RoleService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\RoleService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\RoleService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\RoleService.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAowCAAAAAJAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "NotificationController.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\NotificationController.cs",
+              "RelativeDocumentMoniker": "MyProject\\Controllers\\NotificationController.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\NotificationController.cs",
+              "RelativeToolTip": "MyProject\\Controllers\\NotificationController.cs",
+              "ViewState": "AgIAAG4AAAAAAAAAAAAAwHQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:25:49.023Z",
+              "WhenOpened": "2025-05-15T09:14:15.496Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Program.cs",
+              "RelativeDocumentMoniker": "MyProject\\Program.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Program.cs",
+              "RelativeToolTip": "MyProject\\Program.cs",
+              "ViewState": "AgIAAGAAAAAAAAAAAAAAAIcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T09:13:52.145Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "SalaryService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\SalaryService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\SalaryService.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAcwDIAAAB/AAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "Message.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Entity\\Message.cs",
+              "RelativeDocumentMoniker": "MyProject\\Entity\\Message.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Entity\\Message.cs",
+              "RelativeToolTip": "MyProject\\Entity\\Message.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:24:08.232Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-15T09:13:06.004Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "TaskService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\TaskService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\TaskService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\TaskService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\TaskService.cs",
-              "ViewState": "AgIAALUAAAAAAAAAAADwv8wAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "INotificationService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\interfac\\INotificationService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\interfac\\INotificationService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\interfac\\INotificationService.cs",
+              "RelativeToolTip": "MyProject\\Service\\interfac\\INotificationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:22:38.54Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-15T09:11:04.795Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "UserService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\UserService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\UserService.cs",
-              "ViewState": "AgIAAAoAAAAAAAAAAAAAABgAAAA2AAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "NotificationService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\NotificationService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
+              "RelativeToolTip": "MyProject\\Service\\impl\\NotificationService.cs",
+              "ViewState": "AgIAAHYAAAAAAAAAAAAUwIgAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T01:22:05.803Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-15T09:09:22.08Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "TaskController.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\TaskController.cs",
+              "RelativeDocumentMoniker": "MyProject\\Controllers\\TaskController.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\TaskController.cs",
+              "RelativeToolTip": "MyProject\\Controllers\\TaskController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T08:47:17.183Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "UserController.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\UserController.cs",
+              "RelativeDocumentMoniker": "MyProject\\Controllers\\UserController.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\UserController.cs",
+              "RelativeToolTip": "MyProject\\Controllers\\UserController.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAgwHAAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T08:33:40.774Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MessageService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\MessageService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\MessageService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\MessageService.cs",
+              "RelativeToolTip": "MyProject\\Service\\impl\\MessageService.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAAAqwFYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T08:32:40.186Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "MessageController.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\MessageController.cs",
+              "RelativeDocumentMoniker": "MyProject\\Controllers\\MessageController.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\MessageController.cs",
+              "RelativeToolTip": "MyProject\\Controllers\\MessageController.cs",
+              "ViewState": "AgIAAEMAAAAAAAAAAAAUwAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T07:52:23.388Z"
             }
           ]
         },

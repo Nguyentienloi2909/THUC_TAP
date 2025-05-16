@@ -56,7 +56,9 @@ namespace MyProject.Service.impl
             var group = new Group
             {
                 GroupName = dto.GroupName,
-                DepartmentId = dto.DepartmentId
+                DepartmentId = dto.DepartmentId,
+                Display = true,
+
             };
 
             _dbContext.Groups.Add(group);

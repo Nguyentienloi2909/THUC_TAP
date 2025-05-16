@@ -86,10 +86,11 @@ namespace MyProject.Mappers
             {
                 Id = dto.Id,
                 Content = dto.Content,
-                UrlContent = dto.UrlContent,
                 SentAt = dto.SentAt,
                 SenderId = dto.SenderId,
-                ReceiverId = dto.ReceiverId
+                ReceiverId = dto.ReceiverId,
+                GroupChatId = dto.GroupChatId,
+
             };
         }
 
@@ -133,7 +134,9 @@ namespace MyProject.Mappers
                 Id = dto.Id ?? 0,
                 Title = dto.Title ,
                 Description = dto.Description,
-                SentAt = dto.SentAt ?? DateTime.Now
+                SentAt = dto.SentAt ?? DateTime.Now,
+                Display = true,
+                SenderId = dto.SenderId,
             };
         }
     }
