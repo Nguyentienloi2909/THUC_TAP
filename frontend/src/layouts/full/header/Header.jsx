@@ -6,7 +6,7 @@ import { IconBellRinging, IconMenu, IconMessage } from '@tabler/icons-react';
 import ListMessage from './ListMessage';
 import Profile from './Profile';
 import ListNotification from './ListNotification';
-import { NotificationContext } from 'd:/INTERN/Projects/THUC_TAP/frontend/src/contexts/NotificationContext'; // Update with the correct path
+import { NotificationContext } from '../../../contexts/NotificationContext'; // Update with the correct path
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   boxShadow: 'none',
