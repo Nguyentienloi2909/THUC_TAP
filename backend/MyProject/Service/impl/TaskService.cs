@@ -2,6 +2,7 @@
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
+using MyProject.Entity;
 using MyProject.Entity.Enum;
 using MyProject.Mappers;
 using MyProject.Service.interfac;
@@ -30,6 +31,7 @@ namespace MyProject.Service.impl
             {
                 return (false, "user not exists", null); ;
             }
+            taskItem.Display = true;
             _dbContext.TaskItems.Add(taskItem);
             await _dbContext.SaveChangesAsync();
             // lưu file
@@ -122,7 +124,7 @@ namespace MyProject.Service.impl
             taskItem.EndTime = request.EndTime ?? taskItem.EndTime;
             taskItem.Status = Enum.TryParse<StatusTask>(request.Status, true, out var status) ? status : taskItem.Status;
             taskItem.AssignedToId = request.AssignedToId ?? taskItem.AssignedToId;
-
+            taskItem.Display = true;
             // Xử lý file nếu có
             if (request.File != null && request.File.Length > 0)
             {
@@ -173,13 +175,15 @@ namespace MyProject.Service.impl
                 return false;
             }
 
-            _dbContext.TaskItems.Remove(taskItem);
+            taskItem.Display = false;
+            _dbContext.TaskItems.Update(taskItem);
             await _dbContext.SaveChangesAsync();
             return true;
         }
         public async Task<List<TaskItemDto>> GetAllTasks()
         {
             var tasks = await _dbContext.TaskItems
+                .Where(d => d.Display == true)
                 .Include(t => t.AssignedTo)
                 .ToListAsync();
 
@@ -197,7 +201,7 @@ namespace MyProject.Service.impl
         {
             var tasks = await _dbContext.TaskItems
                 .Include(t => t.AssignedTo)
-                .Where(t => t.AssignedToId == userId)
+                .Where(t => t.AssignedToId == userId && t.Display == true)
                 .ToListAsync();
 
             return tasks.Select(t => t.ToDto()).ToList();

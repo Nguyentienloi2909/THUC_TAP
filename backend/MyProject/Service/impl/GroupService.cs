@@ -18,6 +18,7 @@ namespace MyProject.Service.impl
         public async Task<List<GroupDto>> GetAllGroup()
         {
             return await _dbContext.Groups
+                .Where(g => g.Display == true)
                 .Include(g => g.Department)
                 .Include(g => g.Users)
                 .Select(g => new GroupDto
@@ -33,6 +34,7 @@ namespace MyProject.Service.impl
         public async Task<GroupDto?> GetGroupById(int id)
         {
             var group = await _dbContext.Groups
+                .Where(g => g.Display == true)
                 .Include(g => g.Department)
                 .Include(g => g.Users)
                 .FirstOrDefaultAsync(g => g.Id == id);
@@ -54,7 +56,9 @@ namespace MyProject.Service.impl
             var group = new Group
             {
                 GroupName = dto.GroupName,
-                DepartmentId = dto.DepartmentId
+                DepartmentId = dto.DepartmentId,
+                Display = true,
+
             };
 
             _dbContext.Groups.Add(group);
@@ -88,8 +92,9 @@ namespace MyProject.Service.impl
             {
                 return false;
             }
+            group.Display = false;
 
-            _dbContext.Groups.Remove(group);
+            _dbContext.Groups.Update(group);
             await _dbContext.SaveChangesAsync();
             return true;
         }

@@ -72,6 +72,9 @@ namespace MyProject.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
 
@@ -104,6 +107,9 @@ namespace MyProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
@@ -120,6 +126,9 @@ namespace MyProject.Migrations
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
+
                     b.Property<string>("GroupName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -129,6 +138,38 @@ namespace MyProject.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.GroupChat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GroupChats");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.GroupChatMember", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GroupChatId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "GroupChatId");
+
+                    b.HasIndex("GroupChatId");
+
+                    b.ToTable("GroupChatMembers");
                 });
 
             modelBuilder.Entity("MyProject.Entity.Message", b =>
@@ -142,6 +183,9 @@ namespace MyProject.Migrations
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("GroupChatId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ReceiverId")
                         .HasColumnType("int");
 
@@ -151,10 +195,9 @@ namespace MyProject.Migrations
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UrlContent")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupChatId");
 
                     b.HasIndex("ReceiverId");
 
@@ -175,6 +218,12 @@ namespace MyProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("datetime2");
 
@@ -183,6 +232,8 @@ namespace MyProject.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
 
                     b.ToTable("Notifications");
                 });
@@ -194,6 +245,9 @@ namespace MyProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
@@ -211,6 +265,9 @@ namespace MyProject.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("Month")
                         .HasColumnType("int");
@@ -240,6 +297,24 @@ namespace MyProject.Migrations
                     b.ToTable("Salaries");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.StatusNotification", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.HasKey("UserId", "NotificationId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("StatusNotifications");
+                });
+
             modelBuilder.Entity("MyProject.Entity.TaskItem", b =>
                 {
                     b.Property<int>("Id")
@@ -254,6 +329,9 @@ namespace MyProject.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
@@ -384,8 +462,32 @@ namespace MyProject.Migrations
                     b.Navigation("Department");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.GroupChatMember", b =>
+                {
+                    b.HasOne("MyProject.Entity.GroupChat", "GroupChat")
+                        .WithMany("Members")
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Entity.User", "User")
+                        .WithMany("GroupChatMemberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GroupChat");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MyProject.Entity.Message", b =>
                 {
+                    b.HasOne("MyProject.Entity.GroupChat", "GroupChat")
+                        .WithMany("Messages")
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("MyProject.Entity.User", "Receiver")
                         .WithMany("ReceivedMessages")
                         .HasForeignKey("ReceiverId")
@@ -396,7 +498,19 @@ namespace MyProject.Migrations
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.Navigation("GroupChat");
+
                     b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.Notification", b =>
+                {
+                    b.HasOne("MyProject.Entity.User", "Sender")
+                        .WithMany("SentNotifications")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Sender");
                 });
@@ -407,6 +521,25 @@ namespace MyProject.Migrations
                         .WithMany("Salaries")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.StatusNotification", b =>
+                {
+                    b.HasOne("MyProject.Entity.Notification", "Notification")
+                        .WithMany("Recipients")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Entity.User", "User")
+                        .WithMany("NotificationStatuses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
 
                     b.Navigation("User");
                 });
@@ -453,6 +586,18 @@ namespace MyProject.Migrations
                     b.Navigation("Users");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.GroupChat", b =>
+                {
+                    b.Navigation("Members");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.Notification", b =>
+                {
+                    b.Navigation("Recipients");
+                });
+
             modelBuilder.Entity("MyProject.Entity.Role", b =>
                 {
                     b.Navigation("Users");
@@ -462,11 +607,17 @@ namespace MyProject.Migrations
                 {
                     b.Navigation("Attendances");
 
+                    b.Navigation("GroupChatMemberships");
+
+                    b.Navigation("NotificationStatuses");
+
                     b.Navigation("ReceivedMessages");
 
                     b.Navigation("Salaries");
 
                     b.Navigation("SentMessages");
+
+                    b.Navigation("SentNotifications");
 
                     b.Navigation("Tasks");
                 });

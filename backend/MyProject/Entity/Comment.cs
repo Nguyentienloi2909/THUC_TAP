@@ -15,5 +15,6 @@
         // Mối quan hệ cha-con giữa Comment và Comment
         public Comment? Parent { get; set; }
         public ICollection<Comment> Replies { get; set; } = new List<Comment>();
+        public bool Display { get; set; } = true;
     }
 }

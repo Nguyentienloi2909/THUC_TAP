@@ -20,8 +20,35 @@ namespace MyProject.Utils
         public DbSet<Message> Messages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<GroupChatMember> GroupChatMembers { get; set; }
+        public DbSet<GroupChat> GroupChats { get; set; }
+
+        public DbSet<StatusNotification> StatusNotifications { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Composite key cho StatusNotification
+            modelBuilder.Entity<StatusNotification>()
+                .HasKey(sn => new { sn.UserId, sn.NotificationId });
+
+            // Quan hệ với User (người nhận)
+            modelBuilder.Entity<StatusNotification>()
+                .HasOne(sn => sn.User)
+                .WithMany(u => u.NotificationStatuses)
+                .HasForeignKey(sn => sn.UserId);
+
+            // Quan hệ với Notification (thông báo)
+            modelBuilder.Entity<StatusNotification>()
+                .HasOne(sn => sn.Notification)
+                .WithMany(n => n.Recipients)
+                .HasForeignKey(sn => sn.NotificationId);
+
+            // Quan hệ với Sender (người gửi)
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Sender)
+                .WithMany(u => u.SentNotifications)
+                .HasForeignKey(n => n.SenderId)
+                .OnDelete(DeleteBehavior.Restrict); // tránh xóa user thì xóa luôn notification
             // Cấu hình quan hệ Department - Group (1 -> N)
             modelBuilder.Entity<Department>()
                 .HasMany(d => d.Groups)
@@ -65,20 +92,6 @@ namespace MyProject.Utils
                 .HasForeignKey(t => t.AssignedToId)
                 .OnDelete(DeleteBehavior.SetNull); // Giữ lại TaskItem khi xóa User
 
-            // Cấu hình quan hệ Message - User (N -> 1 cho Sender)
-            modelBuilder.Entity<Message>()
-                .HasOne(m => m.Sender)
-                .WithMany(u => u.SentMessages)
-                .HasForeignKey(m => m.SenderId)
-                .OnDelete(DeleteBehavior.Restrict); 
-
-            // Cấu hình quan hệ Message - User (N -> 1 cho Receiver)
-            modelBuilder.Entity<Message>()
-                .HasOne(m => m.Receiver)
-                .WithMany(u => u.ReceivedMessages)
-                .HasForeignKey(m => m.ReceiverId)
-                .OnDelete(DeleteBehavior.Restrict); 
-
             modelBuilder.Entity<User>()
                .HasMany(u => u.Salaries) // Mối quan hệ giữa User và Salary
                .WithOne(s => s.User) // Mỗi Salary thuộc về một User
@@ -105,6 +118,41 @@ namespace MyProject.Utils
                       .HasForeignKey(c => c.TaskId)
                       .OnDelete(DeleteBehavior.SetNull); // Khi xóa TaskItem thì chỉ gán TaskId = null, không xóa comment
             });
+
+            
+
+            modelBuilder.Entity<GroupChatMember>()
+                .HasKey(gm => new { gm.UserId, gm.GroupChatId });
+
+            modelBuilder.Entity<GroupChatMember>()
+                .HasOne(gm => gm.User)
+                .WithMany(u => u.GroupChatMemberships)
+                .HasForeignKey(gm => gm.UserId);
+
+            modelBuilder.Entity<GroupChatMember>()
+                .HasOne(gm => gm.GroupChat)
+                .WithMany(gc => gc.Members)
+                .HasForeignKey(gm => gm.GroupChatId);
+
+            // Tin nhắn gửi từ người dùng đến người dùng (1-1)
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.SentMessages)
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany(u => u.ReceivedMessages)
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Tin nhắn trong group chat
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.GroupChat)
+                .WithMany(gc => gc.Messages)
+                .HasForeignKey(m => m.GroupChatId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

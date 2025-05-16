@@ -20,15 +20,20 @@
   {
     "ContainingType": "MyProject.Controllers.AttendanceController",
     "Method": "GetAttendance",
-    "RelativePath": "api/Attendance/attendance/{userId}",
+    "RelativePath": "api/Attendance/attendance",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "userId",
-        "Type": "System.Int32",
-        "IsRequired": true
+        "Name": "month",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -80,6 +85,116 @@
       {
         "Name": "note",
         "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetMonthlySummary",
+    "RelativePath": "api/Attendance/summary/month",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetUserMonthlySummary",
+    "RelativePath": "api/Attendance/summary/monthly",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetQuarterlySummary",
+    "RelativePath": "api/Attendance/summary/quarter",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "quarter",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetWeeklySummary",
+    "RelativePath": "api/Attendance/summary/week",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetUserWeeklySummary",
+    "RelativePath": "api/Attendance/summary/weekly",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetYearlySummary",
+    "RelativePath": "api/Attendance/summary/year",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "year",
+        "Type": "System.Int32",
         "IsRequired": false
       }
     ],
@@ -444,6 +559,85 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "MyProject.Controllers.MessageController",
+    "Method": "GetAllGroups",
+    "RelativePath": "api/Message/chatGroups",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.MessageController",
+    "Method": "GetGroupMessages",
+    "RelativePath": "api/Message/chatGroups/{groupChatId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupChatId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.MessageController",
+    "Method": "GetPrivateMessages",
+    "RelativePath": "api/Message/private/{otherUserId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "otherUserId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.NotificationController",
+    "Method": "UpdateNotification",
+    "RelativePath": "api/Notification/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "MyProject.Dto.NotificationDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.NotificationController",
+    "Method": "DeleteNotification",
+    "RelativePath": "api/Notification/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "MyProject.Controllers.NotificationController",
     "Method": "GetAllNotifications",
     "RelativePath": "api/Notification/all",
@@ -464,6 +658,32 @@
       {
         "Name": "request",
         "Type": "MyProject.Dto.NotificationDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.NotificationController",
+    "Method": "GetNotificationsByUser",
+    "RelativePath": "api/Notification/user",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.NotificationController",
+    "Method": "updateStatusNotificationById",
+    "RelativePath": "api/Notification/user/{notificationId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "notificationId",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],

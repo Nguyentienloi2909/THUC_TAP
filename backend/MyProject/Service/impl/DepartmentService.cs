@@ -17,6 +17,7 @@ namespace MyProject.Service.impl
         public async Task<List<DepartmentDto>> GetAllDepartment()
         {
             var departments = await _dbContext.Departments
+                .Where(d => d.Display == true)
                 .Include(d => d.Groups)
                 .ThenInclude(g => g.Users)
                 .ToListAsync();
@@ -61,7 +62,8 @@ namespace MyProject.Service.impl
         {
             var department = new Department
             {
-                DepartmentName = dto.DepartmentName
+                DepartmentName = dto.DepartmentName,
+                Display = true,
             };
 
             _dbContext.Departments.Add(department);
@@ -80,6 +82,7 @@ namespace MyProject.Service.impl
             }
 
             department.DepartmentName = dto.DepartmentName ?? department.DepartmentName;
+            department.Display = true;
             await _dbContext.SaveChangesAsync();
 
             return new DepartmentDto
@@ -104,10 +107,10 @@ namespace MyProject.Service.impl
             {
                 foreach (var group in department.Groups)
                 {
-                    group.DepartmentId = null;
+                    group.Display = false;
                 }
-
-                _dbContext.Departments.Remove(department);
+                department.Display = false;
+                _dbContext.Departments.Update(department);
                 await _dbContext.SaveChangesAsync();
 
                 await transaction.CommitAsync();

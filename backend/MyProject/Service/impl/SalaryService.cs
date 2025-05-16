@@ -58,11 +58,12 @@ namespace MyProject.Service.impl
             var attendances = await _dbContext.Attendances
                 .Where(a => a.UserId == userId &&
                             a.Workday.Month == month &&
-                            a.Workday.Year == year)
+                            a.Workday.Year == year
+                      )
                 .ToListAsync();
 
             var salary = await _dbContext.Salaries
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.Month == month && s.Year == year);
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.Month == month && s.Year == year && s.Display==true);
 
             if ((attendances == null || !attendances.Any()) && salary == null)
             {
@@ -80,6 +81,7 @@ namespace MyProject.Service.impl
                     NumberOfWorkingDays = 0,
                     TotalSalary = 0,
                     MonthSalary = user?.MonthSalary ?? 0,
+                    Display = true,
                 };
                 _dbContext.Salaries.Add(salary);
                 await _dbContext.SaveChangesAsync();
