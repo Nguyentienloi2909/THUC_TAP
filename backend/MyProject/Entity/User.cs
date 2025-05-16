@@ -31,5 +31,10 @@ namespace MyProject.Entity
         public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
         public ICollection<Message> SentMessages { get; set; } = new List<Message>();
         public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
+        public ICollection<GroupChatMember> GroupChatMemberships { get; set; } = new List<GroupChatMember>();
+
+        public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();
+        public ICollection<StatusNotification> NotificationStatuses { get; set; } = new List<StatusNotification>();
+
     }
 }

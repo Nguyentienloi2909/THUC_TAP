@@ -51,7 +51,7 @@ namespace MyProject.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "ADMIN")]
+        [Authorize]
         public async Task<IActionResult> UpdateUserById(int id, [FromForm] UserDto dto)
         {
             if (dto == null || id != dto.Id)

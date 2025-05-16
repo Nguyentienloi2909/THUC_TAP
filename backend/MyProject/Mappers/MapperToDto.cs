@@ -102,12 +102,13 @@ namespace MyProject.Mappers
             {
                 Id = message.Id,
                 Content = message.Content,
-                UrlContent = message.UrlContent,
                 SentAt = message.SentAt,
                 SenderId = message.SenderId,
                 SenderName = message.Sender?.FullName,
                 ReceiverId = message.ReceiverId,
-                ReceiverName = message.Receiver?.FullName
+                ReceiverName = message.Receiver?.FullName,
+                GroupChatId = message.GroupChatId,
+                GroupChatName = message.GroupChat?.Name
             };
         }
 
@@ -153,6 +154,8 @@ namespace MyProject.Mappers
                 Title = notification.Title,
                 Description = notification.Description,
                 SentAt = notification.SentAt,
+                SenderId = notification.SenderId,
+                SenderName = notification.Sender?.FullName
             };
         }
     }

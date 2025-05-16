@@ -146,6 +146,119 @@ namespace MyProject.Controllers
             }
         }
 
+        [HttpGet("summary/week")]
+        public async Task<IActionResult> GetWeeklySummary()
+        {
+            try
+            {
+                var result = await _attendanceService.GetWeeklySummaryAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
+        [HttpGet("summary/month")]
+        public async Task<IActionResult> GetMonthlySummary([FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+                if (month < 1 || month > 12)
+                    return BadRequest("Tháng không hợp lệ. Giá trị từ 1 đến 12.");
+
+                var result = await _attendanceService.GetMonthlySummaryAsync(month, year);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
+        [HttpGet("summary/quarter")]
+        public async Task<IActionResult> GetQuarterlySummary([FromQuery] int quarter, [FromQuery] int year)
+        {
+            try
+            {
+                if (quarter < 1 || quarter > 4)
+                    return BadRequest("Quý không hợp lệ. Giá trị từ 1 đến 4.");
+
+                var result = await _attendanceService.GetQuarterlySummaryAsync(quarter, year);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
+        [HttpGet("summary/year")]
+        public async Task<IActionResult> GetYearlySummary([FromQuery] int year)
+        {
+            try
+            {
+                if (year < 2000 || year > DateTime.Now.Year)
+                    return BadRequest("Năm không hợp lệ.");
+
+                var result = await _attendanceService.GetYearlySummaryAsync(year);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
+        [HttpGet("summary/monthly")]
+        public async Task<IActionResult> GetUserMonthlySummary([FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+                var email = GetUsernameFromToken();
+                if (string.IsNullOrEmpty(email))
+                    return Unauthorized(new { message = "Username claim not found in token" });
+                var user = await _userService.GetMyInfo(email);
+                var summary = await _attendanceService.GetUserMonthlySummaryAsync(user.Id ?? 0, month, year);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nếu cần: _logger.LogError(ex, "Lỗi khi lấy thống kê tháng cho user");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thống kê tháng", detail = ex.Message });
+            }
+        }
+
+        [HttpGet("summary/weekly")]
+        public async Task<IActionResult> GetUserWeeklySummary(int month, int year)
+        {
+            try
+            {
+                var email = GetUsernameFromToken();
+                if (string.IsNullOrEmpty(email))
+                    return Unauthorized(new { message = "Username claim not found in token" });
+                var user = await _userService.GetMyInfo(email);
+                var summaries = await _attendanceService.GetUserWeeklySummaryInMonthAsync(user.Id ?? 0, month, year);
+
+                var result = summaries.Select(s => new
+                {
+                    weekNumber = s.WeekNumber,
+                    totalPresentDays = s.Summary.TotalPresentDays,
+                    totalLateDays = s.Summary.TotalLateDays,
+                    totalAbsentDays = s.Summary.TotalAbsentDays,
+                    totalOvertimeHours = s.Summary.TotalOvertimeHours
+                });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thống kê tuần", detail = ex.Message });
+            }
+        }
+
+
         private string? GetUsernameFromToken()
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();

@@ -65,12 +65,7 @@ namespace MyProject.Service.impl
                         Id = c.Id,
                         Content = c.Content,
                         CreatedAt = c.CreatedAt,
-                        User = new UserDto
-                        {
-                            Id = c.User.Id,
-                            FullName = c.User.FullName,
-                            Avatar = c.User.Avatar
-                        },
+                        User = c.User != null ? Mappers.MapperToDto.ToDto(c.User) : null,
                         Replies = BuildTree(c.Id) // Đệ quy ở đây
                     })
                     .ToList();

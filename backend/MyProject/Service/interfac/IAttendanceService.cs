@@ -9,5 +9,12 @@ namespace MyProject.Service.interfac
         public Task<(bool IsSuccess, string? ErrorMessage)> CheckOut(int userId);
         public Task<(bool IsSuccess, string? ErrorMessage)> UpdateStatus(int userId, string status, string note = "");
         Task<List<AttendanceDto>> GetAllAttendancesForToday();
+        Task<AttendanceSummaryDto> GetWeeklySummaryAsync();
+        Task<AttendanceSummaryDto> GetMonthlySummaryAsync(int month, int year);
+        Task<AttendanceSummaryDto> GetQuarterlySummaryAsync(int quarter, int year);
+        Task<AttendanceSummaryDto> GetYearlySummaryAsync(int year);
+        Task<AttendanceSummaryDto> GetUserMonthlySummaryAsync(int userId, int month, int year);
+        Task<List<(int WeekNumber, AttendanceSummaryDto Summary)>> GetUserWeeklySummaryInMonthAsync(int userId, int month, int year);
+
     }
 }
