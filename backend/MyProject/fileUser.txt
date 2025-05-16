@@ -1,6 +1,0 @@
-
-UserId: 1; Email: 21t1020485@husc.edu.vn; Password: e1Vgr6PogF; fullName: admin
-UserId: 2; Email: 21t1020880@husc.edu.vn; Password: cbw55fIqdA; fullName: user
-UserId: 3; Email: mddat4203@gmail.com; Password: qPFXYdat2h; fullName: leader
-UserId: 4; Email: tdhuy@gmail.com; Password: jlCqH9Ooxk; fullName: Trần Dụng Huy
-UserId: 5; Email: lvnam@gmail.com; Password: 2rLLiNaRdT; fullName: Lê Văn Nam
