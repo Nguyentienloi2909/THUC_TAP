@@ -1,0 +1,47 @@
+import React from 'react';
+import { Box, Tooltip, IconButton } from '@mui/material';
+import { IconDownload, IconEdit, IconTrash } from '@tabler/icons-react';
+
+const TaskActions = ({ task, onEdit, onDelete, role }) => {
+    return (
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+            {task.urlFile && (
+                <Tooltip title="Tải tài liệu">
+                    <IconButton
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(task.urlFile, '_blank');
+                        }}
+                    >
+                        <IconDownload size={18} />
+                    </IconButton>
+                </Tooltip>
+            )}
+            {role === 'LEADER' && (
+                <>
+                    <Tooltip title="Chỉnh sửa">
+                        <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => onEdit(task.id, e)}
+                        >
+                            <IconEdit size={18} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Xóa">
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => onDelete(task.id, e)}
+                        >
+                            <IconTrash size={18} />
+                        </IconButton>
+                    </Tooltip>
+                </>
+            )}
+        </Box>
+    );
+};
+
+export default TaskActions;

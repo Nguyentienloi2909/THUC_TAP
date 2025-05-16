@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
-import AttendanceMiniTools from './components/AttendanceMiniTools';
+import AttendanceMiniTools from './components/AttendanceMiniTools'; // Ensure this import is present
 import ApiService from '../../service/ApiService';
 
 const Attendance = () => {
@@ -55,7 +55,7 @@ const Attendance = () => {
             <Grid container spacing={3}>
                 <Grid item xs={12}>
                     <DashboardCard title="Bảng chấm công">
-                        {/* <AttendanceMiniTools /> */}
+                        <AttendanceMiniTools /> {/* Add the tool here */}
                         <TableContainer component={Paper}>
                             <Table
                                 sx={{

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Grid,
@@ -13,7 +14,6 @@ import {
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import ApiService from 'src/service/ApiService';
-import { useNavigate } from 'react-router-dom';
 
 const genders = [
     { label: 'Nam', value: 'true' },
@@ -33,27 +33,31 @@ const EditProfile = () => {
         bankNumber: '',
         bankName: '',
         avatar: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        status: '',
+        roleId: '',
+        groupId: '',
+        startDate: '',
+        monthSalary: ''
     });
     const [bankList, setBankList] = useState([]);
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
                 setLoading(true);
                 const userData = await ApiService.getUserProfile();
-                // Ensure userData.id is present and valid
                 if (!userData.id) {
-                    setError('Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.');
+                    setErrors({ general: 'Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.' });
                     setLoading(false);
                     return;
                 }
-                setForm({
+                const formattedData = {
                     id: userData.id || '',
                     fullName: userData.fullName || '',
                     birthDate: userData.birthDate ? userData.birthDate.substring(0, 10) : '',
@@ -63,22 +67,25 @@ const EditProfile = () => {
                     bankNumber: userData.bankNumber || '',
                     bankName: userData.bankName || '',
                     avatar: userData.avatar || '',
-                    phoneNumber: userData.phoneNumber || ''
-                });
+                    phoneNumber: userData.phoneNumber || '',
+                    status: userData.status || '',
+                    roleId: userData.roleId || '',
+                    groupId: userData.groupId || '',
+                    startDate: userData.startDate || '',
+                    monthSalary: userData.monthSalary || ''
+                };
+                setForm(formattedData);
                 setAvatarPreview(userData.avatar || '');
 
-                // Fetch banks after user profile to ensure bankName is available
                 const banks = await ApiService.getBankList?.() || [];
-                const hasUserBank = banks.some(
-                    bank => bank.name === userData.bankName
-                );
+                const hasUserBank = banks.some(bank => bank.name === userData.bankName);
                 if (userData.bankName && !hasUserBank) {
-                    setBankList([{ name: userData.bankName }, ...banks]);
+                    setBankList([{ name: userData.bankName, code: userData.bankName }, ...banks]);
                 } else {
                     setBankList(banks);
                 }
             } catch (error) {
-                setError(error.response?.data?.message || error.message || 'Failed to load profile');
+                setErrors({ general: error.response?.data?.message || 'Không thể tải hồ sơ người dùng' });
             } finally {
                 setLoading(false);
             }
@@ -92,6 +99,7 @@ const EditProfile = () => {
             ...prev,
             [name]: value
         }));
+        setErrors(prev => ({ ...prev, [name]: null, general: null }));
     };
 
     const handleAvatarChange = (e) => {
@@ -110,32 +118,50 @@ const EditProfile = () => {
         navigate('/profile');
     };
 
+    const validate = () => {
+        const newErrors = {};
+        if (!form.fullName) newErrors.fullName = 'Vui lòng nhập họ tên';
+        if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email không hợp lệ';
+        if (!form.phoneNumber) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
+        if (!form.birthDate) newErrors.birthDate = 'Vui lòng chọn ngày sinh';
+        if (!form.gender) newErrors.gender = 'Vui lòng chọn giới tính';
+        if (!form.address) newErrors.address = 'Vui lòng nhập địa chỉ';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Validate user ID before submit
         if (!form.id) {
-            setError('Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.');
+            setErrors({ general: 'Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.' });
             return;
         }
+        if (!validate()) return;
+
         setSaving(true);
         try {
             const formData = new FormData();
-            formData.append('Id', String(form.id)); // Capital "I", ensure string
+            formData.append('Id', String(form.id));
             formData.append('fullName', form.fullName || '');
             formData.append('phoneNumber', form.phoneNumber || '');
             formData.append('email', form.email || '');
             formData.append('gender', form.gender || '');
             formData.append('address', form.address || '');
-            formData.append('birthDay', form.birthDate || ''); // Use "birthDay"
+            formData.append('birthDate', form.birthDate || ''); // Fixed key from birthDay to birthDate
             formData.append('bankNumber', form.bankNumber || '');
             formData.append('bankName', form.bankName || '');
+            formData.append('status', form.status || '');
+            formData.append('roleId', form.roleId || '');
+            formData.append('groupId', form.groupId || '');
+            formData.append('startDate', form.startDate || '');
+            formData.append('monthSalary', form.monthSalary || '');
             if (avatarFile) {
-                formData.append('FileImage', avatarFile); // Use "FileImage"
+                formData.append('FileImage', avatarFile);
             }
             await ApiService.updateUser(form.id, formData);
             navigate('/profile');
         } catch (error) {
-            setError(error.response?.data?.message || error.message || 'Failed to update profile');
+            setErrors({ general: error.response?.data?.message || 'Không thể cập nhật hồ sơ' });
         } finally {
             setSaving(false);
         }
@@ -143,38 +169,31 @@ const EditProfile = () => {
 
     if (loading) {
         return (
-            <Grid
-                container
-                justifyContent="center"
-                alignItems="center"
-                style={{ minHeight: '100vh' }}
-            >
+            <Grid container justifyContent="center" alignItems="center" style={{ minHeight: '100vh' }}>
                 <CircularProgress />
             </Grid>
         );
     }
 
     return (
-        <PageContainer
-            title='Sửa hồ sơ cá nhân'
-            description='Cập nhật thông tin cá nhân'
-        >
+        <PageContainer title="Sửa hồ sơ cá nhân" description="Cập nhật thông tin cá nhân">
             <Card>
                 <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                        <Typography variant="h5">
-                            Sửa hồ sơ cá nhân
-                        </Typography>
-                        <Button color="inherit" variant="outlined" size="small" onClick={handleCancel}>
+                        <Typography variant="h5">Sửa hồ sơ cá nhân</Typography>
+                        <Button color="error" variant="outlined" size="small" onClick={handleCancel}>
                             Hủy
                         </Button>
                     </Box>
+                    {errors.general && (
+                        <Typography color="error" sx={{ mb: 2 }}>{errors.general}</Typography>
+                    )}
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sx={{ textAlign: 'center' }}>
                                 <Box sx={{ mb: 2 }}>
                                     <Avatar
-                                        src={avatarPreview || form.avatar}
+                                        src={avatarPreview}
                                         sx={{ width: 120, height: 120, margin: '0 auto', mb: 2 }}
                                     />
                                     <Button variant="contained" component="label" size="small">
@@ -183,7 +202,6 @@ const EditProfile = () => {
                                     </Button>
                                 </Box>
                             </Grid>
-                            <input type="hidden" name="id" value={form.id} />
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
@@ -191,6 +209,8 @@ const EditProfile = () => {
                                     name="fullName"
                                     value={form.fullName}
                                     onChange={handleChange}
+                                    error={!!errors.fullName}
+                                    helperText={errors.fullName}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -202,6 +222,8 @@ const EditProfile = () => {
                                     value={form.birthDate}
                                     onChange={handleChange}
                                     InputLabelProps={{ shrink: true }}
+                                    error={!!errors.birthDate}
+                                    helperText={errors.birthDate}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -211,7 +233,8 @@ const EditProfile = () => {
                                     name="email"
                                     value={form.email}
                                     onChange={handleChange}
-                                    disabled
+                                    error={!!errors.email}
+                                    helperText={errors.email}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -221,6 +244,8 @@ const EditProfile = () => {
                                     name="phoneNumber"
                                     value={form.phoneNumber}
                                     onChange={handleChange}
+                                    error={!!errors.phoneNumber}
+                                    helperText={errors.phoneNumber}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -230,6 +255,8 @@ const EditProfile = () => {
                                     name="address"
                                     value={form.address}
                                     onChange={handleChange}
+                                    error={!!errors.address}
+                                    helperText={errors.address}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -240,12 +267,12 @@ const EditProfile = () => {
                                     name="gender"
                                     value={form.gender}
                                     onChange={handleChange}
+                                    error={!!errors.gender}
+                                    helperText={errors.gender}
                                 >
                                     <MenuItem value="">Chọn giới tính</MenuItem>
                                     {genders.map((g) => (
-                                        <MenuItem key={g.value} value={g.value}>
-                                            {g.label}
-                                        </MenuItem>
+                                        <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
                                     ))}
                                 </TextField>
                             </Grid>
@@ -264,15 +291,20 @@ const EditProfile = () => {
                                     fullWidth
                                     label="Ngân hàng"
                                     name="bankName"
-                                    value={form.bankName}
+                                    value={form.bankName || ''}
                                     onChange={handleChange}
                                 >
                                     <MenuItem value="">Chọn ngân hàng</MenuItem>
                                     {bankList.map((bank) => (
-                                        <MenuItem key={bank.id || bank.code || bank.name} value={bank.name}>
+                                        <MenuItem key={bank.code || bank.name} value={bank.name}>
                                             {bank.name}
                                         </MenuItem>
                                     ))}
+                                    {form.bankName && !bankList.some(bank => bank.name === form.bankName) && (
+                                        <MenuItem value={form.bankName}>
+                                            {form.bankName} (Ngân hàng không trong danh sách)
+                                        </MenuItem>
+                                    )}
                                 </TextField>
                             </Grid>
                             <Grid item xs={12}>
@@ -284,14 +316,9 @@ const EditProfile = () => {
                                     size="large"
                                     disabled={saving}
                                 >
-                                    Lưu thay đổi
+                                    {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
                                 </Button>
                             </Grid>
-                            {error && (
-                                <Grid item xs={12}>
-                                    <Typography color="error" align="center">{error}</Typography>
-                                </Grid>
-                            )}
                         </Grid>
                     </Box>
                 </CardContent>

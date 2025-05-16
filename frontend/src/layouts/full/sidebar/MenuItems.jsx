@@ -27,7 +27,7 @@ const getMenuItems = (userRole) => {
             id: uniqueId(),
             title: 'Chấm công',
             icon: IconCheckbox,
-            href: '/history-checkwork/1',
+            href: '/history-checkwork',
         },
     ];
 
@@ -52,7 +52,7 @@ const getMenuItems = (userRole) => {
             id: uniqueId(),
             title: 'Quản lý lương',
             icon: IconDeviceImacDollar,
-            href: '/manage/payroll',
+            href: '/manage/payroll/list',
         },
         {
             id: uniqueId(),
@@ -62,21 +62,15 @@ const getMenuItems = (userRole) => {
         },
         {
             id: uniqueId(),
-            title: 'Giao nhiệm vụ',
+            title: 'Danh sách công việc',
             icon: IconLicense,
             href: '/manage/tasks',
         },
-        // {
-        //     id: uniqueId(),
-        //     title: 'Quản lý chức vụ',
-        //     icon: IconUsers,
-        //     href: '/manage/role',
-        // },
         {
             id: uniqueId(),
             title: 'Quản lý thống kê',
             icon: IconReport,
-            href: '/report',
+            href: '/manage/statistics',
         }
     ];
 
@@ -89,7 +83,7 @@ const getMenuItems = (userRole) => {
             id: uniqueId(),
             title: 'Quản lý nhóm',
             icon: IconUsersGroup,
-            href: '/manage/group/:id',
+            href: '/manage/group',
         },
         {
             id: uniqueId(),

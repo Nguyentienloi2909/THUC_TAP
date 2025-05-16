@@ -1,28 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Grid, Card, CardContent, Typography, Button, List, ListItem,
-    ListItemText, ListItemSecondaryAction, IconButton, Divider,
-    Box, TextField, Chip, Stack, MenuItem, Select, FormControl,
-    InputLabel
+    Typography, Box, TextField, Chip, Stack, FormControl, InputLabel, Select, MenuItem,
+    CircularProgress, Tooltip, IconButton
 } from '@mui/material';
-import { IconPlus, IconEdit, IconTrash, IconDownload, IconCalendar, IconUpload } from '@tabler/icons-react';
+import { DataGrid } from '@mui/x-data-grid';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
-import {
-    Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, Tooltip,
-    Dialog, DialogTitle, DialogContent, DialogActions
-} from '@mui/material';
+import { IconEdit, IconTrash, IconDownload } from '@tabler/icons-react';
 import ApiService from '../../service/ApiService';
-import Info from './Info';
 import { useNavigate } from 'react-router-dom';
-import AddTaskPage from './Add';
 
 const Tasks = () => {
     const navigate = useNavigate();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [openAddModal, setOpenAddModal] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const fetchTasks = async () => {
         setLoading(true);
@@ -40,50 +33,11 @@ const Tasks = () => {
         fetchTasks();
     }, []);
 
-    const handleAddTask = async (newTask) => {
-        try {
-            const token = localStorage.getItem('token');
-            console.log('Token:', token);
-            console.log('Task data being sent:', newTask);
-
-            if (!token) {
-                console.log('No token found, redirecting to login');
-                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                navigate('/auth/login');
-                return;
-            }
-
-            const response = await ApiService.createTask(newTask);
-            console.log('Server response:', response);
-
-            if (response) {
-                console.log('Task created successfully, fetching updated list');
-                await fetchTasks();
-                setOpenAddModal(false);
-                alert('Tạo nhiệm vụ thành công!');
-            }
-        } catch (error) {
-            console.error('Error details:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-            
-            if (error.response?.status === 403) {
-                alert('Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên.');
-                return;
-            }
-            alert('Không thể tạo nhiệm vụ. Vui lòng thử lại sau.');
-        }
-    };
-
-    const handleEdit = async (taskId, e) => {
-        e?.stopPropagation();
+    const handleEdit = (taskId) => {
         navigate(`/manage/task/update/${taskId}`);
     };
 
-    const handleDelete = async (taskId, e) => {
-        e?.stopPropagation();
+    const handleDelete = async (taskId) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?')) {
             try {
                 await ApiService.deleteTask(taskId);
@@ -105,137 +59,235 @@ const Tasks = () => {
         }
     };
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    const filteredTasks = tasks
+        .filter(task =>
+            task.title.toLowerCase().includes(searchText.toLowerCase()) ||
+            task.description.toLowerCase().includes(searchText.toLowerCase())
+        )
+        .filter(task =>
+            statusFilter === 'all' || task.status.toLowerCase() === statusFilter.toLowerCase()
+        );
+
+    const columns = [
+        {
+            field: 'title',
+            headerName: 'Tiêu đề',
+            flex: 1,
+            minWidth: 150,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    {params.value}
+                </Typography>
+            )
+        },
+        {
+            field: 'description',
+            headerName: 'Mô tả',
+            flex: 1,
+            minWidth: 200,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {params.value}
+                </Typography>
+            )
+        },
+        {
+            field: 'urlFile',
+            headerName: 'Tài liệu',
+            width: 100,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                params.value ? (
+                    <Tooltip title="Tải xuống tài liệu">
+                        <IconButton
+                            size="small"
+                            color="primary"
+                            component="a"
+                            href={params.value}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <IconDownload />
+                        </IconButton>
+                    </Tooltip>
+                ) : (
+                    <Typography variant="caption" color="text.secondary">N/A</Typography>
+                )
+            )
+        },
+        {
+            field: 'status',
+            headerName: 'Trạng thái',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Chip
+                    size="small"
+                    label={params.value}
+                    color={getStatusColor(params.value)}
+                    sx={{ borderRadius: 1, fontWeight: 500 }}
+                />
+            )
+        },
+        {
+            field: 'startTime',
+            headerName: 'Ngày bắt đầu',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Typography variant="body2">
+                    {new Date(params.value).toLocaleDateString('vi-VN')}
+                </Typography>
+            )
+        },
+        {
+            field: 'endTime',
+            headerName: 'Ngày kết thúc',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Typography variant="body2">
+                    {new Date(params.value).toLocaleDateString('vi-VN')}
+                </Typography>
+            )
+        },
+        {
+            field: 'assignedToName',
+            headerName: 'Người nhận',
+            width: 150,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                params.value ? (
+                    <Chip
+                        size="small"
+                        label={params.value}
+                        variant="outlined"
+                        sx={{ borderRadius: 1 }}
+                    />
+                ) : (
+                    <Typography variant="caption" color="text.secondary">N/A</Typography>
+                )
+            )
+        },
+        {
+            field: 'actions',
+            headerName: 'Thao tác',
+            width: 120,
+            align: 'center',
+            headerAlign: 'center',
+            renderCell: (params) => (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Chỉnh sửa">
+                        <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(params.row.id);
+                            }}
+                        >
+                            <IconEdit />
+                        </IconButton>
+
+                    </Tooltip>
+                    <Tooltip title="Xóa">
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => {
+                                e.stopPropagation(); // Ngăn sự kiện lan tới hàng
+                                handleDelete(params.row.id);
+                            }}
+                        >
+                            <IconTrash />
+                        </IconButton>
+
+                    </Tooltip>
+                </Box>
+            )
+        }
+    ];
 
     return (
         <PageContainer title="Quản lý công việc" description="Danh sách và quản lý công việc">
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<IconPlus />}
-                    onClick={() => setOpenAddModal(true)}
-                >
-                    Giao nhiệm vụ
-                </Button>
-            </Box>
+            <DashboardCard>
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+                        Danh sách công việc
+                    </Typography>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center">
+                        <Stack direction="row" spacing={2} sx={{ flexGrow: 1 }}>
+                            <TextField
+                                label="Tìm kiếm tiêu đề/mô tả"
+                                variant="outlined"
+                                size="small"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                sx={{ width: { xs: '100%', sm: 300 } }}
+                            />
+                            <FormControl sx={{ width: { xs: '100%', sm: 200 } }} size="small">
+                                <InputLabel>Trạng thái</InputLabel>
+                                <Select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    label="Trạng thái"
+                                >
+                                    <MenuItem value="all">Tất cả</MenuItem>
+                                    <MenuItem value="completed">Hoàn thành</MenuItem>
+                                    <MenuItem value="in progress">Đang thực hiện</MenuItem>
+                                    <MenuItem value="pending">Chờ xử lý</MenuItem>
+                                    <MenuItem value="late">Trễ hạn</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Stack>
+                    </Stack>
+                </Box>
 
-            <Card elevation={0} sx={{ borderRadius: 2 }}>
-                <TableContainer>
-                    {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                            <CircularProgress />
-                        </Box>
-                    ) : tasks.length === 0 ? (
-                        <Box sx={{ padding: '20px', textAlign: 'center' }}>
-                            Không tìm thấy bản ghi nào
-                        </Box>
-                    ) : (
-                        <Table sx={{ minWidth: 800 }}>
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: 'background.default' }}>
-                                    <TableCell sx={{ fontWeight: 600 }}>Tiêu đề</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Mô tả</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Tài liệu</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Ngày bắt đầu</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Ngày kết thúc</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Người nhận</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 600 }}>Thao tác</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {tasks.map((task) => (
-                                    <TableRow
-                                        key={task.id}
-                                        hover
-                                        sx={{ cursor: 'pointer' }}
-                                        onClick={() => navigate(`/manage/task/${task.id}`)} // Updated to navigate
-                                    >
-                                        <TableCell>{task.title}</TableCell>
-                                        <TableCell>{task.description}</TableCell>
-                                        <TableCell>
-                                            {task.urlFile && (
-                                                <Tooltip title="Tải xuống">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="primary"
-                                                        component="a"
-                                                        href={task.urlFile}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        <IconDownload />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip
-                                                size="small"
-                                                label={task.status}
-                                                color={getStatusColor(task.status)}
-                                                sx={{ borderRadius: 1 }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(task.startTime).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(task.endTime).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell>
-                                            {task.assignedToName ? (
-                                                <Chip
-                                                    size="small"
-                                                    label={task.assignedToName}
-                                                    variant="outlined"
-                                                    sx={{ borderRadius: 1 }}
-                                                />
-                                            ) : (
-                                                <Typography variant="caption" color="text.secondary">
-                                                    N/A
-                                                </Typography>
-                                            )}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title="Chỉnh sửa">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="primary"
-                                                        onClick={e => { e.stopPropagation(); handleEdit(task.id); }}
-                                                    >
-                                                        <IconEdit />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Xóa">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="error"
-                                                        onClick={e => { e.stopPropagation(); handleDelete(task.id); }}
-                                                    >
-                                                        <IconTrash />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    )}
-                </TableContainer>
-            </Card>
-
-            <AddTaskPage 
-                open={openAddModal}
-                onClose={() => setOpenAddModal(false)}
-                onAdd={handleAddTask}
-            />
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : filteredTasks.length === 0 ? (
+                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="body1" color="text.secondary">
+                            Không tìm thấy công việc nào
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Box sx={{ height: 'auto', width: '100%' }}>
+                        <DataGrid
+                            rows={filteredTasks}
+                            columns={columns}
+                            pageSize={10}
+                            rowsPerPageOptions={[10, 20, 50]}
+                            autoHeight
+                            disableSelectionOnClick
+                            onRowClick={(params) => navigate(`/manage/task/${params.row.id}`)}
+                            sx={{
+                                '& .MuiDataGrid-root': {
+                                    border: 'none'
+                                },
+                                '& .MuiDataGrid-cell': {
+                                    borderColor: 'divider',
+                                    cursor: 'pointer'
+                                },
+                                '& .MuiDataGrid-columnHeaders': {
+                                    backgroundColor: 'background.default',
+                                    borderColor: 'divider'
+                                },
+                                '& .MuiDataGrid-row:hover': {
+                                    backgroundColor: 'action.hover'
+                                }
+                            }}
+                        />
+                    </Box>
+                )}
+            </DashboardCard>
         </PageContainer>
     );
 };

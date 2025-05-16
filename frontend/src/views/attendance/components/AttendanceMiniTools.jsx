@@ -13,12 +13,9 @@ import {
 const AttendanceMiniTools = () => {
     const navigate = useNavigate();
     const tools = [
-        // { icon: IconCalendarTime, label: 'Chấm công', color: 'primary', path: '/manage/attendance/checkwork' },
-        // { icon: IconCalendarStats, label: 'Thống kê', color: 'secondary' },
-        { icon: IconClockCheck, label: 'Duyệt công', color: 'success' },
-        // { icon: IconReportAnalytics, label: 'Báo cáo', color: 'info' },
-        { icon: IconClockPause, label: 'Nghỉ phép', color: 'warning' },
-        { icon: IconClockEdit, label: 'Điều chỉnh', color: 'error' }
+        { icon: IconClockCheck, label: 'Hôm nay', color: 'success', path: '/manage/attendance' },
+        { icon: IconClockPause, label: 'Tuần', color: 'warning', path: '/manage/attendance/week' },
+        { icon: IconClockEdit, label: 'Tháng', color: 'error', path: '/manage/attendance/month' }
     ];
 
     const handleClick = (path) => {

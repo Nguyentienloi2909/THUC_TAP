@@ -41,10 +41,22 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
     const [fileInfo, setFileInfo] = useState({ name: '', size: '' });
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [statusList, setStatusList] = useState([]);
 
     useEffect(() => {
         fetchUsers();
+        fetchStatusList();
     }, []);
+
+    const fetchStatusList = async () => {
+        try {
+            const statuses = await ApiService.getStatusTask();
+            setStatusList(statuses);
+        } catch (error) {
+            console.error('Error fetching status list:', error);
+            alert('Không thể tải danh sách trạng thái');
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -115,7 +127,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
     };
 
     return (
-        <Dialog 
+        <Dialog
             open={Boolean(open)}  // Ensure open prop is passed and converted to boolean
             onClose={onClose}
             maxWidth="md"
@@ -215,10 +227,11 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                     onChange={handleChange}
                                     label="Trạng thái"
                                 >
-                                    <MenuItem value="Pending">Chờ xử lý</MenuItem>
-                                    <MenuItem value="In Progress">Đang thực hiện</MenuItem>
-                                    <MenuItem value="Completed">Hoàn thành</MenuItem>
-                                    <MenuItem value="Late">Quá hạn</MenuItem>
+                                    {statusList.map((status) => (
+                                        <MenuItem key={status.id} value={status.name}>
+                                            {status.name}
+                                        </MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -257,8 +270,8 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
 
 AddTaskPage.defaultProps = {
     open: false,
-    onClose: () => {},
-    onAdd: () => {},
+    onClose: () => { },
+    onAdd: () => { },
 };
 
 export default AddTaskPage;
