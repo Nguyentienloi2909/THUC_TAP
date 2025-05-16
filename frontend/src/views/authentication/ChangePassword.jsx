@@ -8,30 +8,30 @@ import {
     IconButton,
     InputAdornment,
     Alert,
-    Stack
+    Stack,
+    CircularProgress
 } from '@mui/material';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import DashboardCard from 'src/components/shared/DashboardCard'; // Import DashboardCard
-import ApiService from 'src/service/ApiService'; // Import ApiService
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import DashboardCard from 'src/components/shared/DashboardCard';
+import ApiService from 'src/service/ApiService';
+import { useNavigate } from 'react-router-dom';
 
 const ChangePassword = () => {
-    const navigate = useNavigate(); // Initialize navigate
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState({
         current: false,
         new: false,
         confirm: false
     });
-
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
-
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleTogglePassword = (field) => {
         setShowPassword(prev => ({
@@ -41,141 +41,164 @@ const ChangePassword = () => {
     };
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-        setError('');
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        setErrors(prev => ({ ...prev, [name]: null, general: null }));
         setSuccess('');
+    };
+
+    const validate = () => {
+        const newErrors = {};
+        if (!formData.currentPassword) newErrors.currentPassword = 'Vui lòng nhập mật khẩu cũ';
+        if (!formData.newPassword) newErrors.newPassword = 'Vui lòng nhập mật khẩu mới';
+        else if (formData.newPassword.length < 6) newErrors.newPassword = 'Mật khẩu mới phải có ít nhất 6 ký tự';
+        if (!formData.confirmPassword) newErrors.confirmPassword = 'Vui lòng nhập lại mật khẩu mới';
+        else if (formData.newPassword !== formData.confirmPassword) newErrors.confirmPassword = 'Mật khẩu mới không khớp';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validate()) return;
 
-        if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-            setError('Vui lòng điền đầy đủ thông tin');
-            return;
-        }
-
-        if (formData.newPassword.length < 6) {
-            setError('Mật khẩu mới phải có ít nhất 6 ký tự');
-            return;
-        }
-
-        if (formData.newPassword !== formData.confirmPassword) {
-            setError('Mật khẩu mới không khớp');
-            return;
-        }
-
+        setLoading(true);
         try {
-            // Call the changePassword API
             await ApiService.changePassword({
                 oldPassword: formData.currentPassword,
                 newPassword: formData.newPassword,
                 againNewPassword: formData.confirmPassword
             });
-            setSuccess('Đổi mật khẩu thành công!');
+            setSuccess('Đổi mật khẩu thành công! Bạn sẽ được đăng xuất sau giây lát.');
             setFormData({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
             });
 
-            // Automatically log out and redirect to login page
             setTimeout(() => {
-                ApiService.logout(); // Assuming logout function exists in ApiService
-                navigate('/auth/login'); // Redirect to login page
-            }, 2000); // Delay for 2 seconds to show success message
+                ApiService.logout();
+                navigate('/auth/login');
+            }, 2000);
         } catch (err) {
-            setError('Có lỗi xảy ra khi thay đổi mật khẩu');
+            setErrors({ general: err.response?.data?.message || 'Có lỗi xảy ra khi thay đổi mật khẩu' });
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <PageContainer title="Đổi mật khẩu" description="Thay đổi mật khẩu tài khoản">
-            <Box sx={{ minHeight: '100%', p: 3 }}>
+            <Box sx={{ minHeight: '100vh', p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
                 <Grid container justifyContent="center">
-                    <Grid item xs={12} sm={6} md={4}>
-                        <DashboardCard> {/* Wrap the form with DashboardCard */}
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="h5" color="primary" fontWeight={500} align='center'>
+                    <Grid item xs={12} sm={10} md={6} lg={5}>
+                        <DashboardCard sx={{
+                            width: '100%',
+                            maxWidth: '500px',
+                            p: 4,
+                            borderRadius: 2,
+                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                            background: '#ffffff'
+                        }}>
+                            <Box sx={{ mb: 4, textAlign: 'center' }}>
+                                <Typography variant="h4" color="primary" fontWeight={700} sx={{ background: 'linear-gradient(90deg, #1976d2, #42a5f5)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
                                     Đổi mật khẩu
                                 </Typography>
                             </Box>
 
-                            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                            {errors.general && <Alert severity="error" sx={{ mb: 3, borderRadius: 1 }}>{errors.general}</Alert>}
+                            {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 1 }}>{success}</Alert>}
 
                             <form onSubmit={handleSubmit}>
-                                <Stack spacing={3}>
+                                <Stack spacing={4}>
                                     <TextField
                                         fullWidth
-                                        size="small"
+                                        variant="outlined"
                                         label="Mật khẩu cũ"
                                         name="currentPassword"
                                         type={showPassword.current ? 'text' : 'password'}
                                         value={formData.currentPassword}
                                         onChange={handleChange}
+                                        error={!!errors.currentPassword}
+                                        helperText={errors.currentPassword}
                                         InputProps={{
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <IconButton size="small" onClick={() => handleTogglePassword('current')}>
-                                                        {showPassword.current ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                                                    <IconButton size="small" onClick={() => handleTogglePassword('current')} sx={{ color: '#1976d2' }}>
+                                                        {showPassword.current ? <IconEyeOff size={20} /> : <IconEye size={20} />}
                                                     </IconButton>
                                                 </InputAdornment>
                                             ),
                                         }}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                                     />
 
                                     <TextField
                                         fullWidth
-                                        size="small"
+                                        variant="outlined"
                                         label="Mật khẩu mới"
                                         name="newPassword"
                                         type={showPassword.new ? 'text' : 'password'}
                                         value={formData.newPassword}
                                         onChange={handleChange}
+                                        error={!!errors.newPassword}
+                                        helperText={errors.newPassword}
                                         InputProps={{
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <IconButton size="small" onClick={() => handleTogglePassword('new')}>
-                                                        {showPassword.new ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                                                    <IconButton size="small" onClick={() => handleTogglePassword('new')} sx={{ color: '#1976d2' }}>
+                                                        {showPassword.new ? <IconEyeOff size={20} /> : <IconEye size={20} />}
                                                     </IconButton>
                                                 </InputAdornment>
                                             ),
                                         }}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                                     />
 
                                     <TextField
                                         fullWidth
-                                        size="small"
+                                        variant="outlined"
                                         label="Nhập lại mật khẩu mới"
                                         name="confirmPassword"
                                         type={showPassword.confirm ? 'text' : 'password'}
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
+                                        error={!!errors.confirmPassword}
+                                        helperText={errors.confirmPassword}
                                         InputProps={{
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    <IconButton size="small" onClick={() => handleTogglePassword('confirm')}>
-                                                        {showPassword.confirm ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                                                    <IconButton size="small" onClick={() => handleTogglePassword('confirm')} sx={{ color: '#1976d2' }}>
+                                                        {showPassword.confirm ? <IconEyeOff size={20} /> : <IconEye size={20} />}
                                                     </IconButton>
                                                 </InputAdornment>
                                             ),
                                         }}
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
                                     />
 
                                     <Button
                                         fullWidth
                                         type="submit"
                                         variant="contained"
+                                        disabled={loading}
                                         sx={{
-                                            py: 1,
+                                            py: 2,
+                                            borderRadius: 1,
+                                            background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(90deg, #1565c0, #2196f3)',
+                                            },
                                             textTransform: 'none',
-                                            fontSize: '0.875rem'
+                                            fontSize: '1rem',
+                                            fontWeight: 600,
+                                            color: '#ffffff'
                                         }}
                                     >
-                                        Xác nhận
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Xác nhận'}
                                     </Button>
                                 </Stack>
                             </form>

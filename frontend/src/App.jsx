@@ -1,7 +1,8 @@
-import { SearchProvider } from 'src/contexts/SearchContext';
+
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { useRoutes } from 'react-router-dom';
 import Router from './routes/Router';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 import { baselightTheme } from "./theme/DefaultColors";
 // import { basedarkTheme } from "./theme/DefaultColors";
@@ -12,12 +13,12 @@ function App() {
   // const theme = basedarkTheme;
 
   return (
-    <SearchProvider>
-      <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme}>
+      <NotificationProvider>
         <CssBaseline />
         {routing}
-      </ThemeProvider>
-    </SearchProvider>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }
 

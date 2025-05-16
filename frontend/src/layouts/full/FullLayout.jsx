@@ -134,6 +134,7 @@ const FullLayout = () => {
           <Container
             sx={{
               paddingTop: "20px",
+              paddingBottom: "20px",
               maxWidth: "1200px",
               flexGrow: 1,
               display: "flex",

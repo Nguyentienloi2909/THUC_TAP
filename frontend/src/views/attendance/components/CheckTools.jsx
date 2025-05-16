@@ -1,27 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Stack, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Stack, Tooltip, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import {
-    IconHistory,
-    IconChartBar,
-    IconLogin,
-    IconLogout
-} from '@tabler/icons-react';
+import { IconHistory, IconChartBar, IconLogin, IconLogout } from '@tabler/icons-react';
 import ApiService from '../../../service/ApiService';
+import { format, parse, isAfter } from 'date-fns';
 
-const CheckTools = () => {
+const CheckTools = ({ onSuccess, attendanceStatus }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [attendanceStatus, setAttendanceStatus] = useState(null);
+    const [currentStatus, setCurrentStatus] = useState(null);
     const [error, setError] = useState(null);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-    // Fetch current attendance status
+    const handleCheckIn = async () => {
+        const currentTime = new Date();
+        const checkInLimit = parse('09:00', 'HH:mm', currentTime);
+
+        console.log('Current time:', currentTime.toLocaleTimeString());
+        console.log('Check-in limit:', format(checkInLimit, 'HH:mm'));
+
+        if (isAfter(currentTime, checkInLimit)) {
+            setSnackbarMessage('Quá giờ check-in!');
+            setSnackbarOpen(true);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+            await ApiService.checkIn();
+
+            if (onSuccess) {
+                onSuccess();
+            }
+
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const year = today.getFullYear();
+            const attendance = await ApiService.getTodayAttendance();
+            setCurrentStatus(attendance);
+        } catch (err) {
+            console.error('Check-in error:', err);
+            setError(err.message || 'Không thể check-in. Vui lòng thử lại sau.');
+            setSnackbarMessage('Check-in thất bại!');
+            setSnackbarOpen(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCheckOut = async () => {
+        try {
+            setLoading(true);
+            await ApiService.checkOut();
+
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const year = today.getFullYear();
+            const attendance = await ApiService.getAttendance(month, year);
+            const todayStr = today.toISOString().split('T')[0];
+            const todayAttendance = attendance.find(record =>
+                record.workday.startsWith(todayStr)
+            );
+            setCurrentStatus(todayAttendance || null);
+
+            if (onSuccess) onSuccess();
+        } catch (err) {
+            console.error('Check-out error:', err);
+            setError(err.message);
+            setSnackbarMessage('Check-out thất bại!');
+            setSnackbarOpen(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         const fetchAttendanceStatus = async () => {
             try {
-                const userProfile = await ApiService.getUserProfile();
-                const attendance = await ApiService.getAttendance(userProfile.id);
-                setAttendanceStatus(attendance);
+                const today = new Date();
+                const month = today.getMonth() + 1;
+                const year = today.getFullYear();
+
+                const attendance = await ApiService.getAttendance(month, year);
+                const todayStr = today.toISOString().split('T')[0];
+                const todayAttendance = attendance.find(record =>
+                    record.workday.startsWith(todayStr)
+                );
+
+                setCurrentStatus(todayAttendance || null);
             } catch (err) {
                 console.error('Error fetching attendance status:', err);
                 setError(err.message);
@@ -31,43 +99,15 @@ const CheckTools = () => {
         fetchAttendanceStatus();
     }, []);
 
-    const handleCheckIn = async () => {
-        try {
-            setLoading(true);
-            const userProfile = await ApiService.getUserProfile();
-            await ApiService.checkIn(userProfile.id);
-            // Refresh attendance status after check-in
-            const newStatus = await ApiService.getAttendance(userProfile.id);
-            setAttendanceStatus(newStatus);
-        } catch (err) {
-            console.error('Check-in error:', err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCheckOut = async () => {
-        try {
-            setLoading(true);
-            const userProfile = await ApiService.getUserProfile();
-            await ApiService.checkOut(userProfile.id);
-            // Refresh attendance status after check-out
-            const newStatus = await ApiService.getAttendance(userProfile.id);
-            setAttendanceStatus(newStatus);
-        } catch (err) {
-            console.error('Check-out error:', err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     const tools = [
         {
             title: 'Lịch sử chấm công',
             icon: <IconHistory size={20} />,
-            onClick: () => navigate('/history-checkwork/1'),
+            onClick: () => navigate('/history-checkwork'),
             color: 'primary',
             show: true
         },
@@ -83,14 +123,14 @@ const CheckTools = () => {
             icon: <IconLogin size={20} />,
             onClick: handleCheckIn,
             color: 'success',
-            show: !attendanceStatus?.checkIn
+            show: attendanceStatus ? attendanceStatus.canCheckIn : !currentStatus?.checkIn
         },
         {
             title: 'Check-out',
             icon: <IconLogout size={20} />,
             onClick: handleCheckOut,
             color: 'error',
-            show: attendanceStatus?.checkIn && !attendanceStatus?.checkOut
+            show: attendanceStatus ? attendanceStatus.canCheckOut : (currentStatus?.checkIn && !currentStatus?.checkOut)
         }
     ];
 
@@ -127,6 +167,17 @@ const CheckTools = () => {
                         </Tooltip>
                     ))}
             </Stack>
+
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarMessage === 'Quá giờ check-in!' ? 'warning' : 'error'} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

@@ -9,50 +9,64 @@ import {
     Typography,
     Card,
     CardContent,
-    Avatar
+    Avatar,
+    CircularProgress
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import ApiService from 'src/service/ApiService';
 
 const genders = [
-    { label: 'Nam', value: true },
-    { label: 'Nữ', value: false }
+    { label: 'Nam', value: 'true' },
+    { label: 'Nữ', value: 'false' }
 ];
+
+const formatCurrency = (value) => {
+    const number = Number(value);
+    if (isNaN(number)) return '';
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(number);
+};
+
+const parseCurrency = (formattedValue) => {
+    return formattedValue.replace(/[^0-9]/g, '');
+};
 
 const EmployeeEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
+        id: '',
         fullName: '',
         email: '',
         phoneNumber: '',
         avatar: '',
         address: '',
-        gender: true,
+        gender: '',
         birthDate: '',
         bankNumber: '',
         bankName: '',
         status: 'Active',
         roleId: '',
-        roleName: '',
         groupId: '',
-        groupName: '',
-        baseSalary: '',
-        salaryCoefficient: '',
+        startDate: '',
+        monthSalary: ''
     });
-
+    const [formInitial, setFormInitial] = useState({});
     const [departments, setDepartments] = useState([]);
     const [errors, setErrors] = useState({});
-    const [avatar, setAvatar] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [banks, setBanks] = useState([]);
     const [roles, setRoles] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                console.log("Fetching data for user ID:", id); // Debugging line
+                setLoading(true);
                 const deptData = await ApiService.getAllDepartments();
                 const groupList = deptData.flatMap(dept =>
                     (dept.groups || []).map(group => ({
@@ -70,34 +84,40 @@ const EmployeeEdit = () => {
 
                 if (id) {
                     const user = await ApiService.getUser(id);
-                    console.log("Fetched user data:", user); // Debugging line
-
-                    // Update bank name handling
-                    const userBankName = user.bankName;
+                    if (!user.id) {
+                        setErrors({ general: 'Không tìm thấy nhân viên.' });
+                        setLoading(false);
+                        return;
+                    }
                     const matchingBank = bankList.find(bank =>
-                        bank.shortName === userBankName ||
-                        bank.name === userBankName
+                        bank.code === user.bankName || bank.name === user.bankName
                     );
 
-                    setForm({
+                    const initialData = {
+                        id: user.id || '',
                         fullName: user.fullName || '',
                         email: user.email || '',
                         phoneNumber: user.phoneNumber || '',
                         avatar: user.avatar || '',
                         address: user.address || '',
-                        gender: user.gender,
+                        gender: user.gender !== undefined ? user.gender.toString() : '',
                         birthDate: user.birthDate?.substring(0, 10) || '',
                         bankNumber: user.bankNumber || '',
-                        bankName: matchingBank ? matchingBank.name : userBankName || '', // Use updated bank name handling
-                        status: user.status || '',
+                        bankName: matchingBank ? matchingBank.name : user.bankName || '',
+                        status: user.status || 'Active',
                         roleId: user.roleId ? user.roleId.toString() : '',
                         groupId: user.groupId ? user.groupId.toString() : '',
-                        baseSalary: user.baseSalary || '',
-                        salaryCoefficient: user.salaryCoefficient || '',
-                    });
+                        startDate: user.startDate?.substring(0, 10) || '',
+                        monthSalary: user.monthSalary ? user.monthSalary.toString() : ''
+                    };
+                    setFormInitial(initialData);
+                    setForm(initialData);
+                    setAvatarPreview(user.avatar || null);
                 }
             } catch (err) {
-                console.error("Error loading data", err);
+                setErrors({ general: 'Không thể tải dữ liệu nhân viên.' });
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -105,6 +125,8 @@ const EmployeeEdit = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        setErrors(prev => ({ ...prev, [name]: '' }));
+
         if (name === 'groupId') {
             const selected = departments.find(d => d.groupId === value);
             setForm(prev => ({
@@ -119,332 +141,305 @@ const EmployeeEdit = () => {
                 roleId: value,
                 roleName: selected?.roleName || ''
             }));
+        } else if (name === 'monthSalary') {
+            const raw = parseCurrency(value);
+            setForm(prev => ({ ...prev, monthSalary: raw }));
         } else {
             setForm(prev => ({
                 ...prev,
-                [name]: name === 'gender' ? value === 'true' : value
+                [name]: value
             }));
         }
     };
 
     const validate = () => {
         const newErrors = {};
-        if (!form.fullName) newErrors.fullName = 'Vui lòng nhập họ tên';
-        if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email không hợp lệ';
-        if (!form.phoneNumber) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
-        if (!form.groupId) newErrors.groupName = 'Vui lòng chọn phòng ban';
-        if (!form.roleId) newErrors.roleName = 'Vui lòng chọn chức vụ';
-        if (!form.birthDate) newErrors.birthDate = 'Vui lòng chọn ngày sinh';
-        if (form.gender === undefined || form.gender === null) newErrors.gender = 'Vui lòng chọn giới tính';
-        if (!form.address) newErrors.address = 'Vui lòng nhập địa chỉ';
+        if (!form.groupId) newErrors.groupId = 'Vui lòng chọn phòng ban';
+        if (!form.roleId) newErrors.roleId = 'Vui lòng chọn chức vụ';
+        if (!form.startDate) newErrors.startDate = 'Vui lòng chọn ngày bắt đầu';
+        if (form.monthSalary && (isNaN(form.monthSalary) || Number(form.monthSalary) <= 0))
+            newErrors.monthSalary = 'Lương tháng phải là số dương';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form data:", form); // Log the form data for inspection
-        if (validate()) {
-            try {
-                setLoading(true);
+        if (!validate()) return;
 
-                const formData = new FormData();
-                formData.append('id', id); // Add the employee ID to the form data
-                formData.append('email', form.email);
-                formData.append('fullName', form.fullName);
-                formData.append('phoneNumber', form.phoneNumber);
-                formData.append('address', form.address);
-                formData.append('gender', form.gender === true || form.gender === 'true' ? 'true' : 'false');
-                formData.append('birthDate', form.birthDate);
-                formData.append('bankNumber', form.bankNumber);
-                formData.append('bankName', form.bankName);
-                formData.append('status', form.status);
-                formData.append('roleId', Number(form.roleId));
-                formData.append('groupId', Number(form.groupId));
-                formData.append('baseSalary', form.baseSalary);
-                formData.append('salaryCoefficient', form.salaryCoefficient);
+        setSaving(true);
+        try {
+            const updatedData = {
+                ...formInitial, // Keep original data for disabled fields
+                groupId: Number(form.groupId),
+                roleId: Number(form.roleId),
+                startDate: form.startDate,
+                monthSalary: form.monthSalary || '0'
+            };
 
-                if (avatar) {
-                    const avatarFile = await fetch(avatar).then(res => res.blob());
-                    formData.append('FileImage', avatarFile, 'avatar.png');
+            const formData = new FormData();
+            Object.entries(updatedData).forEach(([key, value]) => {
+                if (key !== 'groupName' && key !== 'roleName' && key !== 'avatar') {
+                    formData.append(key, value);
                 }
+            });
 
-                // Debugging: Log each key-value pair in FormData
-                for (let [key, value] of formData.entries()) {
-                    console.log(`${key}: ${value}`);
-                }
-
-                await ApiService.updateUser(id, formData);
-                navigate('/manage/employee/list');
-            } catch (error) {
-                if (error.response && error.response.data) {
-                    alert('Lỗi: ' + JSON.stringify(error.response.data));
-                } else {
-                    alert('Có lỗi khi cập nhật thông tin nhân viên!');
-                }
-                console.error('Error updating employee:', error);
-            } finally {
-                setLoading(false);
-            }
+            await ApiService.updateUser(id, formData);
+            navigate('/manage/employee/list', { state: { success: 'Cập nhật nhân viên thành công!' } });
+        } catch (error) {
+            setErrors({
+                general: error.response?.data?.message || 'Lỗi khi cập nhật thông tin nhân viên.'
+            });
+        } finally {
+            setSaving(false);
         }
     };
-
 
     const handleCancel = () => {
-        navigate(`/manage/employee/info/${id}`);
-    };
-
-    const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAvatar(reader.result);
-            };
-            reader.readAsDataURL(file);
+        if (window.confirm('Bạn có chắc muốn hủy? Các thay đổi sẽ không được lưu.')) {
+            navigate(`/manage/employee/info/${id}`);
         }
     };
 
+    if (loading) {
+        return (
+            <Grid container justifyContent="center" alignItems="center" style={{ minHeight: '100vh' }}>
+                <CircularProgress />
+            </Grid>
+        );
+    }
+
     return (
-        <PageContainer
-            title='Cập nhật thông tin nhân viên'
-            description='Chỉnh sửa thông tin nhân viên'
-        >
+        <PageContainer title="Cập nhật thông tin nhân viên" description="Chỉnh sửa thông tin nhân viên">
             <Card>
                 <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                        <Typography variant="h5">
-                            Cập nhật thông tin nhân viên
-                        </Typography>
-                        <Button color="inherit" variant="outlined" size="small" onClick={handleCancel}>
-                            Hủy
-                        </Button>
+                        <Typography variant="h5">Cập nhật thông tin nhân viên</Typography>
                     </Box>
+                    {errors.general && (
+                        <Typography color="error" sx={{ mb: 2 }}>{errors.general}</Typography>
+                    )}
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sx={{ textAlign: 'center' }}>
-                                <Box sx={{ mb: 2 }}>
-                                    <Avatar
-                                        src={avatar || form.avatar}
-                                        sx={{ width: 200, height: 200, margin: '0 auto', mb: 2 }}
-                                    />
-                                    <Button variant="contained" component="label" size="small">
-                                        Tải lên ảnh đại diện
-                                        <input type="file" hidden accept="image/*" onChange={handleAvatarChange} />
-                                    </Button>
-                                </Box>
+                        <Typography variant="h6" sx={{ mb: 2 }}>Thông tin cá nhân</Typography>
+                        <Grid container justifyContent="center" sx={{ mb: 2 }}>
+                            <Grid item>
+                                <Avatar
+                                    src={avatarPreview}
+                                    alt="Employee Avatar"
+                                    sx={{ width: 200, height: 200, mb: 2 }}
+                                />
                             </Grid>
-
+                        </Grid>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    id="fullName"
-                                    name="fullName"
                                     label="Họ và tên"
+                                    name="fullName"
                                     value={form.fullName}
                                     onChange={handleChange}
                                     error={!!errors.fullName}
                                     helperText={errors.fullName}
-                                    InputProps={{
-                                        readOnly: true, // Make email read-only
-                                    }}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    id="email"
-                                    name="email"
                                     label="Email"
+                                    name="email"
                                     value={form.email}
                                     onChange={handleChange}
                                     error={!!errors.email}
                                     helperText={errors.email}
-                                    InputProps={{
-                                        readOnly: true, // Make email read-only
-                                    }}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    id="phoneNumber"
-                                    name="phoneNumber"
                                     label="Số điện thoại"
+                                    name="phoneNumber"
                                     value={form.phoneNumber}
                                     onChange={handleChange}
                                     error={!!errors.phoneNumber}
                                     helperText={errors.phoneNumber}
-                                    InputProps={{
-                                        readOnly: true, // Make phone number read-only
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    select
-                                    fullWidth
-                                    id="groupId"
-                                    name="groupId"
-                                    label="Phòng ban"
-                                    value={form.groupId}
-                                    onChange={handleChange}
-                                    error={!!errors.groupName}
-                                    helperText={errors.groupName}
-                                >
-                                    {departments.length === 0 ? (
-                                        <MenuItem disabled>Đang tải nhóm...</MenuItem>
-                                    ) : (
-                                        departments
-                                            .filter(dept => dept.groupId)
-                                            .map((dept) => (
-                                                <MenuItem key={`dept-${dept.groupId}`} value={dept.groupId}>
-                                                    {dept.groupName}
-                                                </MenuItem>
-                                            ))
-                                    )}
-                                </TextField>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    select
-                                    fullWidth
-                                    id="roleId"
-                                    name="roleId"
-                                    label="Chức vụ"
-                                    value={form.roleId}
-                                    onChange={handleChange}
-                                    error={!!errors.roleName}
-                                    helperText={errors.roleName}
-                                >
-                                    {roles && roles.length === 0 ? (
-                                        <MenuItem disabled>Đang tải chức vụ...</MenuItem>
-                                    ) : (
-                                        roles && roles.map((role) => (
-                                            <MenuItem key={role.id} value={role.id}>
-                                                {role.roleName}
-                                            </MenuItem>
-                                        ))
-                                    )}
-                                </TextField>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    id="baseSalary"
-                                    name="baseSalary"
-                                    label="Lương cơ bản"
-                                    type="number"
-                                    value={form.baseSalary}
-                                    onChange={handleChange}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    id="salaryCoefficient"
-                                    name="salaryCoefficient"
-                                    label="Hệ số lương"
-                                    type="number"
-                                    value={form.salaryCoefficient}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    id="birthDate"
-                                    name="birthDate"
-                                    label="Ngày sinh"
-                                    type="date"
-                                    value={form.birthDate}
-                                    onChange={handleChange}
-                                    error={!!errors.birthDate}
-                                    helperText={errors.birthDate}
-                                    InputLabelProps={{ shrink: true }}
-                                    InputProps={{
-                                        readOnly: true, // Make birth date read-only
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    select
-                                    fullWidth
-                                    id="gender"
-                                    name="gender"
-                                    label="Giới tính"
-                                    value={form.gender.toString()}
-                                    onChange={handleChange}
-                                    error={!!errors.gender}
-                                    helperText={errors.gender}
-                                    InputProps={{
-                                        readOnly: true, // Make gender read-only
-                                    }}
-                                >
-                                    {genders.map((g) => (
-                                        <MenuItem key={g.value.toString()} value={g.value.toString()}>
-                                            {g.label}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    id="address"
-                                    name="address"
                                     label="Địa chỉ"
+                                    name="address"
                                     value={form.address}
                                     onChange={handleChange}
                                     error={!!errors.address}
                                     helperText={errors.address}
-                                    InputProps={{
-                                        readOnly: true, // Make address read-only
-                                    }}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    id="bankNumber"
-                                    name="bankNumber"
-                                    label="Số tài khoản"
-                                    value={form.bankNumber}
+                                    type="date"
+                                    label="Ngày sinh"
+                                    name="birthDate"
+                                    value={form.birthDate}
                                     onChange={handleChange}
-                                    InputProps={{
-                                        readOnly: true, // Make bank number read-only
-                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                    error={!!errors.birthDate}
+                                    helperText={errors.birthDate}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
+                                    select
                                     fullWidth
-                                    id="bankName"
-                                    name="bankName"
-                                    label="Ngân hàng"
-                                    value={form.bankName || ''} // Add fallback for empty value
-                                    InputProps={{
-                                        readOnly: true,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={loading}
-                                    >
-                                        Cập nhật
-                                    </Button>
-                                </Box>
+                                    label="Giới tính"
+                                    name="gender"
+                                    value={form.gender}
+                                    onChange={handleChange}
+                                    error={!!errors.gender}
+                                    helperText={errors.gender}
+                                    disabled
+                                >
+                                    <MenuItem value="">Chọn giới tính</MenuItem>
+                                    {genders.map(g => (
+                                        <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
+                                    ))}
+                                </TextField>
                             </Grid>
                         </Grid>
+
+                        <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Thông tin ngân hàng</Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Số tài khoản"
+                                    name="bankNumber"
+                                    value={form.bankNumber}
+                                    onChange={handleChange}
+                                    error={!!errors.bankNumber}
+                                    helperText={errors.bankNumber}
+                                    disabled
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    select
+                                    fullWidth
+                                    label="Ngân hàng"
+                                    name="bankName"
+                                    value={form.bankName}
+                                    onChange={handleChange}
+                                    error={!!errors.bankName}
+                                    helperText={errors.bankName}
+                                    disabled
+                                >
+                                    <MenuItem value="">Chọn ngân hàng</MenuItem>
+                                    {banks.length > 0 ? (
+                                        banks.map(bank => (
+                                            <MenuItem key={bank.code} value={bank.name}>{bank.name}</MenuItem>
+                                        ))
+                                    ) : (
+                                        <MenuItem disabled>Không có ngân hàng</MenuItem>
+                                    )}
+                                </TextField>
+                            </Grid>
+                        </Grid>
+
+                        <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Thông tin công việc</Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    select
+                                    fullWidth
+                                    label="Phòng ban"
+                                    name="groupId"
+                                    value={form.groupId}
+                                    onChange={handleChange}
+                                    error={!!errors.groupId}
+                                    helperText={errors.groupId}
+                                >
+                                    <MenuItem value="">Chọn phòng ban</MenuItem>
+                                    {departments.length > 0 ? (
+                                        departments.map(dept => (
+                                            <MenuItem key={dept.groupId} value={dept.groupId}>{dept.groupName}</MenuItem>
+                                        ))
+                                    ) : (
+                                        <MenuItem disabled>Không có phòng ban</MenuItem>
+                                    )}
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    select
+                                    fullWidth
+                                    label="Chức vụ"
+                                    name="roleId"
+                                    value={form.roleId}
+                                    onChange={handleChange}
+                                    error={!!errors.roleId}
+                                    helperText={errors.roleId}
+                                >
+                                    <MenuItem value="">Chọn chức vụ</MenuItem>
+                                    {roles.length > 0 ? (
+                                        roles.map(role => (
+                                            <MenuItem key={role.id} value={role.id}>{role.roleName}</MenuItem>
+                                        ))
+                                    ) : (
+                                        <MenuItem disabled>Không có chức vụ</MenuItem>
+                                    )}
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    type="date"
+                                    label="Ngày bắt đầu"
+                                    name="startDate"
+                                    value={form.startDate}
+                                    onChange={handleChange}
+                                    InputLabelProps={{ shrink: true }}
+                                    error={!!errors.startDate}
+                                    helperText={errors.startDate}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Lương tháng"
+                                    name="monthSalary"
+                                    value={form.monthSalary ? formatCurrency(form.monthSalary) : ''}
+                                    onChange={handleChange}
+                                    error={!!errors.monthSalary}
+                                    helperText={errors.monthSalary || 'Nhập số tiền (VND)'}
+                                />
+                            </Grid>
+                        </Grid>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={saving}
+                                sx={{ mr: 2 }}
+                            >
+                                {saving ? 'Đang cập nhật...' : 'Cập nhật'}
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleCancel}
+                                disabled={saving}
+                            >
+                                Hủy
+                            </Button>
+                        </Box>
                     </Box>
                 </CardContent>
             </Card>

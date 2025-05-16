@@ -89,7 +89,7 @@ const Profile = () => {
       >
         <MenuItem component={Link} to="/profile">
           <ListItemIcon><IconUser width={20} /></ListItemIcon>
-          <ListItemText>Thông tin tài khoản</ListItemText>
+          <ListItemText>Tài khoản</ListItemText>
         </MenuItem>
         <MenuItem component={Link} to="/auth/changepassword">
           <ListItemIcon><IconKey width={20} /></ListItemIcon>

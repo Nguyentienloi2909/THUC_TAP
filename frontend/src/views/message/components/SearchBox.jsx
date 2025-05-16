@@ -12,9 +12,9 @@ const SearchBox = () => {
             size="small"
             InputProps={{
                 startAdornment: (
-                    <IconSearch 
-                        size={20} 
-                        style={{ 
+                    <IconSearch
+                        size={20}
+                        style={{
                             marginRight: theme.spacing(1),
                             color: theme.palette.text.secondary
                         }}

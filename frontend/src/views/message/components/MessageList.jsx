@@ -28,7 +28,7 @@ const MessageList = ({ selectedUser }) => {
                     {index % 2 === 0 && (
                         <Avatar
                             src={`https://www.bootdey.com/img/Content/avatar/avatar${selectedUser}.png`}
-                            sx={{ 
+                            sx={{
                                 mr: 1,
                                 width: 32,
                                 height: 32
@@ -40,9 +40,10 @@ const MessageList = ({ selectedUser }) => {
                         sx={{
                             p: 2,
                             maxWidth: '70%',
-                            bgcolor: index % 2 === 0 ? theme.palette.background.paper : theme.palette.primary.main,
-                            color: index % 2 === 0 ? theme.palette.text.primary : theme.palette.primary.contrastText,
+                            bgcolor: index % 2 === 0 ? '#e0e8f5' : '#1976d2', // Darker left bubble color
+                            color: index % 2 === 0 ? theme.palette.text.primary : '#ffffff',
                             borderRadius: index % 2 === 0 ? '12px 12px 12px 4px' : '12px 12px 4px 12px',
+                            boxShadow: index % 2 === 0 ? '0 1px 2px rgba(0,0,0,0.1)' : '0 1px 2px rgba(0,0,0,0.2)',
                             position: 'relative',
                             '&:after': {
                                 content: '""',
@@ -54,22 +55,22 @@ const MessageList = ({ selectedUser }) => {
                                 height: 0,
                                 borderStyle: 'solid',
                                 borderWidth: '0 8px 8px 0',
-                                borderColor: index % 2 === 0 ? `transparent ${theme.palette.background.paper} transparent transparent` : `transparent transparent transparent ${theme.palette.primary.main}`
+                                borderColor: index % 2 === 0 ? `transparent #e0e8f5 transparent transparent` : `transparent transparent transparent #1976d2`
                             }
                         }}
                     >
                         <Typography variant="body1">This is a message content</Typography>
-                        <Typography variant="caption" sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Typography variant="caption" sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 0.5,
-                            color: index % 2 === 0 ? theme.palette.text.secondary : theme.palette.primary.contrastText
+                            color: index % 2 === 0 ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'
                         }}>
                             12:30 <IconCheck size={14} />
                         </Typography>
                     </Paper>
                     {index % 2 !== 0 && (
-                        <Avatar sx={{ 
+                        <Avatar sx={{
                             ml: 1,
                             width: 32,
                             height: 32
