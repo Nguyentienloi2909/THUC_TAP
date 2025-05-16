@@ -1,55 +1,12 @@
-import React, { useState } from 'react';
-import { Box, AppBar, Toolbar, styled, Stack, IconButton, Badge, InputBase } from '@mui/material';
+
+import React, { useState, useContext } from 'react';
+import { Box, AppBar, Toolbar, styled, Stack, IconButton, Badge } from '@mui/material';
 import PropTypes from 'prop-types';
-import { IconBellRinging, IconMenu, IconSearch, IconMessage } from '@tabler/icons-react';
+import { IconBellRinging, IconMenu, IconMessage } from '@tabler/icons-react';
 import ListMessage from './ListMessage';
 import Profile from './Profile';
-import { useNavigate } from 'react-router-dom';
-import { useSearch } from 'src/contexts/SearchContext';
-// Add import
 import ListNotification from './ListNotification';
-
-const SearchWrapper = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.default,
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '100%',
-  border: '1px solid rgba(0, 0, 0, 0.12)',
-  '&:hover': {
-    border: '1px solid rgba(0, 0, 0, 0.24)',
-  },
-  '&:focus-within': {
-    border: `1px solid ${theme.palette.primary.main}`,
-  },
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-}));
+import { NotificationContext } from 'd:/INTERN/Projects/THUC_TAP/frontend/src/contexts/NotificationContext'; // Update with the correct path
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   boxShadow: 'none',
@@ -66,10 +23,31 @@ const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
-const Header = (props) => {
+const StyledIconButton = styled(IconButton, {
+  shouldForwardProp: (prop) => prop !== 'isActive',
+})(({ theme, isActive }) => ({
+  marginRight: theme.spacing(1),
+  ...(isActive && {
+    color: theme.palette.primary.main,
+  }),
+}));
+
+const HeaderStack = styled(Stack)(({ theme }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  [theme.breakpoints.down('sm')]: {
+    gap: theme.spacing(0.5),
+  },
+}));
+
+const Header = ({ toggleMobileSidebar }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationEl, setNotificationEl] = useState(null);
-  const navigate = useNavigate();
+  const [messageCount] = useState(4); // Demo message count
+  const { notifications } = useContext(NotificationContext);
+
+  const unreadNotificationCount = notifications.filter((n) => !n.isRead).length;
 
   const handleMessageClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -87,91 +65,65 @@ const Header = (props) => {
     setNotificationEl(null);
   };
 
-  const { search, setSearch } = useSearch();
-
   return (
     <AppBarStyled position="sticky" color="default">
       <ToolbarStyled>
         <IconButton
           color="inherit"
           aria-label="menu"
-          onClick={props.toggleMobileSidebar}
-          sx={{
-            display: {
-              lg: "none",
-              xs: "inline",
-            },
-          }}
+          onClick={toggleMobileSidebar}
+          sx={{ display: { lg: 'none', xs: 'inline' } }}
         >
           <IconMenu width="20" height="20" />
         </IconButton>
 
         <Box flexGrow={1} />
 
-        <>
-          <SearchWrapper>
-            <SearchIconWrapper>
-              <IconSearch size="20" stroke="1.5" />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Tìm kiếm..."
-              inputProps={{ 'aria-label': 'search' }}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </SearchWrapper>
-
-          <Box sx={{ position: 'relative' }}>
-            <IconButton
-              size="large"
-              aria-label="show messages"
-              color="inherit"
-              sx={{
-                mr: 1,
-                ...(Boolean(anchorEl) && {
-                  color: 'primary.main',
-                }),
-              }}
-              onClick={handleMessageClick}
-            >
-              <Badge badgeContent={4} color="error">
-                <IconMessage size="30" stroke="1.5" />
-              </Badge>
-            </IconButton>
-
-            <ListMessage
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMessageClose}
-            />
-          </Box>
-
-          <IconButton
+        <Box sx={{ position: 'relative' }}>
+          <StyledIconButton
             size="large"
-            aria-label="show notifications"
+            aria-label="show messages"
+            aria-controls={Boolean(anchorEl) ? 'message-menu' : undefined}
+            aria-haspopup="true"
             color="inherit"
-            onClick={handleNotificationClick}
-            sx={{
-              ...(Boolean(notificationEl) && {
-                color: 'primary.main',
-              }),
-            }}
+            isActive={Boolean(anchorEl)}
+            onClick={handleMessageClick}
           >
-            <Badge variant="dot" color="primary">
-              <IconBellRinging size="30" stroke="1.5" />
+            <Badge badgeContent={messageCount} color="error">
+              <IconMessage size="30" stroke="1.5" />
             </Badge>
-          </IconButton>
+          </StyledIconButton>
 
-          <ListNotification
-            anchorEl={notificationEl}
-            open={Boolean(notificationEl)}
-            onClose={handleNotificationClose}
+          <ListMessage
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMessageClose}
           />
-        </>
+        </Box>
 
-        <Stack spacing={1} direction="row" alignItems="center">
+        <StyledIconButton
+          size="large"
+          aria-label="show notifications"
+          aria-controls={Boolean(notificationEl) ? 'notification-menu' : undefined}
+          aria-haspopup="true"
+          color="inherit"
+          isActive={Boolean(notificationEl)}
+          onClick={handleNotificationClick}
+        >
+          <Badge badgeContent={unreadNotificationCount} color="error">
+            <IconBellRinging size="30" stroke="1.5" />
+          </Badge>
+        </StyledIconButton>
+
+        <ListNotification
+          anchorEl={notificationEl}
+          open={Boolean(notificationEl)}
+          onClose={handleNotificationClose}
+        />
+
+        <HeaderStack>
           <Profile />
-        </Stack>
+        </HeaderStack>
       </ToolbarStyled>
     </AppBarStyled>
   );

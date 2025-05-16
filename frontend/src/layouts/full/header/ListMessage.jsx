@@ -19,21 +19,21 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
         {
             id: 1,
             sender: 'Nguyễn Văn A',
-            content: 'Xin chào, tôi cần hỗ trợ về vấn đề chấm công tháng này...',
+            content: 'Xin chào, tôi cần hỗ trợ ...',
             time: '10 phút trước',
             avatar: ProfileImg
         },
         {
             id: 2,
             sender: 'Trần Thị B',
-            content: 'Báo cáo sự cố máy chấm công tại phòng kế toán...',
+            content: 'Báo cáo sự cố máy chấm ...',
             time: '30 phút trước',
             avatar: ProfileImg
         },
         {
             id: 3,
             sender: 'Lê Văn C',
-            content: 'Đơn xin nghỉ phép đã được phê duyệt...',
+            content: 'Đơn xin nghỉ phép ...',
             time: '1 giờ trước',
             avatar: ProfileImg
         }

@@ -10,12 +10,14 @@ import {
     DialogTitle,
     Button,
     CircularProgress,
-    Alert
+    Alert,
+    Chip,
+    Snackbar
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
-import { format, addMonths, subMonths } from 'date-fns';
+import { format, addMonths, subMonths, isAfter, parse } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import CheckTools from './components/CheckTools';
@@ -24,233 +26,239 @@ import ApiService from '../../service/ApiService';
 const HistoryCheckwork = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [pageSize, setPageSize] = useState(10);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [actionType, setActionType] = useState('');
     const [attendanceData, setAttendanceData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [checkInLoading, setCheckInLoading] = useState(false);
 
-    // Fetch attendance data
-    useEffect(() => {
-        const fetchAttendanceData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+    const fetchAttendanceData = async () => {
+        try {
+            setLoading(true);
+            const month = format(currentDate, 'M');
+            const year = format(currentDate, 'yyyy');
+            const response = await ApiService.getAttendance(month, year);
 
-                // Get current user profile
-                const userProfile = await ApiService.getUserProfile();
+            if (!Array.isArray(response)) {
+                throw new Error('Invalid response format');
+            }
 
-                if (!userProfile?.id) {
-                    throw new Error('Không thể xác định người dùng');
-                }
-
-                // Get attendance data
-                const response = await ApiService.getAttendance(userProfile.id);
-
-                // Ensure response is an array
-                const attendanceArray = Array.isArray(response) ? response : [response];
-                console.log('Attendance array:', attendanceArray);
-
-                // Transform data for DataGrid
-                const formattedData = attendanceArray.map((item, index) => ({
+            const formattedData = response.map((item, index) => {
+                const workday = new Date(item.workday);
+                return {
                     id: item.id || index,
-                    date: new Date(item.workday).toLocaleDateString('vi-VN'),
-                    checkIn: item.checkIn ? new Date(item.checkIn).toLocaleTimeString('vi-VN', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }) : '--:--',
-                    checkOut: item.checkOut ? new Date(item.checkOut).toLocaleTimeString('vi-VN', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }) : '--:--',
+                    date: isNaN(workday.getTime()) ? '--/--/----' : format(workday, 'dd/MM/yyyy'),
+                    checkIn: item.checkIn ? format(new Date(item.checkIn), 'HH:mm') : '--:--',
+                    checkOut: item.checkOut ? format(new Date(item.checkOut), 'HH:mm') : '--:--',
                     status: transformStatus(item.status),
                     note: item.note || '--',
-                    workHours: calculateWorkHours(item.checkIn, item.checkOut),
-                    userFullName: item.userFullName
-                }));
+                    workHours: calculateWorkHours(item.checkIn, item.checkOut)
+                };
+            });
 
-                setAttendanceData(formattedData);
-            } catch (err) {
-                console.error('Error fetching attendance:', err);
-                setError('Không thể tải dữ liệu chấm công');
-            } finally {
-                setLoading(false);
-            }
-        };
+            setAttendanceData(formattedData);
+            setError(null);
+        } catch (err) {
+            setError(err.message || 'Không thể tải dữ liệu chấm công');
+            setAttendanceData([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchAttendanceData();
     }, [currentDate]);
 
-    // Helper function to calculate work hours
+    const handleMonthChange = (direction) => {
+        setCurrentDate(prevDate => direction === 'next' ? addMonths(prevDate, 1) : subMonths(prevDate, 1));
+    };
+
     const calculateWorkHours = (checkIn, checkOut) => {
         if (!checkIn || !checkOut) return '--:--';
         const start = new Date(checkIn);
         const end = new Date(checkOut);
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) return '--:--';
+
         const diff = end - start;
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         return `${hours}:${minutes.toString().padStart(2, '0')}`;
     };
 
-    // Add status transformation function
     const transformStatus = (status) => {
-        switch (status) {
-            case 'Pending':
-                return 'pending';
-            case 'Present':
-                return 'onTime';
-            case 'Late':
-                return 'late';
-            case 'Early':
-                return 'early';
-            default:
-                return 'pending';
+        const statusMap = {
+            'Pending': 'pending',
+            'Present': 'onTime',
+            'Late': 'late',
+            'Early': 'early'
+        };
+        return statusMap[status] || 'pending';
+    };
+
+    const getTodayAttendanceStatus = () => {
+        const today = format(new Date(), 'dd/MM/yyyy');
+        const todayRecord = attendanceData.find(record => record.date === today);
+        return todayRecord
+            ? { canCheckIn: todayRecord.checkIn === '--:--', canCheckOut: todayRecord.checkIn !== '--:--' && todayRecord.checkOut === '--:--' }
+            : { canCheckIn: true, canCheckOut: false };
+    };
+
+    const handleCheckIn = async () => {
+        setCheckInLoading(true);
+        try {
+            await ApiService.checkIn();
+            setSnackbarMessage('Check-in thành công!');
+            fetchAttendanceData();
+        } catch (error) {
+            setSnackbarMessage('Check-in thất bại!');
+            console.error('Check-in error:', error);
+        } finally {
+            setCheckInLoading(false);
+            setSnackbarOpen(true);
         }
     };
 
-    const handleMonthChange = (direction) => {
-        setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+    const handleConfirmCheckIn = () => {
+        setOpenConfirmDialog(true);
     };
 
-    const handleCheckIn = () => {
-        setActionType('Check-in');
-        setOpenDialog(true);
+    const handleConfirmCheckInAction = () => {
+        const currentTime = new Date();
+        const checkInLimit = parse('09:00', 'HH:mm', currentTime);
+
+        console.log('Current time:', currentTime.toLocaleTimeString());
+        console.log('Check-in limit:', format(checkInLimit, 'HH:mm'));
+
+        if (isAfter(currentTime, checkInLimit)) {
+            setSnackbarMessage('Quá giờ check-in!');
+            setSnackbarOpen(true);
+            setOpenConfirmDialog(false);
+            return;
+        }
+
+        handleCheckIn();
+        setOpenConfirmDialog(false);
     };
 
-    const handleCheckOut = () => {
-        setActionType('Check-out');
-        setOpenDialog(true);
+    const handleCloseConfirmDialog = () => {
+        setOpenConfirmDialog(false);
     };
 
-    const handleConfirm = () => {
-        setOpenDialog(false);
-        console.log(`${actionType} confirmed`);
-        // Implement check-in or check-out logic here
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     const columns = [
-        {
-            field: 'date',
-            headerName: 'Ngày',
-            width: 130,
-            valueFormatter: (params) => format(new Date(params.value), 'dd/MM/yyyy')
-        },
-        { field: 'checkIn', headerName: 'Giờ vào', width: 130 },
-        { field: 'checkOut', headerName: 'Giờ ra', width: 130 },
+        { field: 'date', headerName: 'Ngày', width: 130, headerAlign: 'center', align: 'center' },
+        { field: 'checkIn', headerName: 'Giờ vào', width: 130, headerAlign: 'center', align: 'center', cellClassName: (params) => params.value === '--:--' ? 'missing-time' : '' },
+        { field: 'checkOut', headerName: 'Giờ ra', width: 130, headerAlign: 'center', align: 'center', cellClassName: (params) => params.value === '--:--' ? 'missing-time' : '' },
         {
             field: 'status',
             headerName: 'Trạng thái',
             width: 130,
+            headerAlign: 'center',
+            align: 'center',
             renderCell: (params) => (
-                <Typography
-                    sx={{
-                        color: params.value === 'onTime' ? '#4caf50' :
-                            params.value === 'late' ? '#f44336' :
-                                params.value === 'early' ? '#ff9800' :
-                                    params.value === 'pending' ? '#757575' : '#757575',
-                        fontWeight: 500
-                    }}
-                >
-                    {params.value === 'onTime' ? 'Có mặt' :
-                        params.value === 'late' ? 'Đi muộn' :
-                            params.value === 'early' ? 'Về sớm' :
-                                'Chưa chấm công'}
-                </Typography>
+                <Chip
+                    label={params.value === 'onTime' ? 'Có mặt' : params.value === 'late' ? 'Đi muộn' : params.value === 'early' ? 'Về sớm' : 'Chưa chấm công'}
+                    color={params.value === 'onTime' ? 'success' : params.value === 'late' ? 'error' : params.value === 'early' ? 'warning' : 'default'}
+                    size="small"
+                    sx={{ minWidth: 90, fontSize: '0.75rem' }}
+                />
             )
         },
-        { field: 'note', headerName: 'Ghi chú', width: 200 },
-        { field: 'workHours', headerName: 'Số giờ làm', width: 130 }
+        { field: 'note', headerName: 'Ghi chú', width: 200, headerAlign: 'center', align: 'left' },
+        { field: 'workHours', headerName: 'Số giờ làm', width: 130, headerAlign: 'center', align: 'center', cellClassName: (params) => params.value === '--:--' ? 'missing-time' : '' }
     ];
 
     return (
         <PageContainer title="Lịch sử chấm công" description="Xem lịch sử chấm công">
             <DashboardCard>
                 <Box mb={2}>
-                    <CheckTools onCheckIn={handleCheckIn} onCheckOut={handleCheckOut} />
+                    <CheckTools
+                        onSuccess={fetchAttendanceData}
+                        attendanceStatus={getTodayAttendanceStatus()}
+                        onCheckIn={handleConfirmCheckIn}
+                        checkInLoading={checkInLoading}
+                    />
                 </Box>
 
-                {/* Confirmation Dialog */}
-                <Dialog
-                    open={openDialog}
-                    onClose={() => setOpenDialog(false)}
-                >
-                    <DialogTitle>
-                        Xác nhận {actionType}
-                    </DialogTitle>
+                <Dialog open={openConfirmDialog} onClose={handleCloseConfirmDialog}>
+                    <DialogTitle>Xác nhận Check-in</DialogTitle>
                     <DialogContent>
-                        <DialogContentText>
-                            Bạn có muốn thực hiện thao tác {actionType}?
-                        </DialogContentText>
+                        <DialogContentText>Bạn có chắc chắn muốn check-in?</DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setOpenDialog(false)}>
-                            Hủy
-                        </Button>
-                        <Button onClick={handleConfirm} color="primary" variant="contained">
-                            Ok
+                        <Button onClick={handleCloseConfirmDialog} color="primary">Hủy</Button>
+                        <Button onClick={handleConfirmCheckInAction} color="primary" variant="contained" disabled={checkInLoading}>
+                            {checkInLoading ? <CircularProgress size={24} /> : 'Xác nhận'}
                         </Button>
                     </DialogActions>
                 </Dialog>
 
-                {/* Error Alert */}
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={handleSnackbarClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert onClose={handleSnackbarClose} severity={snackbarMessage === 'Quá giờ check-in!' ? 'warning' : 'success'} sx={{ width: '100%' }}>
+                        {snackbarMessage}
                     </Alert>
-                )}
+                </Snackbar>
 
-                <Box sx={{ backgroundColor: '#f5f5f5', borderRadius: 4, p: 3, mt: 2 }}>
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 3
-                    }}>
-                        <Typography variant="h6" sx={{ color: '#2c3e50' }}>
-                            Lịch sử chấm công
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton onClick={() => handleMonthChange('prev')}>
+                <Box sx={{ backgroundColor: 'background.paper', borderRadius: 2, p: 3, boxShadow: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600 }}>Lịch sử chấm công</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: 'background.default', borderRadius: 2, p: 1 }}>
+                            <IconButton onClick={() => handleMonthChange('prev')} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
                                 <IconChevronLeft />
                             </IconButton>
-                            <Typography variant="h6" sx={{ minWidth: 200, textAlign: 'center' }}>
-                                {format(currentDate, 'MMMM yyyy', { locale: vi })}
+                            <Typography variant="h6" sx={{ mx: 2, minWidth: 200, textAlign: 'center', fontWeight: 500 }}>
+                                {format(currentDate, 'MM/yyyy', { locale: vi })}
                             </Typography>
-                            <IconButton onClick={() => handleMonthChange('next')}>
+                            <IconButton onClick={() => handleMonthChange('next')} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
                                 <IconChevronRight />
                             </IconButton>
                         </Box>
                     </Box>
 
                     {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
                             <CircularProgress />
                         </Box>
                     ) : (
-                        <DataGrid
-                            rows={attendanceData}
-                            columns={columns}
-                            pageSize={pageSize}
-                            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-                            rowsPerPageOptions={[5, 10, 20]}
-                            autoHeight
-                            disableSelectionOnClick
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 2,
-                                '& .MuiDataGrid-cell': {
-                                    borderColor: '#f0f0f0'
-                                },
-                                '& .MuiDataGrid-columnHeaders': {
-                                    backgroundColor: '#f8f9fa',
-                                    borderColor: '#f0f0f0'
-                                },
-                                border: 'none',
-                                '& .MuiDataGrid-cell:focus': {
-                                    outline: 'none'
-                                }
-                            }}
-                        />
+                        <>
+                            {attendanceData.length === 0 && (
+                                <Box sx={{ mb: 2 }}>
+                                    <Alert severity="info" sx={{ width: '100%', boxShadow: 1 }}>
+                                        {error || `Không tìm thấy chấm công cho user: admin trong tháng ${format(currentDate, 'MM/yyyy', { locale: vi })}`}
+                                    </Alert>
+                                </Box>
+                            )}
+                            <DataGrid
+                                rows={attendanceData}
+                                columns={columns}
+                                pageSize={pageSize}
+                                onPageSizeChange={setPageSize}
+                                rowsPerPageOptions={[5, 10, 20]}
+                                autoHeight
+                                disableSelectionOnClick
+                                initialState={{ sorting: { sortModel: [{ field: 'date', sort: 'desc' }] } }}
+                                sx={{
+                                    border: '1px solid rgba(224, 224, 224, 1)',
+                                    '& .MuiDataGrid-root': { border: 'none' },
+                                    '& .MuiDataGrid-cell': { borderColor: 'divider' },
+                                    '& .MuiDataGrid-columnHeaders': { backgroundColor: 'background.default', borderColor: 'divider' },
+                                    '& .MuiDataGrid-cell:focus': { outline: 'none' },
+                                    '& .missing-time': { color: 'text.disabled' },
+                                    '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' }
+                                }}
+                            />
+                        </>
                     )}
                 </Box>
             </DashboardCard>

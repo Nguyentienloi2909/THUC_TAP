@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSearch } from 'src/contexts/SearchContext'; // Thêm dòng này
 import {
     Grid,
     Table,
@@ -16,16 +15,49 @@ import ApiService from '../../service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
 import EmployeeMiniTools from './components/EmployeeminiTools';
+import EmployeeFilterToolbar from './components/EmployeeFilterToolbar';
 
+const tableStyles = {
+    minWidth: 650,
+    '& .MuiTableCell-root': {
+        border: '1px solid rgba(224, 224, 224, 1)',
+        padding: '16px'
+    },
+    '& .MuiTableHead-root .MuiTableRow-root': {
+        backgroundColor: '#e3f2fd'
+    },
+    '& .MuiTableBody-root .MuiTableRow-root': {
+        '&:nth-of-type(odd)': {
+            backgroundColor: '#fafafa'
+        },
+        '&:nth-of-type(even)': {
+            backgroundColor: '#ffffff'
+        },
+        '&:hover': {
+            backgroundColor: '#f5f5f5',
+            cursor: 'pointer'
+        }
+    }
+};
+
+const tableHeaders = [
+    { id: 'id', label: 'ID', align: 'center' },
+    { id: 'fullName', label: 'Họ và tên', align: 'center' },
+    { id: 'gender', label: 'Giới tính', align: 'center' },
+    { id: 'roleName', label: 'Chức vụ', align: 'center' },
+    { id: 'groupName', label: 'Phòng ban', align: 'center' },
+    { id: 'phoneNumber', label: 'Số điện thoại', align: 'center' },
+    { id: 'email', label: 'Email', align: 'center' }
+];
 
 const Employees = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(10);
+    const [allEmployees, setAllEmployees] = useState([]);
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // const [search, setSearch] = useState(''); // Xóa dòng này
-    const { search } = useSearch(); // Lấy search từ context
+    const [filters, setFilters] = useState({ name: '', role: '', department: '' });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,122 +65,105 @@ const Employees = () => {
             try {
                 setLoading(true);
                 const response = await ApiService.getAllUsers();
-                setEmployees(response);
+                setAllEmployees(response);
+                setError(null);
             } catch (error) {
                 setError(error.response?.data?.message || error.message || 'Failed to load employees');
             } finally {
                 setLoading(false);
             }
         };
-
         fetchEmployees();
     }, []);
+
+    useEffect(() => {
+        // Lọc employees trên client khi filters thay đổi
+        const filteredEmployees = allEmployees.filter(employee =>
+            (filters.name === '' || employee.fullName.toLowerCase().includes(filters.name.toLowerCase())) &&
+            (filters.role === '' || employee.roleName.toLowerCase() === filters.role.toLowerCase()) &&
+            (filters.department === '' || employee.groupId?.toString() === filters.department)
+        );
+        setEmployees(filteredEmployees);
+        setPage(0); // Reset page về 0 khi filter thay đổi
+    }, [filters, allEmployees]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
 
+    // Reset page về 0 khi filter thay đổi
+    useEffect(() => {
+        setPage(0);
+    }, [filters]);
+
     const handleEmployeeClick = (employeeId) => {
         navigate(`/manage/employee/info/${employeeId}`);
     };
 
-    // Filter employees by search value
-    const filteredEmployees = employees.filter(emp =>
-        emp.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-        emp.email?.toLowerCase().includes(search.toLowerCase()) ||
-        emp.phoneNumber?.toLowerCase().includes(search.toLowerCase())
-    );
+    const getGenderDisplay = (gender) => {
+        if (gender === true) return 'Nam';
+        if (gender === false) return 'Nữ';
+        return 'N/A';
+    };
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    // Log filters mỗi khi thay đổi
+    useEffect(() => {
+        console.log("Current filters:", filters);
+    }, [filters]);
 
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
 
     return (
         <PageContainer title="Danh sách nhân viên" description="Quản lý danh sách nhân viên">
             <Grid container spacing={3}>
                 <Grid item xs={12}>
                     <DashboardCard title="Quản lý nhân viên">
-                        <EmployeeMiniTools />
+                        <EmployeeFilterToolbar onFilterChange={setFilters} />
                         <TableContainer component={Paper}>
-                            <Table
-                                sx={{
-                                    minWidth: 650,
-                                    '& .MuiTableCell-root': {
-                                        border: '1px solid rgba(224, 224, 224, 1)',
-                                        padding: '16px'
-                                    },
-                                    '& .MuiTableHead-root': {
-                                        '& .MuiTableRow-root': {
-                                            backgroundColor: '#e3f2fd'
-                                        }
-                                    },
-                                    '& .MuiTableBody-root': {
-                                        '& .MuiTableRow-root': {
-                                            '&:nth-of-type(odd)': {
-                                                backgroundColor: '#fafafa'
-                                            },
-                                            '&:nth-of-type(even)': {
-                                                backgroundColor: '#ffffff'
-                                            },
-                                            '&:hover': {
-                                                backgroundColor: '#f5f5f5'
-                                            }
-                                        }
-                                    }
-                                }}
-                                aria-label="employee table"
-                            >
+                            <Table sx={tableStyles} aria-label="employee table">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>ID</TableCell>
-                                        <TableCell align="center">Họ và tên</TableCell>
-                                        <TableCell align="center">Giới tính</TableCell>
-                                        <TableCell align="center">Chức vụ</TableCell>
-                                        <TableCell align="center">Phòng ban</TableCell>
-                                        <TableCell align="center">Số điện thoại</TableCell>
-                                        <TableCell align="center">Email</TableCell>
+                                        {tableHeaders.map((header) => (
+                                            <TableCell key={header.id} align={header.align}>
+                                                {header.label}
+                                            </TableCell>
+                                        ))}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredEmployees.length === 0 ? (
+                                    {employees.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} align="center">
-                                                Không tìm thấy bản ghi nào
+                                                Không có bản ghi nào
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredEmployees
+                                        employees
                                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                            .map((employee) => (
-                                                <TableRow
-                                                    key={employee.id}
-                                                    onClick={() => handleEmployeeClick(employee.id)}
-                                                    sx={{
-                                                        cursor: 'pointer',
-                                                        '&:hover': {
-                                                            backgroundColor: '#f5f5f5'
-                                                        }
-                                                    }}
-                                                >
-                                                    <TableCell align="center">{employee.id}</TableCell>
-                                                    <TableCell>{employee.fullName}</TableCell>
-                                                    <TableCell align="center">{employee.gender === true ? 'Nam' : employee.gender === false ? 'Nữ' : 'N/A'}</TableCell>
-                                                    <TableCell align="center">{employee.roleName}</TableCell>
-                                                    <TableCell align="center">{employee.groupName}</TableCell>
-                                                    <TableCell align="center">{employee.phoneNumber}</TableCell>
-                                                    <TableCell align="center">{employee.email}</TableCell>
-                                                </TableRow>
-                                            ))
+                                            .map((employee) => {
+                                                console.log("Render employee row:", employee);
+                                                return (
+                                                    <TableRow
+                                                        key={employee.id}
+                                                        onClick={() => handleEmployeeClick(employee.id)}
+                                                    >
+                                                        <TableCell align="center">{employee.id}</TableCell>
+                                                        <TableCell>{employee.fullName}</TableCell>
+                                                        <TableCell align="center">{getGenderDisplay(employee.gender)}</TableCell>
+                                                        <TableCell align="center">{employee.roleName}</TableCell>
+                                                        <TableCell align="center">{employee.groupName}</TableCell>
+                                                        <TableCell align="center">{employee.phoneNumber}</TableCell>
+                                                        <TableCell align="center">{employee.email}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })
                                     )}
                                 </TableBody>
                             </Table>
                             <TablePagination
                                 component="div"
-                                count={filteredEmployees.length}
+                                count={employees.length}
                                 page={page}
                                 onPageChange={handleChangePage}
                                 rowsPerPage={rowsPerPage}

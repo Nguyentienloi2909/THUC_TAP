@@ -3,7 +3,7 @@ import {
     Grid, Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Paper, Tooltip, IconButton, CircularProgress,
-    Button
+    Button, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import {
     IconPlus, IconEdit, IconTrash, IconDownload,
@@ -11,32 +11,61 @@ import {
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useNavigate } from 'react-router-dom';
+import AddTaskPage from './Add';
+import ApiService from '../../service/ApiService';
+import TaskActions from './TaskActions';
 
-const STATUS_CONFIG = {
-    completed: {
-        label: 'Hoàn thành',
-        color: 'success',
-        icon: <IconCheck size={16} />
-    },
-    'in progress': {
-        label: 'Đang thực hiện',
-        color: 'primary',
-        icon: <IconClockHour4 size={16} />
-    },
-    pending: {
-        label: 'Chờ xử lý',
-        color: 'warning',
-        icon: <IconClock size={16} />
-    },
-    overdue: {
-        label: 'Quá hạn',
-        color: 'error',
-        icon: <IconAlertCircle size={16} />
-    }
+// Hàm ánh xạ trạng thái từ API sang cấu hình hiển thị
+const createStatusConfig = (statusList) => {
+    const defaultConfig = {
+        pending: {
+            label: 'Chờ xử lý',
+            color: 'warning',
+            icon: <IconClock size={16} />
+        },
+        inprogress: {
+            label: 'Đang thực hiện',
+            color: 'primary',
+            icon: <IconClockHour4 size={16} />
+        },
+        late: {
+            label: 'Muộn',
+            color: 'error',
+            icon: <IconAlertCircle size={16} />
+        },
+        completed: {
+            label: 'Hoàn thành',
+            color: 'success',
+            icon: <IconCheck size={16} />
+        },
+        cancelled: {
+            label: 'Đã hủy',
+            color: 'default',
+            icon: <IconAlertCircle size={16} />
+        }
+    };
+
+    const config = {};
+    statusList.forEach(status => {
+        const normalizedStatus = status.name.toLowerCase().replace(/\s+/g, '');
+        config[normalizedStatus] = {
+            ...defaultConfig[normalizedStatus],
+            label: defaultConfig[normalizedStatus]?.label || status.name,
+            color: defaultConfig[normalizedStatus]?.color || 'default',
+            icon: defaultConfig[normalizedStatus]?.icon || <IconClock size={16} />
+        };
+    });
+
+    return config;
 };
 
+// Component hiển thị trạng thái
 const TaskStatusChip = ({ status }) => {
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+    const config = status && statusConfig[status.toLowerCase().replace(/\s+/g, '')] || {
+        label: 'Không xác định',
+        color: 'default',
+        icon: <IconClock size={16} />
+    };
     return (
         <Chip
             icon={config.icon}
@@ -48,125 +77,154 @@ const TaskStatusChip = ({ status }) => {
     );
 };
 
-// Mock data
-const mockTasks = [
-    {
-        id: 1,
-        title: 'Phát triển tính năng đăng nhập',
-        description: 'Xây dựng hệ thống xác thực người dùng',
-        status: 'completed',
-        startTime: '2024-02-01',
-        endTime: '2024-02-15',
-        assignedToName: 'Nguyễn Văn A',
-        urlFile: 'https://example.com/file1.pdf',
-        priority: 'High',
-        progress: 100,
-        comments: [
-            { id: 1, text: 'Đã hoàn thành UI', date: '2024-02-10' }
-        ]
-    },
-    {
-        id: 2,
-        title: 'Thiết kế giao diện dashboard',
-        description: 'Tạo layout và các component cho dashboard',
-        status: 'in progress',
-        startTime: '2024-02-10',
-        endTime: '2024-02-25',
-        assignedToName: 'Trần Thị B',
-        urlFile: null,
-        priority: 'Medium',
-        progress: 60,
-        comments: []
-    },
-    {
-        id: 3,
-        title: 'Tối ưu hiệu suất ứng dụng',
-        description: 'Phân tích và cải thiện thời gian tải trang',
-        status: 'pending',
-        startTime: '2024-02-20',
-        endTime: '2024-03-05',
-        assignedToName: 'Lê Văn C',
-        urlFile: 'https://example.com/file2.pdf',
-        priority: 'Low',
-        progress: 0,
-        comments: []
-    },
-    {
-        id: 4,
-        title: 'Sửa lỗi báo cáo',
-        description: 'Khắc phục lỗi hiển thị dữ liệu trong báo cáo tháng',
-        status: 'overdue',
-        startTime: '2024-01-25',
-        endTime: '2024-02-01',
-        assignedToName: 'Phạm Thị D',
-        urlFile: null,
-        priority: 'High',
-        progress: 80,
-        comments: [
-            { id: 2, text: 'Đã xác định được nguyên nhân', date: '2024-01-28' }
-        ]
-    }
-];
+let statusConfig = {};
 
 const Task = () => {
     const navigate = useNavigate();
-    const [tasks, setTasks] = useState(mockTasks); // Initialize with mockTasks
-    const [loading, setLoading] = useState(false); // Start with false since we have initial data
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState(0);
     const [error, setError] = useState(null);
+    const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
+    const [role, setRole] = useState('USER');
+    const [statusList, setStatusList] = useState([]);
 
-    // Define tab configuration
-    const tabs = [
-        { label: "Tất cả", value: "all" },
-        { label: "Chờ xử lý", value: "pending" },
-        { label: "Đang thực hiện", value: "in progress" },
-        { label: "Hoàn thành", value: "completed" },
-        { label: "Quá hạn", value: "overdue" }
-    ];
+    const fetchStatusList = async () => {
+        try {
+            const statuses = await ApiService.getStatusTask();
+            setStatusList(statuses);
+            statusConfig = createStatusConfig(statuses);
+        } catch (err) {
+            console.error('Error fetching status list:', err);
+            setError('Không thể tải danh sách trạng thái.');
+        }
+    };
 
-    // Update fetchTasks to properly filter based on selected tab
-    const fetchTasks = async () => {
+    const fetchUserTasks = async (userId) => {
         try {
             setLoading(true);
             setError(null);
-
-            const currentStatus = tabs[selectedTab].value;
-
-            // Filter tasks based on selected status
-            const filteredTasks = currentStatus === 'all'
-                ? mockTasks
-                : mockTasks.filter(task => task.status === currentStatus);
-
-            setTasks(filteredTasks);
-            setLoading(false);
+            const userTasks = await ApiService.getTasksByUser(userId);
+            setTasks(userTasks);
         } catch (err) {
-            setError('Đã xảy ra lỗi khi tải dữ liệu');
+            console.error('Error fetching tasks:', err);
+            if (err.response && err.response.status === 403) {
+                setError('Access denied. Please check your permissions.');
+            } else {
+                setError('Failed to load tasks. Please try again later.');
+            }
+        } finally {
             setLoading(false);
         }
     };
 
-    // Update useEffect to depend on selectedTab
     useEffect(() => {
-        fetchTasks();
-    }, [selectedTab]);
+        const fetchUserProfile = async () => {
+            try {
+                const userProfile = await ApiService.getUserProfile();
+                setRole(userProfile.roleName);
+                await fetchUserTasks(userProfile.id);
+                await fetchStatusList();
+            } catch (err) {
+                console.error('Error fetching user profile:', err);
+                setError('Cannot retrieve user information.');
+            }
+        };
+        fetchUserProfile();
+    }, []);
+
+    const tabs = [
+        { label: "Tất cả", value: "all" },
+        ...statusList.map(status => ({
+            label: statusConfig[status.name.toLowerCase().replace(/\s+/g, '')]?.label || status.name,
+            value: status.name.toLowerCase().replace(/\s+/g, '')
+        }))
+    ];
+
+    const getFilteredTasksByStatus = () => {
+        const currentStatus = tabs[selectedTab].value;
+        const filtered = currentStatus === 'all'
+            ? tasks
+            : tasks.filter(task => task.status.toLowerCase().replace(/\s+/g, '') === currentStatus);
+        return filtered;
+    };
+
+    const filteredTasks = getFilteredTasksByStatus();
+
+    const [newTask, setNewTask] = useState({
+        title: '',
+        description: '',
+        assignedToName: '',
+        startTime: '',
+        endTime: ''
+    });
+
+    const viewTaskDetails = (taskId) => {
+        navigate(`/manage/task/${taskId}`);
+    };
 
     const handleDelete = async (taskId, event) => {
         event.stopPropagation();
-        try {
-            // Add confirmation dialog here if needed
-            setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-        } catch (err) {
-            console.error('Error deleting task:', err);
-        }
+        setConfirmDialog({ open: true, action: 'delete', taskId });
     };
 
     const handleEdit = (taskId, event) => {
         event.stopPropagation();
-        navigate(`/manage/task/edit/${taskId}`);
+        setConfirmDialog({ open: true, action: 'edit', taskId });
+    };
+
+    const confirmAction = async () => {
+        const { action, taskId } = confirmDialog;
+        if (action === 'delete') {
+            try {
+                await ApiService.deleteTask(taskId);
+                setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+            } catch (err) {
+                console.error('Error deleting task:', err);
+                alert('Failed to delete task. Please try again.');
+            }
+        } else if (action === 'edit') {
+            navigate(`/manage/task/edit/${taskId}`);
+        }
+        setConfirmDialog({ open: false, action: null, taskId: null });
     };
 
     const handleTaskClick = (taskId) => {
         navigate(`/manage/task/${taskId}`);
+    };
+
+    const handleAddTask = async (newTask) => {
+        try {
+            console.log('Adding new task:', newTask);
+            if (!newTask.title || !newTask.description || !newTask.startTime || !newTask.endTime || !newTask.assignedToId) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('Title', newTask.title);
+            formData.append('Description', newTask.description);
+            formData.append('File', newTask.file);
+            formData.append('StartTime', newTask.startTime);
+            formData.append('EndTime', newTask.endTime);
+            formData.append('AssignedToId', newTask.assignedToId);
+
+            const createdTask = await ApiService.createTask(formData);
+            setTasks([...tasks, createdTask]);
+            setOpenAddTaskDialog(false);
+            alert('Task added successfully!');
+        } catch (err) {
+            console.error('Error adding task:', err);
+            alert('Failed to add task. Please try again.');
+        }
+    };
+
+    // Hàm cắt ngắn description
+    const truncateDescription = (description, maxLength = 50) => {
+        if (!description) return "Không có mô tả";
+        if (description.length <= maxLength) return description;
+        return description.substring(0, maxLength) + "...";
     };
 
     return (
@@ -176,13 +234,15 @@ const Task = () => {
                     <Typography variant="h5" fontWeight="bold">
                         Quản lý nhiệm vụ
                     </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<IconPlus />}
-                        onClick={() => navigate('/manage/task/create')}
-                    >
-                        Thêm nhiệm vụ
-                    </Button>
+                    {role === 'LEADER' && (
+                        <Button
+                            variant="contained"
+                            startIcon={<IconPlus />}
+                            onClick={() => setOpenAddTaskDialog(true)}
+                        >
+                            Thêm nhiệm vụ
+                        </Button>
+                    )}
                 </Box>
 
                 <Tabs
@@ -217,10 +277,6 @@ const Task = () => {
                     <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
                         {error}
                     </Box>
-                ) : tasks.length === 0 ? (
-                    <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
-                        Không có nhiệm vụ nào
-                    </Box>
                 ) : (
                     <TableContainer>
                         <Table>
@@ -235,71 +291,78 @@ const Task = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {tasks.map((task) => (
-                                    <TableRow
-                                        key={task.id}
-                                        hover
-                                        onClick={() => handleTaskClick(task.id)}
-                                        sx={{ cursor: 'pointer' }}
-                                    >
-                                        <TableCell>
-                                            <Typography variant="subtitle2">{task.title}</Typography>
-                                            <Typography variant="caption" color="textSecondary">
-                                                {task.description}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{task.assignedToName}</TableCell>
-                                        <TableCell align="center">
-                                            <TaskStatusChip status={task.status} />
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(task.startTime).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(task.endTime).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                                {task.urlFile && (
-                                                    <Tooltip title="Tải tài liệu">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                window.open(task.urlFile, '_blank');
-                                                            }}
-                                                        >
-                                                            <IconDownload size={18} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
-                                                <Tooltip title="Chỉnh sửa">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="primary"
-                                                        onClick={(e) => handleEdit(task.id, e)}
-                                                    >
-                                                        <IconEdit size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Xóa">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="error"
-                                                        onClick={(e) => handleDelete(task.id, e)}
-                                                    >
-                                                        <IconTrash size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
+                                {filteredTasks.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} align="center">
+                                            Không có nhiệm vụ nào
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : (
+                                    filteredTasks.map((task) => (
+                                        <TableRow
+                                            key={task.id}
+                                            hover
+                                            onClick={() => viewTaskDetails(task.id)}
+                                            sx={{ cursor: 'pointer' }}
+                                        >
+                                            <TableCell>
+                                                <Typography variant="subtitle2">{task.title}</Typography>
+                                                <Tooltip title={task.description || "Không có mô tả"} placement="top">
+                                                    <Typography variant="caption" color="textSecondary">
+                                                        {truncateDescription(task.description, 50)}
+                                                    </Typography>
+                                                </Tooltip>
+                                            </TableCell>
+                                            <TableCell>{task.assignedToName}</TableCell>
+                                            <TableCell align="center">
+                                                <TaskStatusChip status={task.status} />
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(task.startTime).toLocaleDateString('vi-VN')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(task.endTime).toLocaleDateString('vi-VN')}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                <TaskActions
+                                                    task={task}
+                                                    onEdit={handleEdit}
+                                                    onDelete={handleDelete}
+                                                    role={role}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 )}
             </Card>
+
+            <Dialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ open: false, action: null, taskId: null })}
+            >
+                <DialogTitle>Xác nhận</DialogTitle>
+                <DialogContent>
+                    Bạn có chắc chắn muốn {confirmDialog.action === 'delete' ? 'xóa' : 'chỉnh sửa'} nhiệm vụ này?
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDialog({ open: false, action: null, taskId: null })} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={confirmAction} color="primary" variant="contained">
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <AddTaskPage
+                open={openAddTaskDialog}
+                onClose={() => setOpenAddTaskDialog(false)}
+                onAdd={handleAddTask}
+            />
         </PageContainer>
     );
 };

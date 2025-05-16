@@ -33,14 +33,14 @@ const Message = () => {
     ], []);
 
     const filteredUsers = useMemo(() => {
-        return users.filter(user => 
+        return users.filter(user =>
             user.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [users, searchQuery]);
 
     return (
         <PageContainer title="Tin nhắn" description="Trò chuyện">
-            <Paper sx={{ 
+            <Paper sx={{
                 height: 'calc(100vh - 100px)',
                 display: 'flex',
                 bgcolor: theme.palette.background.default,
@@ -49,51 +49,90 @@ const Message = () => {
                 boxShadow: theme.shadows[3]
             }}>
                 {/* Left side - User list */}
-                <Box sx={{ 
+                <Box sx={{
                     width: 320,
                     borderRight: `1px solid ${theme.palette.divider}`,
                     bgcolor: theme.palette.background.paper,
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                    <Box sx={{
+                        p: 2,
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                        height: '72px', // Consistent height with chat header
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}>
                         <SearchBox onSearch={setSearchQuery} />
                     </Box>
-                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                        <UserList 
+                    <Box sx={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: theme.palette.divider,
+                            borderRadius: '6px',
+                        }
+                    }}>
+                        <UserList
                             users={filteredUsers}
-                            selectedUser={selectedUser} 
-                            onSelectUser={setSelectedUser} 
+                            selectedUser={selectedUser}
+                            onSelectUser={setSelectedUser}
                         />
                     </Box>
                 </Box>
 
                 {/* Right side - Chat area */}
-                <Box sx={{ 
+                <Box sx={{
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     bgcolor: theme.palette.background.default
                 }}>
-                    <Box sx={{ 
+                    <Box sx={{
                         borderBottom: `1px solid ${theme.palette.divider}`,
-                        bgcolor: theme.palette.background.paper
+                        bgcolor: theme.palette.background.paper,
+                        height: '72px', // Consistent height
+                        display: 'flex',
+                        alignItems: 'center'
                     }}>
                         <ChatHeader selectedUser={selectedUser} />
                     </Box>
-                    <Box sx={{ 
+                    <Box sx={{
                         flex: 1,
                         overflowY: 'auto',
-                        p: 2
+                        display: 'flex',
+                        flexDirection: 'column',
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: theme.palette.divider,
+                            borderRadius: '6px',
+                        }
                     }}>
                         <MessageList selectedUser={selectedUser} />
                     </Box>
-                    <Box sx={{ 
+                    <Box sx={{
                         borderTop: `1px solid ${theme.palette.divider}`,
                         bgcolor: theme.palette.background.paper,
-                        p: 2
+                        display: 'flex',
+                        width: '100%',
+                        padding: 0,
+                        minHeight: '72px'
                     }}>
-                        <MessageInput />
+                        <MessageInput
+                            onSendMessage={(message) => {
+                                console.log('Message sent:', message);
+                                // Here you would implement your actual message sending logic
+                            }}
+                            disabled={!selectedUser}
+                            sx={{ width: '100%' }}
+                        />
                     </Box>
                 </Box>
             </Paper>
