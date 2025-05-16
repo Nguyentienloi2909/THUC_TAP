@@ -18,6 +18,11 @@ const HomePage = () => {
     useEffect(() => {
         const role = ApiService.isAdmin() ? 'ADMIN' : 'USER';
         setUserRole(role);
+
+        // Log localStorage data for debugging
+        console.log('localStorage data:', localStorage);
+        console.log('User role from localStorage:', localStorage.getItem('role'));
+
     }, []);
 
     const handleChangePage = (event, newPage) => {

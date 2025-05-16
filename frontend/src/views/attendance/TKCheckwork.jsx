@@ -1,32 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Typography,
-    IconButton,
-    Grid,
-    Card,
-    CardContent,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Button,
-    CircularProgress,
-    Alert,
+    Box, Typography, IconButton, Grid, Card, CardContent,
+    Dialog, DialogActions, DialogContent, DialogContentText,
+    DialogTitle, Button, CircularProgress, Alert,
 } from '@mui/material';
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    PieChart,
-    Pie,
-    Cell,
-    ResponsiveContainer,
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+    Legend, PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
@@ -83,7 +63,7 @@ const TKCheckwork = () => {
                 setPieData([
                     { name: 'Đúng giờ', value: processedStats.onTimeDays },
                     { name: 'Đi muộn', value: processedStats.lateDays },
-                    { name: 'Về sớm', value: processedStats.earlyLeaveDays },
+                    { name: 'Có phép', value: processedStats.earlyLeaveDays },
                     { name: 'Vắng', value: processedStats.absentDays },
                 ]);
 
@@ -252,7 +232,7 @@ const TKCheckwork = () => {
                                         <Typography>Tổng ngày làm việc: {monthlyStats.workDays}/{monthlyStats.totalDays}</Typography>
                                         <Typography color="success.main">Đúng giờ: {monthlyStats.onTimeDays} ngày</Typography>
                                         <Typography color="error.main">Đi muộn: {monthlyStats.lateDays} ngày</Typography>
-                                        <Typography color="warning.main">Về sớm: {monthlyStats.earlyLeaveDays} ngày</Typography>
+                                        <Typography color="warning.main">Có phép: {monthlyStats.earlyLeaveDays} ngày</Typography>
                                         <Typography color="info.main">Vắng: {monthlyStats.absentDays} ngày</Typography>
                                         <Typography>Tổng giờ làm: {monthlyStats.workHours} giờ</Typography>
                                     </Box>
@@ -302,7 +282,7 @@ const TKCheckwork = () => {
                                             <Legend />
                                             <Bar dataKey="onTime" name="Đúng giờ" fill="#4caf50" />
                                             <Bar dataKey="late" name="Đi muộn" fill="#f44336" />
-                                            <Bar dataKey="early" name="Về sớm" fill="#ff9800" />
+                                            <Bar dataKey="early" name="Có phép" fill="#ff9800" />
                                             <Bar dataKey="absent" name="Vắng" fill="#2196f3" />
                                         </BarChart>
                                     </ResponsiveContainer>

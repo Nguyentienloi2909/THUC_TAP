@@ -129,10 +129,10 @@ const Statistics = () => {
             <DashboardCard>
                 <Box sx={{ p: 4, backgroundColor: '#f5f5f5' }}>
                     {/* Header */}
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a202c', mb: 2 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a202c', mb: 2 }}>
                         Tổng quan nhân sự
                     </Typography>
-                    <Typography variant="subtitle1" sx={{ color: 'text.secondary', mb: 4 }}>
+                    <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 4 }}>
                         Xem các số liệu chính và truy cập các báo cáo chi tiết về nhân sự
                     </Typography>
 
@@ -155,7 +155,7 @@ const Statistics = () => {
                                         {card.icon}
                                         <Box>
                                             <Typography variant="h6">{card.title}</Typography>
-                                            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
                                                 {card.value}
                                             </Typography>
                                         </Box>

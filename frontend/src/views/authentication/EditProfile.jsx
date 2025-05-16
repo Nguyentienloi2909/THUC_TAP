@@ -235,6 +235,7 @@ const EditProfile = () => {
                                     onChange={handleChange}
                                     error={!!errors.email}
                                     helperText={errors.email}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
