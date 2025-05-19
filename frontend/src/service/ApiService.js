@@ -2,8 +2,8 @@ import axios from "axios";
 import { id } from "date-fns/locale";
 
 export default class ApiService {
-    static BASE_URL = "http://192.168.1.145:7247/api";
-    // static BASE_URL = "http://localhost:7247/api";
+    // static BASE_URL = "http://192.168.1.145:7247/api";
+    static BASE_URL = "http://localhost:7247/api";
 
     static getHeader() {
         const token = localStorage.getItem("token");
@@ -481,5 +481,18 @@ export default class ApiService {
                 console.error('Lỗi khi gửi bình luận:', error);
                 throw error;
             });
+    }
+
+    /** MESSAGE MANAGEMENT */
+    static getChatGroups() {
+        return this.handleRequest('get', '/Message/chatGroups');
+    }
+
+    static getChatGroupById(groupId) {
+        return this.handleRequest('get', `/Message/chatGroups/${groupId}`);
+    }
+
+    static getChatByUserId(userId) {
+        return this.handleRequest('get', `/Message/private/${userId}`);
     }
 }

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import ApiService from 'src/service/ApiService';
-import connection from 'src/service/SignalR'; // Import SignalR connection
+import { notificationConnection } from '../service/SignalR';
 
 export const NotificationContext = createContext();
 
@@ -26,17 +26,17 @@ export const NotificationProvider = ({ children }) => {
 
     // Listen for SignalR events
     useEffect(() => {
-        connection.start().then(() => {
+        notificationConnection.start().then(() => {
             console.log('SignalR Connected');
-            connection.on('ReceiveNotification', (notification) => {
+            notificationConnection.on('ReceiveNotification', (notification) => {
                 setNotifications((prev) => [...prev, notification]);
             });
         }).catch((error) => {
-            console.error('SignalR Connection Error:', error);
+            console.error('SignalR notificationConnection Error:', error);
         });
 
         return () => {
-            connection.stop();
+            notificationConnection.stop();
         };
     }, []);
 
