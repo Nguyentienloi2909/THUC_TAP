@@ -1,14 +1,13 @@
 import axios from "axios";
-import { id } from "date-fns/locale";
 
 export default class ApiService {
-    // static BASE_URL = "http://192.168.1.145:7247/api";
-    static BASE_URL = "http://localhost:7247/api";
+    static BASE_URL = "http://192.168.1.126:7247/api";
+    // static BASE_URL = "http://localhost:7247/api";
 
     static getHeader() {
-        const token = localStorage.getItem("token");
+        const authToken = localStorage.getItem("authToken");
         return {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
             "Content-Type": "application/json"
         };
     }
@@ -27,7 +26,7 @@ export default class ApiService {
             });
             return response.data;
         } catch (error) {
-            console.error('API Error:', error);
+            console.error('Lỗi API:', error.message || error); // Localized error message
             throw error;
         }
     }
@@ -38,13 +37,13 @@ export default class ApiService {
     }
 
     static logout() {
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('role');
     }
 
     static isAuthenticated() {
-        const token = localStorage.getItem('token');
-        return !!token;
+        const authToken = localStorage.getItem('authToken');
+        return !!authToken;
     }
 
     static isAdmin() {
@@ -59,28 +58,21 @@ export default class ApiService {
 
     /** USER MANAGEMENT */
     static createUser(formData) {
-        return axios.post(`${this.BASE_URL}/Auth/Register`, formData, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-        }).then(response => response.data);
+        return this.handleRequest('post', '/Auth/Register', formData);
     }
 
     static updateUser(userId, userData) {
-        const headers = {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-        };
-        return axios.put(`${this.BASE_URL}/User/${userId}`, userData, {
-            headers
-        }).then(response => response.data);
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        return this.handleRequest('put', `/User/${userId}`, userData);
     }
 
     static deleteUser(userId) {
-        return axios.delete(`${this.BASE_URL}/User/${userId}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-        }).then(response => response.data);
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        return this.handleRequest('delete', `/User/${userId}`);
     }
 
     static getAllUsers() {
@@ -92,6 +84,9 @@ export default class ApiService {
     }
 
     static getUser(userId) {
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
         return this.handleRequest('get', `/User/${userId}`);
     }
 
@@ -105,6 +100,9 @@ export default class ApiService {
     }
 
     static getDepartmentById(departmentId) {
+        if (!departmentId) {
+            throw new Error('ID phòng ban không được để trống');
+        }
         return this.handleRequest('get', `/Department/${departmentId}`);
     }
 
@@ -113,159 +111,104 @@ export default class ApiService {
     }
 
     static updateDepartment(departmentId, departmentData) {
+        if (!departmentId) {
+            throw new Error('ID phòng ban không được để trống');
+        }
         return this.handleRequest('put', `/Department/${departmentId}`, departmentData);
     }
 
     static deleteDepartment(departmentId) {
+        if (!departmentId) {
+            throw new Error('ID phòng ban không được để trống');
+        }
         return this.handleRequest('delete', `/Department/${departmentId}`);
     }
 
     /** ATTENDANCE MANAGEMENT */
     static checkIn() {
-        return this.handleRequest('post', '/Attendance/checkin', {})
-            .then(data => {
-                console.log("Điểm danh thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi điểm danh:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('post', '/Attendance/checkin', {});
     }
 
     static checkOut(userId) {
-        return this.handleRequest('post', `/Attendance/checkout?userId=${userId}`)
-            .then(data => {
-                console.log("Điểm danh ra thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi điểm danh ra:', error); // Localized message
-                throw error;
-            });
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        return this.handleRequest('post', `/Attendance/checkout?userId=${userId}`);
     }
 
     static applyLeave(userId, leaveData) {
-        return this.handleRequest('post', `/Attendance/leave/${userId}`, leaveData)
-            .then(data => {
-                console.log("Đã nộp đơn xin nghỉ thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi nộp đơn xin nghỉ:', error); // Localized message
-                throw error;
-            });
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        return this.handleRequest('post', `/Attendance/leave/${userId}`, leaveData);
     }
 
-
     static getTodayAttendance() {
-        return this.handleRequest('get', '/Attendance/today')
-            .then(data => {
-                console.log("Điểm danh hôm nay:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy điểm danh hôm nay:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Attendance/today');
     }
 
     static getAttendance(month, year) {
-        return this.handleRequest('get', `/Attendance/attendance?month=${month}&year=${year}`)
-            .then(data => {
-                console.log("Dữ liệu điểm danh:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/attendance?month=${month}&year=${year}`);
     }
 
-    // Lấy dữ liệu thống kê chấm công trong tuần của user
     static getTKAttendanceToWeekByUser(month, year) {
-        return this.handleRequest('get', `/Attendance/summary/weekly?month=${month}&year=${year}`)
-            .then(data => {
-                console.log("Dữ liệu thong ke điểm danh trong Week:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/summary/weekly?month=${month}&year=${year}`);
     }
 
-    // Lấy dữ liệu thống kê chấm công trong tháng của user
     static getTKAttendanceToMonthByUser(month, year) {
-        return this.handleRequest('get', `/Attendance/summary/monthly?month=${month}&year=${year}`)
-            .then(data => {
-                console.log("Dữ liệu thong ke điểm danh trong Month:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/summary/monthly?month=${month}&year=${year}`);
     }
 
-    // Lấy dữ liệu thống kê chấm công trong năm của cả hệ thống
     static getTKAttendanceToYear(year) {
-        return this.handleRequest('get', `/Attendance/summary/year?year=${year}`)
-            .then(data => {
-                console.log("Dữ liệu thong ke điểm danh trong Month:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        if (!year || year < 2000) {
+            throw new Error('Năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/summary/year?year=${year}`);
     }
 
-    // Lấy dữ liệu thống kê chấm công trong tháng của cả hệ thống
     static getTKAttendanceToMonth(month, year) {
-        return this.handleRequest('get', `/Attendance/summary/month?month=${month}&year=${year}`)
-            .then(data => {
-                console.log("Dữ liệu thong ke điểm danh trong Month:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/summary/month?month=${month}&year=${year}`);
     }
 
-    // Lấy dữ liệu thống kê chấm công trong tuần của cả hệ thống
     static getTKAttendanceToWeek() {
-        return this.handleRequest('get', `/Attendance/summary/week`)
-            .then(data => {
-                console.log("Dữ liệu thong ke điểm danh trong Month:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy dữ liệu điểm danh:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Attendance/summary/week');
     }
-
 
     /** TASK MANAGEMENT */
     static createTask(taskData) {
-        return this.handleRequest('.post', '/Task', taskData);
+        return this.handleRequest('post', '/Task', taskData); // Fixed typo: '.post' -> 'post'
     }
 
     static updateTask(taskId, taskData) {
+        if (!taskId) {
+            throw new Error('ID công việc không được để trống');
+        }
         return this.handleRequest('put', `/Task/${taskId}`, taskData);
     }
 
     static getTask(taskId) {
         if (!taskId) {
-            console.error('Task ID is undefined');
-            return Promise.reject(new Error('Task ID is undefined'));
+            throw new Error('ID công việc không được để trống');
         }
         return this.handleRequest('get', `/Task/${taskId}`);
     }
 
     static deleteTask(taskId) {
+        if (!taskId) {
+            throw new Error('ID công việc không được để trống');
+        }
         return this.handleRequest('delete', `/Task/${taskId}`);
     }
 
@@ -274,6 +217,9 @@ export default class ApiService {
     }
 
     static getTasksByUser(userId) {
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
         return this.handleRequest('get', `/Task/user/${userId}`);
     }
 
@@ -287,14 +233,23 @@ export default class ApiService {
     }
 
     static getRole(roleId) {
+        if (!roleId) {
+            throw new Error('ID vai trò không được để trống');
+        }
         return this.handleRequest('get', `/Role/${roleId}`);
     }
 
     static updateRole(roleId, roleData) {
+        if (!roleId) {
+            throw new Error('ID vai trò không được để trống');
+        }
         return this.handleRequest('put', `/Role/${roleId}`, roleData);
     }
 
     static deleteRole(roleId) {
+        if (!roleId) {
+            throw new Error('ID vai trò không được để trống');
+        }
         return this.handleRequest('delete', `/Role/${roleId}`);
     }
 
@@ -308,162 +263,149 @@ export default class ApiService {
     }
 
     static getGroup(groupId) {
+        if (!groupId) {
+            throw new Error('ID nhóm không được để trống');
+        }
         return this.handleRequest('get', `/Group/${groupId}`);
     }
 
     static updateGroup(groupId, groupData) {
+        if (!groupId) {
+            throw new Error('ID nhóm không được để trống');
+        }
         return this.handleRequest('put', `/Group/${groupId}`, groupData);
     }
 
     static deleteGroup(groupId) {
+        if (!groupId) {
+            throw new Error('ID nhóm không được để trống');
+        }
         return this.handleRequest('delete', `/Group/${groupId}`);
     }
 
     /** BANK MANAGEMENT */
-    static getBankList() {
-        return axios.get('https://api.vietqr.io/v2/banks')
-            .then(response => {
-                if (response.data && response.data.data) {
-                    return response.data.data;
-                }
-                return [];
-            })
-            .catch(error => {
-                console.error('Error fetching bank list:', error);
-                return [];
-            });
+    static async getBankList() {
+        try {
+            const response = await axios.get('https://api.vietqr.io/v2/banks');
+            return response.data?.data || [];
+        } catch (error) {
+            console.error('Lỗi khi lấy danh sách ngân hàng:', error.message || error);
+            return [];
+        }
     }
 
     /** SALARY MANAGEMENT */
+    static getPayroll(payrollId) {
+        if (!payrollId) {
+            throw new Error('ID lương không được để trống');
+        }
+        return this.handleRequest('get', `/Salary/${payrollId}`);
+    }
+
     static getSalaryById(userId, month, year) {
+        if (!userId || !month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Thông tin người dùng, tháng hoặc năm không hợp lệ');
+        }
         const url = `/Salary/getSalarById?userId=${userId}&month=${month}&year=${year}`;
         return this.handleRequest('get', url);
     }
 
-    // Lấy thông tin lương cho tất cả nhân viên trong một tháng cụ thể
     static calculateAllSalaries(month, year) {
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
         return this.handleRequest('get', `/Salary/calculate-all?month=${month}&year=${year}`);
     }
 
-    // Lấy danh sách lương của tất cả nhân viên theo quý
     static getSalariesByQuarter(year, quarter) {
+        if (!year || !quarter || year < 2000 || quarter < 1 || quarter > 4) {
+            throw new Error('Năm hoặc quý không hợp lệ');
+        }
         const url = `/Salary/quarter/${year}/${quarter}`;
         return this.handleRequest('get', url);
     }
 
-    // Lấy danh sách lương của tất cả nhân viên theo năm
     static getSalariesByYear(year) {
+        if (!year || year < 2000) {
+            throw new Error('Năm không hợp lệ');
+        }
         const url = `/Salary/year/${year}`;
         return this.handleRequest('get', url);
     }
 
+    static getSalariesByMonth(year, month) {
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Salary/calculate-all?month=${month}&year=${year}`);
+    }
+
+    static createPayroll(payrollData) {
+        return this.handleRequest('post', '/Salary', payrollData);
+    }
+
+    static updatePayroll(payrollId, payrollData) {
+        if (!payrollId) {
+            throw new Error('ID lương không được để trống');
+        }
+        return this.handleRequest('put', `/Salary/${payrollId}`, payrollData);
+    }
+
+    static deletePayroll(payrollId) {
+        if (!payrollId) {
+            throw new Error('ID lương không được để trống');
+        }
+        return this.handleRequest('delete', `/Salary/${payrollId}`);
+    }
+
     /** NOTIFICATION MANAGEMENT */
     static sendNotification(notificationData) {
-        return this.handleRequest('post', '/Notification/send', notificationData)
-            .then(data => {
-                console.log("Gửi thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi gửi thông báo:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('post', '/Notification/send', notificationData);
     }
 
     static updateNotification(notificationData) {
-        return this.handleRequest('put', `/Notification/${notificationData.id}`, notificationData)
-            .then(data => {
-                console.log("Cập nhật thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi cập nhật thông báo:', error); // Localized message
-                throw error;
-            });
+        if (!notificationData?.id) {
+            throw new Error('ID thông báo không được để trống');
+        }
+        return this.handleRequest('put', `/Notification/${notificationData.id}`, notificationData);
     }
 
     static deleteNotification(notificationId) {
-        return this.handleRequest('delete', `/Notification/${notificationId}`)
-            .then(data => {
-                console.log("Xóa thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi xóa thông báo:', error); // Localized message
-                throw error;
-            });
+        if (!notificationId) {
+            throw new Error('ID thông báo không được để trống');
+        }
+        return this.handleRequest('delete', `/Notification/${notificationId}`);
     }
 
     static getAllNotifications() {
-        return this.handleRequest('get', '/Notification/all')
-            .then(data => {
-                console.log("Lấy thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy thông báo:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Notification/all');
     }
 
     static getStatusNotification() {
-        return this.handleRequest('get', '/Notification/user')
-            .then(data => {
-                console.log("Lấy trạng thái thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy trạng thái thông báo:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Notification/user');
     }
 
-    static updateStatusNotification(notificationID) {
-        return this.handleRequest('put', `/Notification/user/${notificationID}`)
-            .then(data => {
-                console.log("Cập nhật trạng thái thông báo thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-
-            })
+    static updateStatusNotification(notificationId) {
+        if (!notificationId) {
+            throw new Error('ID thông báo không được để trống');
+        }
+        return this.handleRequest('put', `/Notification/user/${notificationId}`);
     }
 
     /** STATUS MANAGEMENT */
     static getStatusAttendance() {
-        return this.handleRequest('get', '/Status/StatusAttendance')
-            .then(data => {
-                console.log("Lấy trạng thái điểm danh thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy trạng thái điểm danh:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Status/StatusAttendance');
     }
 
     static getStatusTask() {
-        return this.handleRequest('get', '/Status/StatusTask')
-            .then(data => {
-                console.log("Lấy trạng thái công việc thành công:", data); // Localized message
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy trạng thái công việc:', error); // Localized message
-                throw error;
-            });
+        return this.handleRequest('get', '/Status/StatusTask');
     }
 
     static getComment(taskId) {
-        return this.handleRequest('get', `/Comment/${taskId}`)
-            .then(data => {
-                console.log("Lấy bình luận thành công:", data);
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi lấy bình luận:', error);
-                throw error;
-            });
+        if (!taskId) {
+            throw new Error('ID công việc không được để trống');
+        }
+        return this.handleRequest('get', `/Comment/${taskId}`);
     }
 
     static async getCurrentUserId() {
@@ -472,27 +414,43 @@ export default class ApiService {
     }
 
     static sendComment(commentData) {
-        return this.handleRequest('post', '/Comment', commentData)
-            .then(data => {
-                console.log("Gửi bình luận thành công:", data);
-                return data;
-            })
-            .catch(error => {
-                console.error('Lỗi khi gửi bình luận:', error);
-                throw error;
-            });
+        return this.handleRequest('post', '/Comment', commentData);
     }
 
     /** MESSAGE MANAGEMENT */
     static getChatGroups() {
-        return this.handleRequest('get', '/Message/chatGroups');
+        return this.handleRequest('get', '/GroupChat');
     }
 
     static getChatGroupById(groupId) {
+        if (!groupId) {
+            throw new Error('ID nhóm chat không được để trống');
+        }
         return this.handleRequest('get', `/Message/chatGroups/${groupId}`);
     }
 
     static getChatByUserId(userId) {
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
         return this.handleRequest('get', `/Message/private/${userId}`);
+    }
+
+    static createGroupChat(groupData) {
+        return this.handleRequest('post', '/GroupChat', groupData);
+    }
+
+    static addUserToGroupChat(groupId, userId) {
+        if (!groupId || !userId) {
+            throw new Error('ID nhóm chat hoặc ID người dùng không được để trống');
+        }
+        return this.handleRequest('post', `/Message/${groupId}/add-user/${userId}`);
+    }
+
+    static deleteUserFromGroupChat(groupId, userId) {
+        if (!groupId || !userId) {
+            throw new Error('ID nhóm chat hoặc ID người dùng không được để trống');
+        }
+        return this.handleRequest('delete', `/Message/${groupId}/remove-user/${userId}`);
     }
 }

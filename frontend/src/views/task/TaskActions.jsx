@@ -20,6 +20,7 @@ const TaskActions = ({ task, onEdit, onDelete, role }) => {
             )}
             {role === 'LEADER' && (
                 <>
+                    {/* This looks correct - it's passing task.id to the onEdit function */}
                     <Tooltip title="Chỉnh sửa">
                         <IconButton
                             size="small"

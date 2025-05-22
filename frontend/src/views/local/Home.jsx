@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Grid, CardContent, Typography, Button, Box } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -13,7 +12,7 @@ const HomePage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(10);
     const [userRole, setUserRole] = useState('');
-    const { notifications } = useContext(NotificationContext);
+    const { notifications, fetchNotifications } = useContext(NotificationContext);
 
     useEffect(() => {
         const role = ApiService.isAdmin() ? 'ADMIN' : 'USER';
@@ -22,8 +21,18 @@ const HomePage = () => {
         // Log localStorage data for debugging
         console.log('localStorage data:', localStorage);
         console.log('User role from localStorage:', localStorage.getItem('role'));
-
     }, []);
+
+    // Thêm useEffect để gọi fetchNotifications khi trang Home được tải
+    useEffect(() => {
+        const fetchAndSortNotifications = async () => {
+            await fetchNotifications();
+            notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            console.log('Sorted notifications:', notifications);
+        };
+
+        fetchAndSortNotifications();
+    }, [fetchNotifications]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);

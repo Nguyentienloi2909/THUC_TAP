@@ -8,18 +8,16 @@ import {
     FormControl,
     InputLabel,
     Typography,
-    Card,
-    CardContent,
     CircularProgress,
-    Grid, // Import Grid component
+    Grid,
 } from '@mui/material';
 import { IconUpload } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import ApiService from '../../service/ApiService';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
-const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default value
+const AddTaskPage = ({ open = false, onClose, onAdd }) => {
     const getCurrentDateTime = () => {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -41,22 +39,11 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
     const [fileInfo, setFileInfo] = useState({ name: '', size: '' });
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [statusList, setStatusList] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false); // Thêm trạng thái loading cho submit
 
     useEffect(() => {
         fetchUsers();
-        fetchStatusList();
     }, []);
-
-    const fetchStatusList = async () => {
-        try {
-            const statuses = await ApiService.getStatusTask();
-            setStatusList(statuses);
-        } catch (error) {
-            console.error('Error fetching status list:', error);
-            alert('Không thể tải danh sách trạng thái');
-        }
-    };
 
     const fetchUsers = async () => {
         try {
@@ -114,22 +101,31 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
         return null;
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const error = validateForm();
         if (error) {
             alert(error);
             return;
         }
 
-        onAdd(newTask);
-        setNewTask(initialTaskState);
-        setFileInfo({ name: '', size: '' });
+        setIsSubmitting(true); // Bật trạng thái loading
+        try {
+            await onAdd(newTask); // Giả định onAdd là async
+            setNewTask(initialTaskState);
+            setFileInfo({ name: '', size: '' });
+            onClose(); // Đóng dialog sau khi thêm thành công
+        } catch (error) {
+            console.error('Error adding task:', error);
+            alert('Không thể thêm nhiệm vụ');
+        } finally {
+            setIsSubmitting(false); // Tắt trạng thái loading
+        }
     };
 
     return (
         <Dialog
-            open={Boolean(open)}  // Ensure open prop is passed and converted to boolean
-            onClose={onClose}
+            open={Boolean(open)}
+            onClose={isSubmitting ? null : onClose} // Vô hiệu hóa đóng khi đang submit
             maxWidth="md"
             fullWidth
         >
@@ -148,6 +144,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                 fullWidth
                                 required
                                 variant="outlined"
+                                disabled={isSubmitting} // Vô hiệu hóa khi đang submit
                             />
                         </Grid>
 
@@ -161,6 +158,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                 multiline
                                 rows={4}
                                 variant="outlined"
+                                disabled={isSubmitting}
                             />
                         </Grid>
 
@@ -177,6 +175,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                 inputProps={{
                                     min: getCurrentDateTime()
                                 }}
+                                disabled={isSubmitting}
                             />
                         </Grid>
 
@@ -193,6 +192,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                 inputProps={{
                                     min: newTask.startTime
                                 }}
+                                disabled={isSubmitting}
                             />
                         </Grid>
 
@@ -204,6 +204,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                                     value={newTask.assignedToId}
                                     onChange={handleEmployeeSelect}
                                     label="Người thực hiện"
+                                    disabled={loading || isSubmitting}
                                 >
                                     {loading ? (
                                         <MenuItem disabled>
@@ -218,30 +219,13 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel>Trạng thái</InputLabel>
-                                <Select
-                                    name="status"
-                                    value={newTask.status}
-                                    onChange={handleChange}
-                                    label="Trạng thái"
-                                >
-                                    {statusList.map((status) => (
-                                        <MenuItem key={status.id} value={status.name}>
-                                            {status.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <Button
                                     variant="outlined"
                                     component="label"
                                     startIcon={<IconUpload />}
+                                    disabled={isSubmitting}
                                 >
                                     Tải lên tài liệu
                                     <input type="file" hidden onChange={handleFileChange} />
@@ -257,11 +241,20 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {  // Add default valu
                 </Box>
             </DialogContent>
             <DialogActions sx={{ p: 3 }}>
-                <Button variant="outlined" onClick={onClose}>
+                <Button
+                    variant="outlined"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                >
                     Hủy
                 </Button>
-                <Button variant="contained" onClick={handleAdd}>
-                    Giao nhiệm vụ
+                <Button
+                    variant="contained"
+                    onClick={handleAdd}
+                    disabled={isSubmitting}
+                    startIcon={isSubmitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+                >
+                    {isSubmitting ? 'Đang giao...' : 'Giao nhiệm vụ'}
                 </Button>
             </DialogActions>
         </Dialog>

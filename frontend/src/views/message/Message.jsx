@@ -14,8 +14,8 @@ const Message = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
     const [selectedGroup, setSelectedGroup] = useState(null);
-    const [userMessages, setUserMessages] = useState({}); // Tin nhắn cá nhân: { userId: [messages] }
-    const [groupMessages, setGroupMessages] = useState({}); // Tin nhắn nhóm: { groupId: [messages] }
+    const [userMessages, setUserMessages] = useState({});
+    const [groupMessages, setGroupMessages] = useState({});
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const { chatConnection, connectionState } = useSignalR();
 
@@ -44,11 +44,12 @@ const Message = () => {
         );
     }, [users, searchQuery]);
 
-    // Lấy loggedInUserId từ ApiService
     useEffect(() => {
         const fetchUserId = async () => {
             try {
+                console.log('Fetching user profile...');
                 const userProfile = await ApiService.getUserProfile();
+                console.log('User profile retrieved:', userProfile);
                 setLoggedInUserId(userProfile.id);
             } catch (error) {
                 console.error('Failed to retrieve user profile:', error);
@@ -57,7 +58,6 @@ const Message = () => {
         fetchUserId();
     }, []);
 
-    // Lắng nghe tin nhắn từ SignalR
     useEffect(() => {
         if (!chatConnection || connectionState !== 'Connected') return;
 
@@ -66,14 +66,17 @@ const Message = () => {
             if (!messageDto || typeof messageDto !== 'object') return;
 
             const userId = messageDto.senderId === loggedInUserId ? messageDto.receiverId : messageDto.senderId;
-
             setUserMessages((prev) => {
                 const userMsgList = prev[userId] || [];
-                if (userMsgList.some((msg) => msg.id === messageDto.id)) return prev;
-                return {
-                    ...prev,
-                    [userId]: [...userMsgList, messageDto],
-                };
+                if (!userMsgList.some((msg) => msg.id === messageDto.id)) {
+                    const updatedMessages = {
+                        ...prev,
+                        [userId]: [...userMsgList, messageDto],
+                    };
+                    console.log('Updated userMessages:', updatedMessages);
+                    return updatedMessages;
+                }
+                return prev;
             });
         };
 
@@ -82,14 +85,17 @@ const Message = () => {
             if (!messageDto || typeof messageDto !== 'object') return;
 
             const groupId = messageDto.groupChatId;
-
             setGroupMessages((prev) => {
                 const groupMsgList = prev[groupId] || [];
-                if (groupMsgList.some((msg) => msg.id === messageDto.id)) return prev;
-                return {
-                    ...prev,
-                    [groupId]: [...groupMsgList, messageDto],
-                };
+                if (!groupMsgList.some((msg) => msg.id === messageDto.id)) {
+                    const updatedMessages = {
+                        ...prev,
+                        [groupId]: [...groupMsgList, messageDto],
+                    };
+                    console.log('Updated groupMessages:', updatedMessages);
+                    return updatedMessages;
+                }
+                return prev;
             });
         };
 
@@ -102,18 +108,19 @@ const Message = () => {
         };
     }, [chatConnection, connectionState, loggedInUserId]);
 
-    // Fetch tin nhắn ban đầu
     useEffect(() => {
         const fetchMessages = async () => {
             try {
-                if (selectedUser) {
+                if (selectedUser?.id && !userMessages[selectedUser.id]) {
+                    console.log('Fetching messages for user:', selectedUser.id);
                     const data = await ApiService.handleRequest('get', `/Message/private/${selectedUser.id}`);
                     console.log('Fetched user messages:', data);
                     setUserMessages((prev) => ({
                         ...prev,
                         [selectedUser.id]: data || [],
                     }));
-                } else if (selectedGroup) {
+                } else if (selectedGroup?.id && !groupMessages[selectedGroup.id]) {
+                    console.log('Fetching messages for group:', selectedGroup.id);
                     const data = await ApiService.handleRequest('get', `/Message/chatGroups/${selectedGroup.id}`);
                     console.log('Fetched group messages:', data);
                     setGroupMessages((prev) => ({
@@ -126,46 +133,46 @@ const Message = () => {
             }
         };
         fetchMessages();
-    }, [selectedUser, selectedGroup]);
+    }, [selectedUser, selectedGroup, userMessages, groupMessages]);
 
-    // Handler gửi tin nhắn
     const handleSendMessage = async (content) => {
-        if (!loggedInUserId) {
-            console.error('Logged in user ID is not available');
+        if (!loggedInUserId || connectionState !== 'Connected') {
+            console.error('Cannot send message: Not connected or user not logged in');
             return;
         }
-        if (connectionState !== 'Connected') {
-            console.error('SignalR connection is not established');
-            return;
-        }
-
         try {
-            if (selectedUser) {
+            if (selectedUser?.id) {
                 await chatConnection.invoke('SendPrivateMessage', loggedInUserId, selectedUser.id, content);
-            } else if (selectedGroup) {
+            } else if (selectedGroup?.id) {
                 await chatConnection.invoke('SendGroupMessage', loggedInUserId, selectedGroup.id, content);
             }
+            console.log('Tin nhắn gửi thành công');
         } catch (error) {
-            console.error('Failed to send message:', error);
+            console.error('Gửi tin nhắn thất bại:', error);
         }
     };
 
-    // Chọn danh sách tin nhắn để hiển thị
-    const displayedMessages = selectedUser
-        ? userMessages[selectedUser.id] || []
-        : selectedGroup
-            ? groupMessages[selectedGroup.id] || []
-            : [];
+    const displayedMessages = useMemo(() => {
+        // Sửa lỗi: Thêm kiểm tra selectedUser và selectedGroup trước khi truy cập id
+        const messages = selectedUser && selectedUser.id
+            ? userMessages[selectedUser.id] || []
+            : selectedGroup && selectedGroup.id
+                ? groupMessages[selectedGroup.id] || []
+                : [];
+        console.log('Displayed messages:', messages);
+        return messages;
+    }, [selectedUser, selectedGroup, userMessages, groupMessages]);
 
-    // Đảm bảo reset trạng thái khi chọn user hoặc group
     const handleSelectUser = (user) => {
+        console.log('User selected:', user);
         setSelectedUser(user);
-        setSelectedGroup(null); // Reset selectedGroup
+        setSelectedGroup(null);
     };
 
     const handleSelectGroup = (group) => {
+        console.log('Group selected:', group);
         setSelectedGroup(group);
-        setSelectedUser(null); // Reset selectedUser
+        setSelectedUser(null);
     };
 
     return (
@@ -180,7 +187,6 @@ const Message = () => {
                     boxShadow: theme.shadows[3],
                 }}
             >
-                {/* Left side - User list */}
                 <Box
                     sx={{
                         width: 320,
@@ -226,7 +232,6 @@ const Message = () => {
                     </Box>
                 </Box>
 
-                {/* Right side - Chat area */}
                 <Box
                     sx={{
                         flex: 1,
@@ -242,6 +247,7 @@ const Message = () => {
                             height: '72px',
                             display: 'flex',
                             alignItems: 'center',
+                            width: '100%',
                         }}
                     >
                         <ChatHeader selectedUser={selectedUser} selectedGroup={selectedGroup} />

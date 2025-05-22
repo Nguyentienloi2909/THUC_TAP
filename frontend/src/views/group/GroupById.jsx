@@ -1,46 +1,125 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Grid, Typography, Box, Avatar, Card, CardContent,
-    Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Paper, Chip, CircularProgress
+    Box, Button, Typography, Card, CardContent, CardActions, Grid, CircularProgress, Alert,
+    Avatar, Divider, IconButton
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
-import DashboardCard from '../../components/shared/DashboardCard';
-import ApiService from '../../service/ApiService';
+import { styled } from '@mui/material/styles';
+import { IconUserPlus, IconTrash } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import ApiService from 'src/service/ApiService';
+import AddMemberModal from './modal/AddUser';
+
+// Styled components
+const StyledContainer = styled(Box)(({ theme }) => ({
+    position: 'relative',
+    overflow: 'hidden',
+    '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%)',
+        opacity: 0.1,
+        zIndex: -1,
+    },
+}));
+
+const StyledHeader = styled(Box)(({ theme }) => ({
+    background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
+    borderRadius: theme.shape.borderRadius * 2,
+    padding: theme.spacing(4),
+    color: '#fff',
+    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.2)',
+    transition: 'transform 0.3s ease',
+    '&:hover': {
+        transform: 'scale(1.02)',
+    },
+}));
+
+const MemberCard = styled(Card)(({ theme }) => ({
+    display: 'flex',
+    flexDirection: 'column', // Xếp chồng theo chiều dọc
+    padding: theme.spacing(2),
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: theme.shape.borderRadius * 2,
+    transition: 'all 0.3s ease',
+    '&:hover': {
+        backgroundColor: theme.palette.action.hover,
+        transform: 'translateY(-5px)',
+        boxShadow: theme.shadows[8],
+    },
+}));
 
 const GroupById = () => {
+    const navigate = useNavigate();
     const [groupData, setGroupData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState('');
+    const [groupId, setGroupId] = useState(null);
+    const [openAddModal, setOpenAddModal] = useState(false);
+
+    // Lấy groupId từ API getUserProfile
+    const fetchGroupId = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError('');
+            const userProfile = await ApiService.getUserProfile();
+            if (!userProfile || !userProfile.groupId) {
+                throw new Error('Không tìm thấy ID nhóm trong thông tin người dùng');
+            }
+            setGroupId(userProfile.groupId);
+        } catch (err) {
+            setError(err.message || 'Không thể lấy thông tin người dùng');
+            setLoading(false);
+        }
+    }, []);
+
+    // Lấy thông tin nhóm dựa trên groupId
+    const fetchGroup = useCallback(async () => {
+        if (!groupId) return;
+
+        try {
+            setLoading(true);
+            setError('');
+            const data = await ApiService.getGroup(groupId);
+            if (!data || !data.id) {
+                throw new Error('Dữ liệu nhóm không hợp lệ');
+            }
+            setGroupData(data);
+        } catch (err) {
+            setError(err.message || 'Không thể tải thông tin nhóm');
+        } finally {
+            setLoading(false);
+        }
+    }, [groupId]);
 
     useEffect(() => {
-        const fetchGroupData = async () => {
-            setLoading(true);
-            try {
-                // Get current user's profile to get groupId
-                const userProfile = await ApiService.getUserProfile();
-                if (!userProfile.groupId) {
-                    throw new Error('User is not assigned to any group');
-                }
+        fetchGroupId();
+    }, [fetchGroupId]);
 
-                // Get group details using groupId
-                const response = await ApiService.getGroup(userProfile.groupId);
-                setGroupData(response);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching group data:', err);
-                setError('Failed to load group data');
-            } finally {
-                setLoading(false);
-            }
-        };
+    useEffect(() => {
+        fetchGroup();
+    }, [fetchGroup]);
 
-        fetchGroupData();
+    const handleAddMember = useCallback(updatedGroup => {
+        setGroupData(updatedGroup);
     }, []);
+
+    const handleRemoveMember = async (userId) => {
+        try {
+            const updatedGroup = await ApiService.removeMemberFromGroup(groupId, userId);
+            setGroupData(updatedGroup);
+        } catch (err) {
+            console.error('Failed to remove member:', err);
+            setError('Không thể xóa thành viên');
+        }
+    };
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }} aria-label="Đang tải dữ liệu">
                 <CircularProgress />
             </Box>
         );
@@ -48,172 +127,108 @@ const GroupById = () => {
 
     if (error) {
         return (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-                <Typography color="error">{error}</Typography>
+            <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+                <Alert severity="error" action={
+                    <Button color="inherit" size="small" onClick={() => navigate('/group')}>
+                        Quay lại
+                    </Button>
+                }>
+                    {error}
+                </Alert>
             </Box>
         );
     }
 
     return (
-        <PageContainer title="Chi tiết nhóm" description="Thông tin chi tiết về nhóm và thành viên">
-            <Grid container spacing={3}>
-                {/* Group Information Card */}
-                <Grid item xs={12} md={4}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h5" gutterBottom>
-                                {groupData?.groupName}
-                            </Typography>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Phòng ban
-                                </Typography>
-                                <Typography variant="body1">
-                                    {groupData?.departmentName}
-                                </Typography>
-                            </Box>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Trưởng nhóm
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                                    {(() => {
-                                        const leader = groupData?.users?.find(user => user.roleId === 3);
-                                        return leader ? (
-                                            <>
-                                                <Avatar src={leader.avatar}>
-                                                    {leader.fullName[0]}
-                                                </Avatar>
-                                                <Typography variant="body1">
-                                                    {leader.fullName}
-                                                </Typography>
-                                            </>
-                                        ) : (
-                                            <Typography variant="body2" color="text.secondary">
-                                                Chưa có trưởng nhóm
-                                            </Typography>
-                                        );
-                                    })()}
-                                </Box>
-                            </Box>
-                            <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Số lượng thành viên
-                                </Typography>
-                                <Typography variant="body1">
-                                    {groupData?.users?.length || 0} thành viên
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
+        <StyledContainer sx={{ p: 4, maxWidth: 1200, mx: 'auto', borderRadius: 2, boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' }}>
+            {/* Header nhóm */}
+            <StyledHeader sx={{ mb: 4 }}>
+                <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
+                    {groupData.groupName}
+                </Typography>
+                <Typography variant="h5" color="inherit" gutterBottom>
+                    {groupData.departmentName} | {groupData.users.length} thành viên
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<IconUserPlus size={20} />}
+                    onClick={() => setOpenAddModal(true)}
+                    sx={{
+                        mt: 2,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 'medium',
+                        background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
+                        '&:hover': {
+                            background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                        },
+                    }}
+                >
+                    Thêm thành viên
+                </Button>
+            </StyledHeader>
 
-                {/* Members Table */}
-                <Grid item xs={12} md={8}>
-                    <DashboardCard title="Danh sách thành viên">
-                        <TableContainer component={Paper} variant="outlined">
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Thành viên</TableCell>
-                                        <TableCell>Email</TableCell>
-                                        <TableCell>Chức vụ</TableCell>
-                                        <TableCell>Trạng thái</TableCell>
-                                    </TableRow>
-                                </TableHead>
+            <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.12)' }} />
 
-                                <TableBody>
-                                    {groupData?.users?.map((member) => (
-                                        <TableRow key={member.id}>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                    <Avatar src={member.avatar}>
-                                                        {member.fullName[0]}
-                                                    </Avatar>
-                                                    <Typography variant="body2">
-                                                        {member.fullName}
-                                                    </Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>{member.email}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={member.roleId === 3 ? "Leader" : "Member"}
-                                                    color={member.roleId === 3 ? "primary" : "default"}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={member.status === "Active" ? "Đang làm việc" : "Đã nghỉ việc"}
-                                                    color={member.status === "Active" ? "success" : "error"}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </DashboardCard>
-                </Grid>
-
-                {/* Statistics Cards */}
-                <Grid item xs={12}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Tổng số nhiệm vụ
+            {/* Danh sách thành viên */}
+            <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
+                Danh sách thành viên
+            </Typography>
+            <Grid container spacing={4}>
+                {groupData.users.map(user => (
+                    <Grid item key={user.id} xs={12} sm={6} md={4}>
+                        <MemberCard>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Avatar
+                                    alt={user.fullName}
+                                    src={user.avatar}
+                                    sx={{ width: 60, height: 60, mr: 2, border: '2px solid #1976d2' }}
+                                />
+                                <CardContent sx={{ flexGrow: 1, p: 0 }}>
+                                    <Typography variant="h6" fontWeight="bold" color="text.primary">
+                                        {user.fullName}
                                     </Typography>
-                                    <Typography variant="h4">
-                                        {groupData?.statistics?.totalTasks || 0}
+                                    <Typography variant="body2" color="text.secondary">
+                                        {user.email}
                                     </Typography>
                                 </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Nhiệm vụ hoàn thành
-                                    </Typography>
-                                    <Typography variant="h4">
-                                        {groupData?.statistics?.completedTasks || 0}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Đang thực hiện
-                                    </Typography>
-                                    <Typography variant="h4">
-                                        {groupData?.statistics?.inProgressTasks || 0}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">
-                                        Tỷ lệ hoàn thành
-                                    </Typography>
-                                    <Typography variant="h4">
-                                        {groupData?.statistics?.completionRate || 0}%
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Grid>
+                            </Box>
+                            <CardActions sx={{ justifyContent: 'center', p: 0 }}>
+                                <IconButton color="primary" aria-label="Xem chi tiết">
+                                    {/* Thêm logic chi tiết nếu cần */}
+                                </IconButton>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<IconTrash size={18} />}
+                                    onClick={() => handleRemoveMember(user.id)}
+                                    sx={{
+                                        borderRadius: 1,
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            backgroundColor: '#f44336',
+                                            color: '#fff',
+                                        },
+                                    }}
+                                >
+                                    Xóa
+                                </Button>
+                            </CardActions>
+                        </MemberCard>
                     </Grid>
-                </Grid>
+                ))}
             </Grid>
-        </PageContainer>
+
+            {/* Modal Thêm thành viên */}
+            <AddMemberModal
+                open={openAddModal}
+                onClose={() => setOpenAddModal(false)}
+                groupId={groupData.id}
+                onAdd={handleAddMember}
+            />
+        </StyledContainer>
     );
 };
 
-export default GroupById;
+export default React.memo(GroupById);

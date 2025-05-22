@@ -8,21 +8,34 @@ import {
     FormControl,
     InputLabel,
     Typography,
-    Card,
-    CardContent,
+    CircularProgress,
     Grid,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Snackbar,
+    Alert,
 } from '@mui/material';
+import { IconUpload } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ApiService from '../../service/ApiService';
-import PageContainer from 'src/components/container/PageContainer'; // Import PageContainer
+import PageContainer from 'src/components/container/PageContainer';
 
 const UpdateTaskPage = () => {
-    const { taskId } = useParams();
+    const params = useParams();
     const navigate = useNavigate();
+    
+    // Log all params to see what's available
+    console.log('All params:', params);
+    
+    // Try to get the task ID from different possible parameter names
+    const taskId = params.taskId || params.id;
+    console.log('Using taskId:', taskId);
+
     const [task, setTask] = useState({
         title: '',
         description: '',
-        urlFile: '',
         file: null,
         startTime: '',
         endTime: '',
@@ -30,111 +43,221 @@ const UpdateTaskPage = () => {
         assignedToId: '',
         assignedToName: '',
     });
+    const [fileInfo, setFileInfo] = useState({ name: '', size: '' });
     const [employees, setEmployees] = useState([]);
+    const [statusList, setStatusList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+    const [open, setOpen] = useState(true);
 
     useEffect(() => {
+        console.log('taskId from useParams:', taskId); // Log để kiểm tra taskId
         const fetchTaskAndEmployees = async () => {
+            if (!taskId || isNaN(parseInt(taskId))) {
+                setError(`ID nhiệm vụ không hợp lệ: ${taskId}. Vui lòng kiểm tra lại.`);
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
-                const [taskResponse, employeesResponse] = await Promise.all([
-                    ApiService.getTaskById(taskId),
-                    ApiService.getAllUsers()
+                const [taskResponse, employeesResponse, statusResponse] = await Promise.all([
+                    ApiService.getTask(taskId),
+                    ApiService.getAllUsers(),
+                    ApiService.getStatusTask(),
                 ]);
 
                 if (taskResponse) {
-                    // Format dates for datetime-local input
                     const formattedTask = {
                         ...taskResponse,
-                        startTime: taskResponse.startTime.slice(0, 16),
-                        endTime: taskResponse.endTime.slice(0, 16)
+                        startTime: taskResponse.startTime
+                            ? new Date(taskResponse.startTime).toISOString().slice(0, 16)
+                            : '',
+                        endTime: taskResponse.endTime
+                            ? new Date(taskResponse.endTime).toISOString().slice(0, 16)
+                            : '',
                     };
                     setTask(formattedTask);
+                    if (taskResponse.urlFile) {
+                        setFileInfo({
+                            name: taskResponse.urlFile.split('/').pop() || 'Tài liệu hiện tại',
+                            size: '',
+                        });
+                    }
+                } else {
+                    setError('Không tìm thấy nhiệm vụ với ID đã cung cấp.');
                 }
 
                 if (employeesResponse && Array.isArray(employeesResponse)) {
                     setEmployees(employeesResponse);
+                } else {
+                    setError('Không thể tải danh sách nhân viên.');
+                }
+
+                if (statusResponse && Array.isArray(statusResponse)) {
+                    setStatusList(statusResponse);
+                } else {
+                    setError('Không thể tải danh sách trạng thái.');
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
-                alert('Không thể tải thông tin nhiệm vụ');
+                const message =
+                    error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể tải dữ liệu. Vui lòng thử lại sau.';
+                setError(message);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (taskId) {
-            fetchTaskAndEmployees();
-        }
+        fetchTaskAndEmployees();
     }, [taskId]);
-
-    const handleUpdate = async () => {
-        try {
-            if (!task.title || !task.assignedToId || !task.startTime || !task.endTime) {
-                alert('Vui lòng điền đầy đủ thông tin bắt buộc');
-                return;
-            }
-
-            await ApiService.updateTask(taskId, task);
-            alert('Cập nhật nhiệm vụ thành công');
-            navigate('/manage/task');
-        } catch (error) {
-            console.error('Failed to update task:', error);
-            alert('Cập nhật nhiệm vụ thất bại');
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        console.log(`Changing ${name} to`, value); // Log input changes
         setTask((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
 
-    const handleCancel = () => {
-        console.log('Cancel update, navigating back to task list'); // Log cancel action
-        navigate('/manage/task');
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setError('File không được vượt quá 5MB.');
+                return;
+            }
+            setTask((prev) => ({ ...prev, file }));
+            setFileInfo({
+                name: file.name,
+                size: `${(file.size / 1024).toFixed(2)} KB`,
+            });
+        }
+        e.target.value = null;
+    };
+
+    const handleEmployeeSelect = (e) => {
+        const selected = employees.find((emp) => emp.id === e.target.value);
+        setTask((prev) => ({
+            ...prev,
+            assignedToId: e.target.value,
+            assignedToName: selected?.fullName || '',
+        }));
+    };
+
+    const validateForm = () => {
+        if (!task.title) return 'Vui lòng nhập tiêu đề nhiệm vụ.';
+        if (!task.assignedToId) return 'Vui lòng chọn người thực hiện.';
+        if (!task.startTime) return 'Vui lòng chọn thời gian bắt đầu.';
+        if (!task.endTime) return 'Vui lòng chọn thời gian kết thúc.';
+        if (new Date(task.endTime) <= new Date(task.startTime)) {
+            return 'Thời gian kết thúc phải sau thời gian bắt đầu.';
+        }
+        if (!task.status) return 'Vui lòng chọn trạng thái.';
+        return null;
+    };
+
+    const handleUpdate = async () => {
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append('Title', task.title);
+            formData.append('Description', task.description || '');
+            if (task.file) {
+                formData.append('File', task.file);
+            }
+            formData.append('StartTime', task.startTime);
+            formData.append('EndTime', task.endTime);
+            formData.append('Status', task.status);
+            formData.append('AssignedToId', task.assignedToId);
+
+            await ApiService.updateTask(taskId, formData);
+            setOpen(false);
+            navigate('/manage/task');
+        } catch (error) {
+            console.error('Failed to update task:', error);
+            const message =
+                error?.response?.data?.message ||
+                error?.message ||
+                'Không thể cập nhật nhiệm vụ. Vui lòng thử lại.';
+            setError(message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleClose = () => {
+        if (!isSubmitting) {
+            setOpen(false);
+            navigate('/manage/task');
+        }
+    };
+
+    const handleCloseSnackbar = () => {
+        setError(null);
     };
 
     return (
         <PageContainer title="Cập nhật nhiệm vụ" description="Giao diện cập nhật nhiệm vụ">
-            <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
-                <Card sx={{ maxWidth: 800, width: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                        <Typography variant="h4" gutterBottom>
-                            Cập nhật nhiệm vụ
-                        </Typography>
-
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>Cập nhật nhiệm vụ</DialogTitle>
+                <DialogContent>
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : error ? (
+                        <Box sx={{ p: 3, textAlign: 'center' }}>
+                            <Typography color="error" variant="body1">{error}</Typography>
+                            <Button
+                                variant="contained"
+                                onClick={handleClose}
+                                sx={{ mt: 2 }}
+                            >
+                                Trở lại
+                            </Button>
+                        </Box>
+                    ) : (
                         <Box component="form" sx={{ mt: 2 }}>
                             <Grid container spacing={3}>
-                                <Grid item xs={12} md={6}>
+                                <Grid item xs={12}>
                                     <TextField
-                                        label="Tiêu đề"
+                                        label="Tiêu đề nhiệm vụ"
                                         name="title"
                                         value={task.title}
                                         onChange={handleChange}
                                         fullWidth
                                         required
+                                        variant="outlined"
+                                        disabled={isSubmitting}
                                     />
+                                </Grid>
+
+                                <Grid item xs={12}>
                                     <TextField
-                                        label="Mô tả"
+                                        label="Mô tả chi tiết"
                                         name="description"
                                         value={task.description}
                                         onChange={handleChange}
                                         fullWidth
                                         multiline
                                         rows={4}
-                                        sx={{ mt: 2 }}
-                                    />
-                                    <TextField
-                                        label="Tài liệu"
-                                        name="urlFile"
-                                        value={task.urlFile}
-                                        onChange={handleChange}
-                                        fullWidth
-                                        sx={{ mt: 2 }}
+                                        variant="outlined"
+                                        disabled={isSubmitting}
                                     />
                                 </Grid>
 
@@ -147,7 +270,12 @@ const UpdateTaskPage = () => {
                                         onChange={handleChange}
                                         InputLabelProps={{ shrink: true }}
                                         fullWidth
+                                        variant="outlined"
+                                        disabled={isSubmitting}
                                     />
+                                </Grid>
+
+                                <Grid item xs={12} md={6}>
                                     <TextField
                                         label="Thời gian kết thúc"
                                         name="endTime"
@@ -156,29 +284,38 @@ const UpdateTaskPage = () => {
                                         onChange={handleChange}
                                         InputLabelProps={{ shrink: true }}
                                         fullWidth
-                                        sx={{ mt: 2 }}
+                                        variant="outlined"
+                                        inputProps={{ min: task.startTime }}
+                                        disabled={isSubmitting}
                                     />
-                                    <FormControl fullWidth sx={{ mt: 2 }}>
+                                </Grid>
+
+                                <Grid item xs={12} md={6}>
+                                    <FormControl fullWidth variant="outlined" disabled={isSubmitting}>
                                         <InputLabel>Trạng thái</InputLabel>
                                         <Select
                                             name="status"
                                             value={task.status}
                                             onChange={handleChange}
-                                            label="Status"
+                                            label="Trạng thái"
                                         >
-                                            <MenuItem value="Pending">Pending</MenuItem>
-                                            <MenuItem value="In Progress">In Progress</MenuItem>
-                                            <MenuItem value="Completed">Completed</MenuItem>
-                                            <MenuItem value="Late">Late</MenuItem>
+                                            {statusList.map((status) => (
+                                                <MenuItem key={status.id} value={status.name}>
+                                                    {status.name}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
-                                    <FormControl fullWidth sx={{ mt: 2 }}>
-                                        <InputLabel>Người nhận</InputLabel>
+                                </Grid>
+
+                                <Grid item xs={12} md={6}>
+                                    <FormControl fullWidth variant="outlined" disabled={isSubmitting}>
+                                        <InputLabel>Người thực hiện</InputLabel>
                                         <Select
                                             name="assignedToId"
                                             value={task.assignedToId}
-                                            onChange={handleChange}
-                                            label="Người nhận"
+                                            onChange={handleEmployeeSelect}
+                                            label="Người thực hiện"
                                         >
                                             {employees.map((emp) => (
                                                 <MenuItem key={emp.id} value={emp.id}>
@@ -190,20 +327,51 @@ const UpdateTaskPage = () => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <Box display="flex" justifyContent="center" mt={3} gap={2}>
-                                        <Button variant="contained" color="primary" onClick={handleUpdate}>
-                                            Cập nhật
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Button
+                                            variant="outlined"
+                                            component="label"
+                                            startIcon={<IconUpload />}
+                                            disabled={isSubmitting}
+                                        >
+                                            Tải lên tài liệu mới
+                                            <input type="file" hidden onChange={handleFileChange} />
                                         </Button>
-                                        <Button variant="outlined" color="secondary" onClick={handleCancel}>
-                                            Hủy
-                                        </Button>
+                                        {fileInfo.name && (
+                                            <Typography variant="body2" color="textSecondary">
+                                                {fileInfo.name} {fileInfo.size ? `(${fileInfo.size})` : ''}
+                                            </Typography>
+                                        )}
                                     </Box>
                                 </Grid>
                             </Grid>
                         </Box>
-                    </CardContent>
-                </Card>
-            </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                    >
+                        Hủy
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleUpdate}
+                        disabled={isSubmitting}
+                        startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
+                    >
+                        {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật nhiệm vụ'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar open={!!error} autoHideDuration={5000} onClose={handleCloseSnackbar}>
+                <Alert severity="error" onClose={handleCloseSnackbar}>
+                    {error}
+                </Alert>
+            </Snackbar>
         </PageContainer>
     );
 };

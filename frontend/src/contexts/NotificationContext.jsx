@@ -1,14 +1,18 @@
+// src/contexts/NotificationContext.jsx
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import ApiService from 'src/service/ApiService';
 import { notificationConnection } from '../service/SignalR';
+import { useUser } from './UserContext';
 
 export const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
+    const { user } = useUser();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchNotifications = useCallback(async () => {
+        if (!user.isAuthenticated) return; // Không lấy thông báo nếu chưa đăng nhập
         try {
             setLoading(true);
             const data = await ApiService.getStatusNotification();
@@ -18,7 +22,7 @@ export const NotificationProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user.isAuthenticated]);
 
     useEffect(() => {
         fetchNotifications();
@@ -26,19 +30,30 @@ export const NotificationProvider = ({ children }) => {
 
     // Listen for SignalR events
     useEffect(() => {
-        notificationConnection.start().then(() => {
-            console.log('SignalR Connected');
-            notificationConnection.on('ReceiveNotification', (notification) => {
-                setNotifications((prev) => [...prev, notification]);
-            });
-        }).catch((error) => {
-            console.error('SignalR notificationConnection Error:', error);
-        });
+        const startConnection = async () => {
+            try {
+                if (user.isAuthenticated) {
+                    await notificationConnection.start();
+                    console.log('SignalR Connected');
+                    notificationConnection.on('ReceiveNotification', (notification) => {
+                        // Chỉ thêm thông báo nếu phù hợp với vai trò người dùng
+                        if (!notification.role || notification.role === user.role) {
+                            setNotifications((prev) => [...prev, notification]);
+                        }
+                    });
+                    fetchNotifications();
+                }
+            } catch (error) {
+                console.error('SignalR notificationConnection Error:', error);
+            }
+        };
+
+        startConnection();
 
         return () => {
             notificationConnection.stop();
         };
-    }, []);
+    }, [fetchNotifications, user.isAuthenticated, user.role]);
 
     const markAsRead = useCallback(async (notificationId) => {
         try {

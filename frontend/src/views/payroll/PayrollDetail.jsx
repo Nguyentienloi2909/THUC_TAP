@@ -325,30 +325,6 @@ const PayrollDetail = () => {
                                 </Table>
                             </TableContainer>
                         </Grid>
-
-                        {/* Signature section */}
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, pt: 2 }}>
-                                <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                    <Typography fontWeight="medium">NGƯỜI LẬP BẢNG</Typography>
-                                    <Typography variant="body2" color="text.secondary">(Ký, họ tên)</Typography>
-                                    <Box sx={{ height: 80 }}></Box>
-                                    <Typography>Nguyễn Thị B</Typography>
-                                </Box>
-                                <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                    <Typography fontWeight="medium">KẾ TOÁN TRƯỞNG</Typography>
-                                    <Typography variant="body2" color="text.secondary">(Ký, họ tên)</Typography>
-                                    <Box sx={{ height: 80 }}></Box>
-                                    <Typography>Trần Văn C</Typography>
-                                </Box>
-                                <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                    <Typography fontWeight="medium">GIÁM ĐỐC</Typography>
-                                    <Typography variant="body2" color="text.secondary">(Ký, họ tên, đóng dấu)</Typography>
-                                    <Box sx={{ height: 80 }}></Box>
-                                    <Typography>Lê Thị D</Typography>
-                                </Box>
-                            </Box>
-                        </Grid>
                     </Grid>
                 </Paper>
             </DashboardCard>

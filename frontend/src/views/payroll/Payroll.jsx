@@ -1,116 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Paper,
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography,
-    Box,
-    Card,
-    CardContent,
-    Divider,
-    Button,
-    Chip,
-    Stack,
-    useTheme
+    Paper, Grid, Typography, Box, Card, CardContent, Divider,
+    Button, Stack, FormControl, InputLabel, Select, MenuItem,
+    CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-import DashboardCard from '../../components/shared/DashboardCard';
-import { IconPrinter, IconDownload, IconMail } from '@tabler/icons-react';
+import {
+    IconPrinter, IconDownload, IconMail, IconUser, IconId,
+    IconBuildingSkyscraper, IconBriefcase, IconReceipt2,
+    IconCalendarEvent, IconCalendarStats, IconClockHour4,
+    IconBeach, IconAward, IconCreditCard, IconBuildingBank,
+    IconAlertCircle
+} from '@tabler/icons-react';
+import ApiService from '../../service/ApiService';
 
-// Mock data for employee salary
-const employeeSalary = {
-    personalInfo: {
-        name: "Nguyễn Văn A",
-        employeeId: "NV001",
-        department: "Development Team",
-        position: "Senior Developer",
-        bankAccount: "19034857102",
-        bankName: "Vietcombank",
-        taxCode: "8721956302",
-        joinDate: "01/06/2020"
-    },
-    salaryDetails: {
-        month: 2,
-        year: 2024,
-        baseSalary: 15000000,
-        workingDays: {
-            standard: 22,
-            actual: 21,
-            overtime: 5,
-            leave: 1
-        },
-        performance: {
-            rating: "A",
-            bonus: 3000000
-        },
-        additions: [
-            { title: "Phụ cấp ăn trưa", amount: 1200000 },
-            { title: "Phụ cấp xăng xe", amount: 500000 },
-            { title: "Thưởng KPI", amount: 2000000 },
-            { title: "Overtime (5 ngày)", amount: 1500000 },
-        ],
-        deductions: [
-            { title: "Bảo hiểm xã hội (8%)", amount: 1200000 },
-            { title: "Bảo hiểm y tế (1.5%)", amount: 225000 },
-            { title: "Bảo hiểm thất nghiệp (1%)", amount: 150000 },
-            { title: "Thuế thu nhập cá nhân", amount: 750000 },
-        ],
+const formatCurrency = value => (
+    typeof value === 'number' && !isNaN(value)
+        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+        : 'N/A'
+);
+
+const InfoItem = ({ icon, label, value, bold = true }) => (
+    <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+        <Box color="text.secondary">{React.cloneElement(icon, { size: 20 })}</Box>
+        <Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.2 }}>
+                {label}:
+            </Typography>
+            <Typography variant="body1" fontWeight={bold ? 'medium' : 'normal'}>
+                {value ?? 'N/A'}
+            </Typography>
+        </Box>
+    </Stack>
+);
+
+const parseNote = (note) => {
+    if (!note) return { lateDays: 0, absentDays: 0, deductions: [] };
+    const regex = /(Trễ): (\d+), (Vắng): (\d+), (Số tiền trừ): ([\d,]+)/;
+    const match = note.match(regex);
+    if (match) {
+        const lateDays = parseInt(match[2]);
+        const absentDays = parseInt(match[4]);
+        const deductionAmount = parseInt(match[6].replace(/,/g, ''));
+        return {
+            lateDays,
+            absentDays,
+            deductions: [{ title: 'Khấu trừ (Trễ/Vắng)', amount: deductionAmount }]
+        };
     }
-};
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(value);
+    return { lateDays: 0, absentDays: 0, deductions: [] };
 };
 
 const Payroll = () => {
-    const theme = useTheme();
+    const theme = useTheme ? useTheme() : {};
+    const [profile, setProfile] = useState(null);
+    const [salary, setSalary] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [month, setMonth] = useState(() => {
+        const now = new Date();
+        if (now.getMonth() === 0) {
+            return 11; // Tháng 12 (0-based)
+        }
+        return now.getMonth() - 1;
+    }); // 0-11
+    const [year, setYear] = useState(() => {
+        const now = new Date();
+        if (now.getMonth() === 0) {
+            return now.getFullYear() - 1;
+        }
+        return now.getFullYear();
+    });
+    const [noteData, setNoteData] = useState({ lateDays: 0, absentDays: 0, deductions: [] });
 
-    const calculateTotal = () => {
-        const { baseSalary, additions, deductions, performance } = employeeSalary.salaryDetails;
-        const additionsTotal = additions.reduce((sum, item) => sum + item.amount, 0);
-        const deductionsTotal = deductions.reduce((sum, item) => sum + item.amount, 0);
-        return baseSalary + performance.bonus + additionsTotal - deductionsTotal;
-    };
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const user = await ApiService.getUserProfile();
+                setProfile(user);
+                const data = await ApiService.getSalaryById(user.id, month + 1, year);
+                setSalary(data);
+                setNoteData(parseNote(data?.note));
+            } catch (err) {
+                setError(err.message || 'Không thể tải dữ liệu.');
+                setSalary(null);
+                setNoteData({ lateDays: 0, absentDays: 0, deductions: [] });
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, [month, year]);
 
-    const calculateGrossTotal = () => {
-        const { baseSalary, additions, performance } = employeeSalary.salaryDetails;
-        const additionsTotal = additions.reduce((sum, item) => sum + item.amount, 0);
-        return baseSalary + performance.bonus + additionsTotal;
-    };
+    if (loading) {
+        return (
+            <PageContainer title="Đang tải...">
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+                    <CircularProgress />
+                    <Typography variant="h6" sx={{ ml: 2 }}>
+                        Đang tải dữ liệu phiếu lương...
+                    </Typography>
+                </Box>
+            </PageContainer>
+        );
+    }
 
-    const calculateDeductionsTotal = () => {
-        const { deductions } = employeeSalary.salaryDetails;
-        return deductions.reduce((sum, item) => sum + item.amount, 0);
-    };
+    if (error) {
+        return (
+            <PageContainer title="Lỗi">
+                <Alert severity="error" icon={<IconAlertCircle />}>{error}</Alert>
+            </PageContainer>
+        );
+    }
+
+    const { month: m, year: y, totalSalary, note, numberOfWorkingDays, monthSalary } = salary || {};
+    const calculateGrossTotal = () => salary?.monthSalary || 0;
+    const calculateDeductionsTotal = () => noteData.deductions.reduce((sum, item) => sum + item.amount, 0);
+    const calculateNetTotal = () => salary?.totalSalary || 0;
 
     return (
-        <PageContainer title="Payslip" description="Monthly Salary Details">
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <PageContainer title={`Phiếu lương tháng ${m}/${y}`} description="Chi tiết lương hàng tháng">
+            {/* Filters */}
+            <Box mb={3} display="flex" justifyContent="space-between" flexWrap="wrap" gap={2}>
                 <Typography variant="h4" fontWeight="bold">
-                    Phiếu lương tháng {employeeSalary.salaryDetails.month}/{employeeSalary.salaryDetails.year}
+                    Phiếu lương tháng {m}/{y}
                 </Typography>
-                <Stack direction="row" spacing={2}>
-                    <Button variant="outlined" startIcon={<IconPrinter />}>
-                        In phiếu lương
-                    </Button>
-                    <Button variant="outlined" startIcon={<IconDownload />}>
-                        Tải xuống
-                    </Button>
-                    <Button variant="contained" startIcon={<IconMail />}>
-                        Gửi email
-                    </Button>
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <FormControl size="small">
+                        <InputLabel>Tháng</InputLabel>
+                        <Select value={month} label="Tháng" onChange={e => setMonth(e.target.value)}>
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <MenuItem key={i} value={i}>{i + 1}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small">
+                        <InputLabel>Năm</InputLabel>
+                        <Select value={year} label="Năm" onChange={e => setYear(e.target.value)}>
+                            {Array.from({ length: 10 }, (_, i) => year - 5 + i).map(yOpt => (
+                                <MenuItem key={yOpt} value={yOpt}>{yOpt}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </Stack>
             </Box>
 
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+            <Box mb={3} display="flex" justifyContent="flex-end">
+                <Stack direction="row" spacing={1.5}>
+                    <Button variant="outlined" startIcon={<IconPrinter size={18} />}>In phiếu lương</Button>
+                    <Button variant="outlined" startIcon={<IconDownload size={18} />}>Tải xuống</Button>
+                </Stack>
+            </Box>
+
+            <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
                 <Grid container spacing={3}>
                     {/* Header with company info */}
                     <Grid item xs={12}>
@@ -122,8 +166,8 @@ const Payroll = () => {
                             </Box>
                             <Box sx={{ textAlign: 'right' }}>
                                 <Typography variant="h6" fontWeight="bold" color="primary">PHIẾU LƯƠNG</Typography>
-                                <Typography variant="body2">Kỳ lương: Tháng {employeeSalary.salaryDetails.month}/{employeeSalary.salaryDetails.year}</Typography>
-                                <Typography variant="body2">Mã phiếu: PL{employeeSalary.salaryDetails.month}{employeeSalary.salaryDetails.year}-{employeeSalary.personalInfo.employeeId}</Typography>
+                                <Typography variant="body2">Kỳ lương: Tháng {m}/{y}</Typography>
+                                <Typography variant="body2">Mã phiếu: PL{String(m).padStart(2, '0')}{y}-{profile?.id}</Typography>
                             </Box>
                         </Box>
                         <Divider sx={{ my: 2 }} />
@@ -131,7 +175,7 @@ const Payroll = () => {
 
                     {/* Employee Information */}
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ height: '100%', backgroundColor: theme.palette.background.default }}>
+                        <Card sx={{ height: '100%', backgroundColor: theme.palette?.background?.default }}>
                             <CardContent>
                                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                                     THÔNG TIN NHÂN VIÊN
@@ -139,27 +183,23 @@ const Payroll = () => {
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
                                         <Typography variant="body2" color="text.secondary">Họ và tên:</Typography>
-                                        <Typography variant="body1" fontWeight="medium">{employeeSalary.personalInfo.name}</Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Mã nhân viên:</Typography>
-                                        <Typography variant="body1" fontWeight="medium">{employeeSalary.personalInfo.employeeId}</Typography>
+                                        <Typography variant="body1" fontWeight="medium">{profile?.fullName || 'N/A'}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body2" color="text.secondary">Phòng ban:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.department}</Typography>
+                                        <Typography variant="body1">{profile?.groupName || 'N/A'}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body2" color="text.secondary">Chức vụ:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.position}</Typography>
+                                        <Typography variant="body1">{profile?.roleName || 'N/A'}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Mã số thuế:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.taxCode}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Số tài khoản ngân hàng:</Typography>
+                                        <Typography variant="body1">{profile?.bankNumber || 'N/A'}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Ngày vào công ty:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.joinDate}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Tên ngân hàng:</Typography>
+                                        <Typography variant="body1">{profile?.bankName || 'N/A'}</Typography>
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -168,44 +208,35 @@ const Payroll = () => {
 
                     {/* Working Information */}
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ height: '100%', backgroundColor: theme.palette.background.default }}>
+                        <Card sx={{ height: '100%', backgroundColor: theme.palette?.background?.default }}>
                             <CardContent>
                                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                                     THÔNG TIN CÔNG VIỆC
                                 </Typography>
                                 <Grid container spacing={2}>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Số ngày công chuẩn:</Typography>
-                                        <Typography variant="body1">{employeeSalary.salaryDetails.workingDays.standard} ngày</Typography>
+                                        <Typography variant="body2" color="text.secondary">Số ngày làm:</Typography>
+                                        <Typography variant="body1">{numberOfWorkingDays || 'N/A'} ngày</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Số ngày công thực tế:</Typography>
-                                        <Typography variant="body1">{employeeSalary.salaryDetails.workingDays.actual} ngày</Typography>
+                                        <Typography variant="body2" color="text.secondary">Trạng thái lương:</Typography>
+                                        <Typography variant="body1">{note === 'Tiền lương đang được điều chỉnh' ? 'Điều chỉnh' : 'Ổn định'}</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Số ngày nghỉ phép:</Typography>
-                                        <Typography variant="body1">{employeeSalary.salaryDetails.workingDays.leave} ngày</Typography>
+                                        <Typography variant="body2" color="text.secondary">Số ngày trễ:</Typography>
+                                        <Typography variant="body1">{noteData.lateDays} ngày</Typography>
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Số ngày làm thêm:</Typography>
-                                        <Typography variant="body1">{employeeSalary.salaryDetails.workingDays.overtime} ngày</Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Xếp loại hiệu suất:</Typography>
-                                        <Chip
-                                            label={employeeSalary.salaryDetails.performance.rating}
-                                            color="success"
-                                            size="small"
-                                            sx={{ fontWeight: 'bold' }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">Tài khoản ngân hàng:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.bankAccount}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Số ngày vắng:</Typography>
+                                        <Typography variant="body1">{noteData.absentDays} ngày</Typography>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Typography variant="body2" color="text.secondary">Ngân hàng:</Typography>
-                                        <Typography variant="body1">{employeeSalary.personalInfo.bankName}</Typography>
+                                        <Typography variant="body2" color="text.secondary">Ghi chú:</Typography>
+                                        <Typography variant="body1">{note || 'Không có'}</Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">Khoản khấu trừ:</Typography>
+                                        <Typography variant="body1">{noteData.deductions.length > 0 ? formatCurrency(noteData.deductions[0].amount) : 'Không có'}</Typography>
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -220,48 +251,25 @@ const Payroll = () => {
                         <TableContainer>
                             <Table sx={{ minWidth: 650 }}>
                                 <TableHead>
-                                    <TableRow sx={{ backgroundColor: theme.palette.primary.light + '20' }}>
+                                    <TableRow sx={{ backgroundColor: theme.palette?.primary?.light + '20' }}>
                                         <TableCell width="60%"><Typography fontWeight="bold">Khoản mục</Typography></TableCell>
                                         <TableCell align="right"><Typography fontWeight="bold">Số tiền (VNĐ)</Typography></TableCell>
                                         <TableCell align="right"><Typography fontWeight="bold">Ghi chú</Typography></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {/* I. Income section */}
-                                    <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                                    {/* Income section */}
+                                    <TableRow sx={{ backgroundColor: theme.palette?.background?.default }}>
                                         <TableCell colSpan={3}>
                                             <Typography fontWeight="bold">I. TỔNG THU NHẬP</Typography>
                                         </TableCell>
                                     </TableRow>
                                     <TableRow>
                                         <TableCell>1. Lương cơ bản</TableCell>
-                                        <TableCell align="right">{formatCurrency(employeeSalary.salaryDetails.baseSalary)}</TableCell>
-                                        <TableCell align="right">
-                                            {employeeSalary.salaryDetails.workingDays.actual}/{employeeSalary.salaryDetails.workingDays.standard} ngày
-                                        </TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>2. Thưởng hiệu suất</TableCell>
-                                        <TableCell align="right">{formatCurrency(employeeSalary.salaryDetails.performance.bonus)}</TableCell>
-                                        <TableCell align="right">Xếp loại {employeeSalary.salaryDetails.performance.rating}</TableCell>
-                                    </TableRow>
-
-                                    {/* Additions */}
-                                    <TableRow>
-                                        <TableCell>3. Các khoản phụ cấp</TableCell>
-                                        <TableCell align="right"></TableCell>
+                                        <TableCell align="right">{formatCurrency(monthSalary)}</TableCell>
                                         <TableCell align="right"></TableCell>
                                     </TableRow>
-                                    {employeeSalary.salaryDetails.additions.map((item, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell sx={{ pl: 4 }}>{item.title}</TableCell>
-                                            <TableCell align="right">{formatCurrency(item.amount)}</TableCell>
-                                            <TableCell align="right"></TableCell>
-                                        </TableRow>
-                                    ))}
-
-                                    {/* Gross total */}
-                                    <TableRow sx={{ backgroundColor: theme.palette.success.light + '20' }}>
+                                    <TableRow sx={{ backgroundColor: theme.palette?.success?.light + '20' }}>
                                         <TableCell><Typography fontWeight="bold">TỔNG THU NHẬP (GROSS)</Typography></TableCell>
                                         <TableCell align="right">
                                             <Typography fontWeight="bold">{formatCurrency(calculateGrossTotal())}</Typography>
@@ -269,24 +277,28 @@ const Payroll = () => {
                                         <TableCell align="right"></TableCell>
                                     </TableRow>
 
-                                    {/* II. Deductions section */}
-                                    <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                                    {/* Deductions section */}
+                                    <TableRow sx={{ backgroundColor: theme.palette?.background?.default }}>
                                         <TableCell colSpan={3}>
                                             <Typography fontWeight="bold">II. CÁC KHOẢN KHẤU TRỪ</Typography>
                                         </TableCell>
                                     </TableRow>
-
-                                    {/* Deductions */}
-                                    {employeeSalary.salaryDetails.deductions.map((item, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>{index + 1}. {item.title}</TableCell>
-                                            <TableCell align="right">- {formatCurrency(item.amount)}</TableCell>
+                                    {noteData.deductions.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell>Không có khấu trừ</TableCell>
+                                            <TableCell align="right">0</TableCell>
                                             <TableCell align="right"></TableCell>
                                         </TableRow>
-                                    ))}
-
-                                    {/* Deductions total */}
-                                    <TableRow sx={{ backgroundColor: theme.palette.error.light + '20' }}>
+                                    ) : (
+                                        noteData.deductions.map((item, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{index + 1}. {item.title}</TableCell>
+                                                <TableCell align="right">- {formatCurrency(item.amount)}</TableCell>
+                                                <TableCell align="right">Trễ: {noteData.lateDays}, Vắng: {noteData.absentDays}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                    <TableRow sx={{ backgroundColor: theme.palette?.error?.light + '20' }}>
                                         <TableCell><Typography fontWeight="bold">TỔNG KHẤU TRỪ</Typography></TableCell>
                                         <TableCell align="right">
                                             <Typography fontWeight="bold">- {formatCurrency(calculateDeductionsTotal())}</Typography>
@@ -295,13 +307,13 @@ const Payroll = () => {
                                     </TableRow>
 
                                     {/* Net Salary */}
-                                    <TableRow sx={{ backgroundColor: theme.palette.primary.light + '30' }}>
+                                    <TableRow sx={{ backgroundColor: theme.palette?.primary?.light + '30' }}>
                                         <TableCell>
                                             <Typography variant="h6" fontWeight="bold">LƯƠNG THỰC LÃNH (NET)</Typography>
                                         </TableCell>
                                         <TableCell align="right">
                                             <Typography variant="h6" fontWeight="bold" color="primary.main">
-                                                {formatCurrency(calculateTotal())}
+                                                {formatCurrency(calculateNetTotal())}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="right"></TableCell>
@@ -309,30 +321,6 @@ const Payroll = () => {
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                    </Grid>
-
-                    {/* Signature section */}
-                    <Grid item xs={12}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, pt: 2 }}>
-                            <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                <Typography fontWeight="medium">NGƯỜI LẬP BẢNG</Typography>
-                                <Typography variant="body2" color="text.secondary">(Ký, họ tên)</Typography>
-                                <Box sx={{ height: 80 }}></Box>
-                                <Typography>Nguyễn Thị B</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                <Typography fontWeight="medium">KẾ TOÁN TRƯỞNG</Typography>
-                                <Typography variant="body2" color="text.secondary">(Ký, họ tên)</Typography>
-                                <Box sx={{ height: 80 }}></Box>
-                                <Typography>Trần Văn C</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center', width: '30%' }}>
-                                <Typography fontWeight="medium">GIÁM ĐỐC</Typography>
-                                <Typography variant="body2" color="text.secondary">(Ký, họ tên, đóng dấu)</Typography>
-                                <Box sx={{ height: 80 }}></Box>
-                                <Typography>Lê Thị D</Typography>
-                            </Box>
-                        </Box>
                     </Grid>
                 </Grid>
             </Paper>

@@ -1,3 +1,4 @@
+// src/views/authentication/auth/AuthLogin.jsx
 import React, { useState } from 'react';
 import {
     Box,
@@ -11,12 +12,13 @@ import {
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
-
+import { useUser } from '../../../contexts/UserContext'; // Thêm useUser
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import ApiService from '../../../service/ApiService';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
     const navigate = useNavigate();
+    const { login } = useUser(); // Lấy login từ UserContext
 
     const [loginData, setLoginData] = useState({
         email: '',
@@ -25,7 +27,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setLoginData({
@@ -45,24 +47,18 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
         try {
             const loginPayload = {
-                email: loginData.email,
-                passwordHash: loginData.password
+                Email: loginData.email,
+                PasswordHash: loginData.password
             };
 
             console.log('Attempting to login with payload:', loginPayload);
             console.log('API Endpoint:', ApiService.BASE_URL);
 
-            const res = await ApiService.loginUser(loginPayload);
+            // Gọi login từ UserContext thay vì ApiService trực tiếp
+            await login(loginData.email, loginData.password);
 
-            if (!res || res.statusCode === 401) {
-                throw new Error(res.message || 'Empty response from server');
-            }
-
-            console.log('Login response:', res);
-            localStorage.setItem('token', res.token);
-            localStorage.setItem('role', res.role);
-
-            navigate('/'); // Redirect to home page on successful login
+            console.log('Login successful, navigating to /home');
+            navigate('/home'); // Điều hướng tới /home
         } catch (err) {
             console.error('Login error details:', {
                 message: err.message,
@@ -128,12 +124,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                         />
                     </Box>
                     <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-                        {/* <FormGroup>
-                            <FormControlLabel
-                                control={<Checkbox defaultChecked />}
-                                label="Ghi nhớ lịch sử đăng nhập"
-                            />
-                        </FormGroup> */}
                         <Typography
                             component={Link}
                             to="/forgot-password"

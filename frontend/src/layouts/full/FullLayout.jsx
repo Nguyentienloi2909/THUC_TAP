@@ -1,7 +1,8 @@
+// src/layouts/FullLayout.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { styled, Container, Box, Typography, Link, useTheme } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
-
+import { useUser } from "../../contexts/UserContext";
 import Header from "./header/Header";
 import Sidebar from "./sidebar/Sidebar";
 
@@ -16,7 +17,7 @@ const PageWrapper = styled("div")(({ theme }) => ({
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
-  backgroundColor: theme.palette.background.default, // Sử dụng màu nền từ theme
+  backgroundColor: theme.palette.background.default,
   width: "100%",
   overflow: "hidden",
 }));
@@ -27,17 +28,17 @@ const ContentBox = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   minHeight: "calc(100vh - 64px)",
   width: "100%",
-  backgroundColor: theme.palette.background.paper, // Đảm bảo nền nội dung theo theme
+  backgroundColor: theme.palette.background.paper,
 }));
 
 const FullLayout = () => {
+  const { user, logout } = useUser();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const mediaPlayPromiseRef = useRef({});
-  const theme = useTheme(); // Lấy theme hiện tại
+  const theme = useTheme();
 
-  // Giữ nguyên logic useEffect cho media cleanup
   useEffect(() => {
     const handleBeforeUnload = () => {
       const mediaElements = document.querySelectorAll('audio, video');
@@ -108,6 +109,7 @@ const FullLayout = () => {
         isSidebarOpen={isSidebarOpen}
         isMobileSidebarOpen={isMobileSidebarOpen}
         onSidebarClose={() => setMobileSidebarOpen(false)}
+        userRole={user.role} // Truyền role để hiển thị menu phù hợp
       />
 
       {/* Main Wrapper */}
@@ -116,6 +118,8 @@ const FullLayout = () => {
         <Header
           toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           toggleMobileSidebar={() => setMobileSidebarOpen(true)}
+          user={user}
+          logout={logout}
         />
 
         {/* PageContent */}
@@ -128,10 +132,9 @@ const FullLayout = () => {
               flexGrow: 1,
               display: "flex",
               flexDirection: "column",
-              backgroundColor: theme.palette.background.paper, // Đồng bộ nền Container
+              backgroundColor: theme.palette.background.paper,
             }}
           >
-            {/* Page Route */}
             <Box sx={{ flexGrow: 1 }}>
               <Outlet />
             </Box>
@@ -145,12 +148,12 @@ const FullLayout = () => {
               display: "flex",
               justifyContent: "center",
               width: "100%",
-              borderTop: `1px solid ${theme.palette.divider}`, // Sử dụng divider từ theme
-              backgroundColor: theme.palette.background.paper, // Nền footer theo theme
+              borderTop: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              © 2025 Company Name
+              © 2025 LD Technogry Company
             </Typography>
           </Box>
         </ContentBox>
