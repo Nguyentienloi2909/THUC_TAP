@@ -51,7 +51,6 @@ const baselightTheme = createTheme({
       400: '#7C8FAC',
       500: '#5A6A85',
       600: '#2A3547',
-
     },
     text: {
       primary: '#2A3547',
@@ -66,9 +65,7 @@ const baselightTheme = createTheme({
   },
   typography,
   shadows
-},
-
-);
+});
 
 const basedarkTheme = createTheme({
   direction: 'ltr',
@@ -78,37 +75,31 @@ const basedarkTheme = createTheme({
       main: '#7C9EFF',
       light: '#9DB5FF',
       dark: '#5D87FF',
-      contrastText: '#FFFFFF',
     },
     secondary: {
       main: '#69CAFF',
       light: '#8CD5FF',
       dark: '#49BEFF',
-      contrastText: '#FFFFFF',
     },
     success: {
       main: '#4DEBB0',
       light: '#7AEFCA',
       dark: '#13DEB9',
-      contrastText: '#ffffff',
     },
     info: {
       main: '#74AEFF',
       light: '#99C5FF',
       dark: '#539BFF',
-      contrastText: '#ffffff',
     },
     error: {
       main: '#FF9E85',
       light: '#FFB8A7',
       dark: '#FA896B',
-      contrastText: '#ffffff',
     },
     warning: {
       main: '#FFBE4D',
       light: '#FFD07F',
       dark: '#FFAE1F',
-      contrastText: '#ffffff',
     },
     purple: {
       A50: '#484B61',
@@ -116,43 +107,39 @@ const basedarkTheme = createTheme({
       A200: '#7599CC',
     },
     grey: {
-      50: '#484B61',
-      100: '#4F5267',
-      200: '#575A70',
-      300: '#666980',
-      400: '#9FAABE',
-      500: '#CBD3E0',
-      600: '#F0F4F8',
-      A100: '#4F5267',
-      A200: '#575A70',
-      A400: '#9FAABE',
-      A700: '#F0F4F8',
+      50: '#212121',
+      100: '#424242',
+      200: '#616161',
+      300: '#757575',
+      400: '#9E9E9E',
+      500: '#BDBDBD',
+      600: '#E0E0E0',
     },
     text: {
-      primary: '#F0F4F8',
-      secondary: '#CBD3E0',
-      disabled: '#9FAABE',
+      primary: '#FFFFFF',
+      secondary: '#BDBDBD',
+      disabled: '#757575',
     },
     action: {
-      active: '#F0F4F8',
-      hover: 'rgba(240, 244, 248, 0.08)',
-      selected: 'rgba(240, 244, 248, 0.16)',
-      disabled: 'rgba(240, 244, 248, 0.3)',
-      disabledBackground: 'rgba(240, 244, 248, 0.12)',
-      focus: 'rgba(240, 244, 248, 0.12)',
+      active: '#FFFFFF',
+      hover: 'rgba(255, 255, 255, 0.08)',
+      selected: 'rgba(255, 255, 255, 0.16)',
+      disabled: 'rgba(255, 255, 255, 0.3)',
+      disabledBackground: 'rgba(255, 255, 255, 0.12)',
+      focus: 'rgba(255, 255, 255, 0.12)',
     },
     background: {
-      default: '#333747',
-      dark: '#2D3142',
-      paper: '#3A3E4F',
+      default: '#121212',
+      dark: '#0A0A0A',
+      paper: '#1E1E1E',
     },
-    divider: 'rgba(240, 244, 248, 0.12)',
+    divider: 'rgba(255, 255, 255, 0.12)',
   },
   components: {
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderColor: 'rgba(240, 244, 248, 0.12)',
+          borderColor: 'rgba(255, 255, 255, 0.12)',
         },
       },
     },
@@ -160,10 +147,10 @@ const basedarkTheme = createTheme({
       styleOverrides: {
         root: {
           '&:nth-of-type(odd)': {
-            backgroundColor: 'rgba(240, 244, 248, 0.03)',
+            backgroundColor: 'rgba(255, 255, 255, 0.03)',
           },
           '&:hover': {
-            backgroundColor: 'rgba(240, 244, 248, 0.08) !important',
+            backgroundColor: 'rgba(255, 255, 255, 0.08) !important',
           },
         },
       },
@@ -172,5 +159,4 @@ const basedarkTheme = createTheme({
   typography,
   shadows
 });
-
 export { baselightTheme, basedarkTheme };

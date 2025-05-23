@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
@@ -16,28 +17,18 @@ namespace MyProject.Service.impl
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly ApplicationDbContext _dbContext;
         private readonly IEmailService _emailService;
-        private readonly IUserService _userService;
 
-        public NotificationService(IHubContext<NotificationHub> hubContext, ApplicationDbContext dbContext, IUserService userService, IEmailService emailService)
+        public NotificationService(IHubContext<NotificationHub> hubContext, ApplicationDbContext dbContext, IEmailService emailService)
         {
             _hubContext = hubContext;
             _dbContext = dbContext;
-            _userService = userService;
             _emailService = emailService;
         }
 
         public async Task<NotificationDto> SendNotificationAsync([FromBody] NotificationDto request)
         {
             //1.Lưu vào database
-            var notification = new Entity.Notification
-            {
-                Title = request.Title,
-                Description = request.Description,
-                SentAt = DateTime.Now,
-                SenderId = request.SenderId,
-                Display = true
-
-            };
+            var notification = Mappers.MapperToEntity.ToEntity(request);
             _dbContext.Notifications.Add(notification);
             await _dbContext.SaveChangesAsync();
 
@@ -50,19 +41,9 @@ namespace MyProject.Service.impl
             }
             await _hubContext.Clients.All.SendAsync("ReceiveNotification", message);
 
-            // 3. Gửi email đến tất cả người dùng
-            var allUsers = await _userService.GetAllUser();
+            //3. Gửi email qua background job
+            BackgroundJob.Enqueue<IEmailService>(job => job.SendNotificationToAllUsersAsync(notification.Id));
 
-            var emailTasks = allUsers.Select(user =>
-                _emailService.SendEmailAsync(new EmailRequest
-                {
-                    To = user.Email,
-                    Subject = $"📢 {notification.Title}",
-                    Description = notification.Description
-                })
-            );
-
-            await Task.WhenAll(emailTasks);
             return message;
         }
 

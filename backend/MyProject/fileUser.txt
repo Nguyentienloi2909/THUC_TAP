@@ -1,6 +1,3 @@
-
-UserId: 1; Email: 21t1020485@husc.edu.vn; Password: e1Vgr6PogF; fullName: admin
-UserId: 2; Email: 21t1020880@husc.edu.vn; Password: cbw55fIqdA; fullName: user
-UserId: 3; Email: mddat4203@gmail.com; Password: qPFXYdat2h; fullName: leader
-UserId: 4; Email: tdhuy@gmail.com; Password: jlCqH9Ooxk; fullName: Trần Dụng Huy
-UserId: 5; Email: lvnam@gmail.com; Password: 2rLLiNaRdT; fullName: Lê Văn Nam
+UserId: 1; Email: mddat4203@gmail.com; Password: Wt0UFtwELr; fullName: Mai Đức Đạt
+UserId: 2; Email: 21t1020880@husc.edu.vn; Password: CqPD2TZ2CG; fullName: Lê Văn Nam
+UserId: 3; Email: 21t1020485@husc.edu.vn; Password: 1zuzEVf20F; fullName: Nguyễn Tiến Lợi

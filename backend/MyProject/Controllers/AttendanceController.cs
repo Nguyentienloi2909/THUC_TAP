@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MyProject.Dto;
 using MyProject.Service.interfac;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -56,7 +57,19 @@ namespace MyProject.Controllers
             }
         }
 
+        [HttpGet("attendanceAll")]
+        public async Task<ActionResult<List<AttendanceDto>>> GetAllAttendancesInMonth([FromQuery] int month, [FromQuery] int year)
+        {
+            if (month < 1 || month > 12)
+                return BadRequest("Month must be between 1 and 12.");
 
+            if (year < 2000 || year > 2100)
+                return BadRequest("Year is out of valid range.");
+
+            var result = await _attendanceService.GetAllAttendancesInMonthAsync(month, year);
+
+            return Ok(result);
+        }
 
         // Check-in
         [HttpPost("checkin")]

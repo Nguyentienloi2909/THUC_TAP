@@ -17,7 +17,8 @@ namespace MyProject.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    DepartmentName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    DepartmentName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -25,18 +26,16 @@ namespace MyProject.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Notifications",
+                name: "GroupChats",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.PrimaryKey("PK_GroupChats", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -45,7 +44,8 @@ namespace MyProject.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    RoleName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,7 +59,8 @@ namespace MyProject.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     GroupName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DepartmentId = table.Column<int>(type: "int", nullable: true)
+                    DepartmentId = table.Column<int>(type: "int", nullable: true),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -137,20 +138,50 @@ namespace MyProject.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupChatMembers",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    GroupChatId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupChatMembers", x => new { x.UserId, x.GroupChatId });
+                    table.ForeignKey(
+                        name: "FK_GroupChatMembers_GroupChats_GroupChatId",
+                        column: x => x.GroupChatId,
+                        principalTable: "GroupChats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupChatMembers_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Messages",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UrlContent = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SenderId = table.Column<int>(type: "int", nullable: true),
-                    ReceiverId = table.Column<int>(type: "int", nullable: true)
+                    ReceiverId = table.Column<int>(type: "int", nullable: true),
+                    GroupChatId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_GroupChats_GroupChatId",
+                        column: x => x.GroupChatId,
+                        principalTable: "GroupChats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Messages_Users_ReceiverId",
                         column: x => x.ReceiverId,
@@ -159,6 +190,29 @@ namespace MyProject.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Messages_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Display = table.Column<bool>(type: "bit", nullable: false),
+                    SenderId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_Users_SenderId",
                         column: x => x.SenderId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -177,7 +231,8 @@ namespace MyProject.Migrations
                     MonthSalary = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     TotalSalary = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: true)
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -202,7 +257,9 @@ namespace MyProject.Migrations
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    AssignedToId = table.Column<int>(type: "int", nullable: true)
+                    SenderId = table.Column<int>(type: "int", nullable: true),
+                    AssignedToId = table.Column<int>(type: "int", nullable: true),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -213,6 +270,37 @@ namespace MyProject.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_TaskItems_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StatusNotifications",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    NotificationId = table.Column<int>(type: "int", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StatusNotifications", x => new { x.UserId, x.NotificationId });
+                    table.ForeignKey(
+                        name: "FK_StatusNotifications_Notifications_NotificationId",
+                        column: x => x.NotificationId,
+                        principalTable: "Notifications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StatusNotifications_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -225,7 +313,8 @@ namespace MyProject.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TaskId = table.Column<int>(type: "int", nullable: true),
                     ParentId = table.Column<int>(type: "int", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: true)
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    Display = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -271,9 +360,19 @@ namespace MyProject.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GroupChatMembers_GroupChatId",
+                table: "GroupChatMembers",
+                column: "GroupChatId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Groups_DepartmentId",
                 table: "Groups",
                 column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_GroupChatId",
+                table: "Messages",
+                column: "GroupChatId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Messages_ReceiverId",
@@ -286,14 +385,29 @@ namespace MyProject.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notifications_SenderId",
+                table: "Notifications",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Salaries_UserId",
                 table: "Salaries",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StatusNotifications_NotificationId",
+                table: "StatusNotifications",
+                column: "NotificationId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TaskItems_AssignedToId",
                 table: "TaskItems",
                 column: "AssignedToId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TaskItems_SenderId",
+                table: "TaskItems",
+                column: "SenderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_GroupId",
@@ -316,16 +430,25 @@ namespace MyProject.Migrations
                 name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "Messages");
+                name: "GroupChatMembers");
 
             migrationBuilder.DropTable(
-                name: "Notifications");
+                name: "Messages");
 
             migrationBuilder.DropTable(
                 name: "Salaries");
 
             migrationBuilder.DropTable(
+                name: "StatusNotifications");
+
+            migrationBuilder.DropTable(
                 name: "TaskItems");
+
+            migrationBuilder.DropTable(
+                name: "GroupChats");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "Users");

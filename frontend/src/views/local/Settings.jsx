@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
     Grid,
     Card,
@@ -18,6 +18,7 @@ import {
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
+import { ThemeContext } from '../../contexts/ThemeContext'; // Import ThemeContext
 
 const Settings = () => {
     const [settings, setSettings] = useState({
@@ -31,6 +32,8 @@ const Settings = () => {
         language: 'vi',
         autoCheckout: false
     });
+
+    const { themeMode, toggleTheme } = useContext(ThemeContext); // Use ThemeContext
 
     const handleChange = (e) => {
         const { name, value, checked, type } = e.target;
@@ -137,23 +140,13 @@ const Settings = () => {
                             <FormControlLabel
                                 control={
                                     <Switch
-                                        checked={settings.emailNotifications}
-                                        onChange={handleChange}
-                                        name="emailNotifications"
+                                        checked={themeMode === 'dark'}
+                                        onChange={toggleTheme}
+                                        name="themeToggle"
                                     />
                                 }
-                                label="Thông báo lương thưởng qua email"
+                                label="Chế độ tối"
                             />
-                            {/* <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={settings.autoCheckout}
-                                        onChange={handleChange}
-                                        name="autoCheckout"
-                                    />
-                                }
-                                label="Tự động checkout"
-                            /> */}
                         </CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                             <Button

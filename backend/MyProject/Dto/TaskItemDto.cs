@@ -1,4 +1,6 @@
-﻿namespace MyProject.Dto
+﻿using MyProject.Entity;
+
+namespace MyProject.Dto
 {
     public class TaskItemDto
     {
@@ -10,6 +12,8 @@
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public string? Status { get; set; } = "Pending";
+        public int? SenderId { get; set; } // New property for the sender
+        public string? SenderName { get; set; }
 
         public int? AssignedToId { get; set; }
         public string? AssignedToName { get; set; }

@@ -30,7 +30,8 @@ namespace MyProject.Mappers
 
                 Attendances = user.Attendances.Select(a => a.ToDto()).ToList(),
                 Salaries = user.Salaries.Select(s => s.ToDto()).ToList(),
-                Tasks = user.Tasks.Select(t => t.ToDto()).ToList(),
+                AssignedTasks = user.AssignedTasks.Select(t => t.ToDto()).ToList(),
+                SentTasks = user.SentTasks.Select(t => t.ToDto()).ToList(),
                 SentMessages = user.SentMessages.Select(m => m.ToDto()).ToList(),
                 ReceivedMessages = user.ReceivedMessages.Select(m => m.ToDto()).ToList()
             };
@@ -86,6 +87,8 @@ namespace MyProject.Mappers
                 StartTime = task.StartTime,
                 EndTime = task.EndTime,
                 Status = task.Status.ToString(),
+                SenderId = task.SenderId,
+                SenderName = task.Sender?.FullName,
                 AssignedToId = task.AssignedToId,
                 AssignedToName = task.AssignedTo?.FullName
             };

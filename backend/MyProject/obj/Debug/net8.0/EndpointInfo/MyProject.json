@@ -35,6 +35,62 @@
         }
       }
     },
+    "/api/Attendance/attendanceAll": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Attendance/checkin": {
       "post": {
         "tags": [
@@ -387,7 +443,13 @@
                       "$ref": "#/components/schemas/SalaryDto"
                     }
                   },
-                  "Tasks": {
+                  "AssignedTasks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TaskItemDto"
+                    }
+                  },
+                  "SentTasks": {
                     "type": "array",
                     "items": {
                       "$ref": "#/components/schemas/TaskItemDto"
@@ -468,7 +530,10 @@
                 "Salaries": {
                   "style": "form"
                 },
-                "Tasks": {
+                "AssignedTasks": {
+                  "style": "form"
+                },
+                "SentTasks": {
                   "style": "form"
                 },
                 "SentMessages": {
@@ -823,10 +888,166 @@
         }
       }
     },
-    "/api/Message/chatGroups": {
+    "/api/GroupChat": {
       "get": {
         "tags": [
-          "Message"
+          "GroupChat"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "GroupChat"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupChatRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupChatRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GroupChat/{id}": {
+      "put": {
+        "tags": [
+          "GroupChat"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupChat"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupChat"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupChat"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "GroupChat"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GroupChat/{groupChatId}/add-user/{userId}": {
+      "post": {
+        "tags": [
+          "GroupChat"
+        ],
+        "parameters": [
+          {
+            "name": "groupChatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GroupChat/{groupChatId}/remove-user/{userId}": {
+      "delete": {
+        "tags": [
+          "GroupChat"
+        ],
+        "parameters": [
+          {
+            "name": "groupChatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -866,6 +1087,69 @@
         "parameters": [
           {
             "name": "otherUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Message/{id}": {
+      "put": {
+        "tags": [
+          "Message"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Message"
+        ],
+        "parameters": [
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -1430,6 +1714,13 @@
                   "Status": {
                     "type": "string"
                   },
+                  "SenderId": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "SenderName": {
+                    "type": "string"
+                  },
                   "AssignedToId": {
                     "type": "integer",
                     "format": "int32"
@@ -1462,6 +1753,12 @@
                   "style": "form"
                 },
                 "Status": {
+                  "style": "form"
+                },
+                "SenderId": {
+                  "style": "form"
+                },
+                "SenderName": {
                   "style": "form"
                 },
                 "AssignedToId": {
@@ -1531,6 +1828,13 @@
                   "Status": {
                     "type": "string"
                   },
+                  "SenderId": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "SenderName": {
+                    "type": "string"
+                  },
                   "AssignedToId": {
                     "type": "integer",
                     "format": "int32"
@@ -1563,6 +1867,12 @@
                   "style": "form"
                 },
                 "Status": {
+                  "style": "form"
+                },
+                "SenderId": {
+                  "style": "form"
+                },
+                "SenderName": {
                   "style": "form"
                 },
                 "AssignedToId": {
@@ -1787,7 +2097,13 @@
                       "$ref": "#/components/schemas/SalaryDto"
                     }
                   },
-                  "Tasks": {
+                  "AssignedTasks": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TaskItemDto"
+                    }
+                  },
+                  "SentTasks": {
                     "type": "array",
                     "items": {
                       "$ref": "#/components/schemas/TaskItemDto"
@@ -1868,7 +2184,10 @@
                 "Salaries": {
                   "style": "form"
                 },
-                "Tasks": {
+                "AssignedTasks": {
+                  "style": "form"
+                },
+                "SentTasks": {
                   "style": "form"
                 },
                 "SentMessages": {
@@ -1955,6 +2274,50 @@
   },
   "components": {
     "schemas": {
+      "Attendance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workday": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "overtime": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAttendance"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "additionalProperties": false
+      },
       "AttendanceDto": {
         "type": "object",
         "properties": {
@@ -2044,6 +2407,48 @@
         },
         "additionalProperties": false
       },
+      "CreateGroupChatRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Department": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            },
+            "nullable": true
+          },
+          "display": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "DepartmentDto": {
         "type": "object",
         "properties": {
@@ -2083,6 +2488,86 @@
           "attachmentUrl": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "departmentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "department": {
+            "$ref": "#/components/schemas/Department"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            },
+            "nullable": true
+          },
+          "display": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GroupChat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupChatMember"
+            },
+            "nullable": true
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GroupChatMember": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "groupChatId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groupChat": {
+            "$ref": "#/components/schemas/GroupChat"
           }
         },
         "additionalProperties": false
@@ -2134,6 +2619,48 @@
         },
         "additionalProperties": false
       },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "string",
+            "nullable": true
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "senderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sender": {
+            "$ref": "#/components/schemas/User"
+          },
+          "receiverId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/User"
+          },
+          "groupChatId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "groupChat": {
+            "$ref": "#/components/schemas/GroupChat"
+          }
+        },
+        "additionalProperties": false
+      },
       "MessageDto": {
         "type": "object",
         "properties": {
@@ -2179,6 +2706,46 @@
         },
         "additionalProperties": false
       },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "display": {
+            "type": "boolean"
+          },
+          "senderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sender": {
+            "$ref": "#/components/schemas/User"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusNotification"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "NotificationDto": {
         "type": "object",
         "properties": {
@@ -2215,6 +2782,30 @@
         },
         "additionalProperties": false
       },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            },
+            "nullable": true
+          },
+          "display": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "RoleDto": {
         "type": "object",
         "properties": {
@@ -2232,6 +2823,56 @@
               "$ref": "#/components/schemas/UserDto"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Salary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "numberOfWorkingDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "monthSalary": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalSalary": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "display": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -2282,6 +2923,111 @@
         },
         "additionalProperties": false
       },
+      "StatusAttendance": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "StatusNotification": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "notificationId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/Notification"
+          },
+          "isRead": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatusTask": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "StatusUser": {
+        "enum": [
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TaskItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "urlFile": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusTask"
+          },
+          "senderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sender": {
+            "$ref": "#/components/schemas/User"
+          },
+          "assignedToId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "assignedTo": {
+            "$ref": "#/components/schemas/User"
+          },
+          "display": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "TaskItemDto": {
         "type": "object",
         "properties": {
@@ -2321,6 +3067,15 @@
             "type": "string",
             "nullable": true
           },
+          "senderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true
+          },
           "assignedToId": {
             "type": "integer",
             "format": "int32",
@@ -2328,6 +3083,152 @@
           },
           "assignedToName": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "User": {
+        "required": [
+          "email",
+          "passwordHash"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "passwordHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "gender": {
+            "type": "boolean"
+          },
+          "birthdate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "bankNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusUser"
+          },
+          "monthSalary": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "roleId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "groupId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "group": {
+            "$ref": "#/components/schemas/Group"
+          },
+          "assignedTasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "nullable": true
+          },
+          "sentTasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "nullable": true
+          },
+          "attendances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attendance"
+            },
+            "nullable": true
+          },
+          "salaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Salary"
+            },
+            "nullable": true
+          },
+          "sentMessages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "nullable": true
+          },
+          "receivedMessages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "nullable": true
+          },
+          "groupChatMemberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupChatMember"
+            },
+            "nullable": true
+          },
+          "sentNotifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "nullable": true
+          },
+          "notificationStatuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusNotification"
+            },
             "nullable": true
           }
         },
@@ -2429,7 +3330,14 @@
             },
             "nullable": true
           },
-          "tasks": {
+          "assignedTasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskItemDto"
+            },
+            "nullable": true
+          },
+          "sentTasks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskItemDto"

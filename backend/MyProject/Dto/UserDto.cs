@@ -24,7 +24,8 @@
         public string? GroupName { get; set; }
         public ICollection<AttendanceDto> Attendances { get; set; } = new List<AttendanceDto>();
         public ICollection<SalaryDto> Salaries { get; set; } = new List<SalaryDto>();
-        public ICollection<TaskItemDto> Tasks { get; set; } = new List<TaskItemDto>();
+        public ICollection<TaskItemDto> AssignedTasks { get; set; } = new List<TaskItemDto>();
+        public ICollection<TaskItemDto> SentTasks { get; set; } = new List<TaskItemDto>();
         public ICollection<MessageDto> SentMessages { get; set; } = new List<MessageDto>();
         public ICollection<MessageDto> ReceivedMessages { get; set; } = new List<MessageDto>();
     }

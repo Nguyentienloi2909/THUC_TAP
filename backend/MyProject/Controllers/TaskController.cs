@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MyProject.Dto;
 using MyProject.Service.interfac;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace MyProject.Controllers
 {
@@ -11,10 +12,11 @@ namespace MyProject.Controllers
     public class TaskController : ControllerBase
     {
         private readonly ITaskService _taskService;
-
-        public TaskController(ITaskService taskService)
+        private readonly IUserService _userService;
+        public TaskController(ITaskService taskService, IUserService userService)
         {
             _taskService = taskService;
+            _userService = userService;
         }
 
         [HttpPost]
@@ -23,6 +25,10 @@ namespace MyProject.Controllers
         {
             try
             {
+                var email = GetUsernameFromToken();
+                var user = await _userService.GetMyInfo(email);
+                request.SenderId = user.Id;
+
                 var result = await _taskService.AddTask(request);
                 if (!result.IsSuccess)
                     return BadRequest(result.ErrorMessage);
@@ -112,6 +118,16 @@ namespace MyProject.Controllers
             {
                 return StatusCode(500, $"Error retrieving tasks for user: {ex.Message}");
             }
+        }
+
+        private string? GetUsernameFromToken()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token)) return null;
+
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            return jsonToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
         }
     }
 }

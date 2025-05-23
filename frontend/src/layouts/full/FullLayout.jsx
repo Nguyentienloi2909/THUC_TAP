@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { styled, Container, Box, Typography, Link } from "@mui/material";
+import { styled, Container, Box, Typography, Link, useTheme } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
 
 import Header from "./header/Header";
@@ -16,17 +16,18 @@ const PageWrapper = styled("div")(({ theme }) => ({
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
-  backgroundColor: "#f0f2f5", // Changed from theme.palette.background.default to #f0f2f5
-  width: "100%", // Ensure it takes full width
-  overflow: "hidden", // Prevent any overflow issues
+  backgroundColor: theme.palette.background.default, // Sử dụng màu nền từ theme
+  width: "100%",
+  overflow: "hidden",
 }));
 
 const ContentBox = styled(Box)(({ theme }) => ({
   flexGrow: 1,
   display: "flex",
   flexDirection: "column",
-  minHeight: "calc(100vh - 64px)", // Account for header height
+  minHeight: "calc(100vh - 64px)",
   width: "100%",
+  backgroundColor: theme.palette.background.paper, // Đảm bảo nền nội dung theo theme
 }));
 
 const FullLayout = () => {
@@ -34,8 +35,9 @@ const FullLayout = () => {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const mediaPlayPromiseRef = useRef({});
+  const theme = useTheme(); // Lấy theme hiện tại
 
-  // Enhanced cleanup for media elements to prevent AbortError
+  // Giữ nguyên logic useEffect cho media cleanup
   useEffect(() => {
     const handleBeforeUnload = () => {
       const mediaElements = document.querySelectorAll('audio, video');
@@ -50,16 +52,12 @@ const FullLayout = () => {
       });
     };
 
-    // Add event listener for page navigation
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Cleanup function for route changes
     const cleanup = () => {
       const mediaElements = document.querySelectorAll('audio, video');
       mediaElements.forEach(media => {
         const mediaId = media.id || Math.random().toString(36);
-
-        // If there's a pending play promise, handle it properly
         if (mediaPlayPromiseRef.current[mediaId]) {
           mediaPlayPromiseRef.current[mediaId]
             .then(() => {
@@ -76,25 +74,18 @@ const FullLayout = () => {
       });
     };
 
-    // Run cleanup when location changes
     cleanup();
-
     return () => {
       cleanup();
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [location.pathname]);
 
-  // Add global handler for play events to track promises
   useEffect(() => {
     const handlePlay = (event) => {
       const media = event.target;
       const mediaId = media.id || Math.random().toString(36);
-
-      // Store the play promise to handle it properly later
       mediaPlayPromiseRef.current[mediaId] = media.play();
-
-      // Clean up the reference when the promise resolves or rejects
       mediaPlayPromiseRef.current[mediaId]
         .then(() => {
           delete mediaPlayPromiseRef.current[mediaId];
@@ -104,9 +95,7 @@ const FullLayout = () => {
         });
     };
 
-    // Add global event listener for play events
     document.addEventListener('play', handlePlay, true);
-
     return () => {
       document.removeEventListener('play', handlePlay, true);
     };
@@ -139,6 +128,7 @@ const FullLayout = () => {
               flexGrow: 1,
               display: "flex",
               flexDirection: "column",
+              backgroundColor: theme.palette.background.paper, // Đồng bộ nền Container
             }}
           >
             {/* Page Route */}
@@ -148,14 +138,17 @@ const FullLayout = () => {
           </Container>
 
           {/* Footer */}
-          <Box sx={{
-            pt: 3,
-            pb: 3,
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-            borderTop: '1px solid rgba(0,0,0,0.1)'
-          }}>
+          <Box
+            sx={{
+              pt: 3,
+              pb: 3,
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              borderTop: `1px solid ${theme.palette.divider}`, // Sử dụng divider từ theme
+              backgroundColor: theme.palette.background.paper, // Nền footer theo theme
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
               © 2025 Company Name
             </Typography>

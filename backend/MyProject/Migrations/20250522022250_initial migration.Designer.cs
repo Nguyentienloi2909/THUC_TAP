@@ -12,8 +12,8 @@ using MyProject.Utils;
 namespace MyProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250515064045_crate new table")]
-    partial class cratenewtable
+    [Migration("20250522022250_initial migration")]
+    partial class initialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -300,6 +300,24 @@ namespace MyProject.Migrations
                     b.ToTable("Salaries");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.StatusNotification", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.HasKey("UserId", "NotificationId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("StatusNotifications");
+                });
+
             modelBuilder.Entity("MyProject.Entity.TaskItem", b =>
                 {
                     b.Property<int>("Id")
@@ -321,6 +339,9 @@ namespace MyProject.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -337,6 +358,8 @@ namespace MyProject.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedToId");
+
+                    b.HasIndex("SenderId");
 
                     b.ToTable("TaskItems");
                 });
@@ -493,7 +516,7 @@ namespace MyProject.Migrations
             modelBuilder.Entity("MyProject.Entity.Notification", b =>
                 {
                     b.HasOne("MyProject.Entity.User", "Sender")
-                        .WithMany()
+                        .WithMany("SentNotifications")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -510,14 +533,40 @@ namespace MyProject.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.StatusNotification", b =>
+                {
+                    b.HasOne("MyProject.Entity.Notification", "Notification")
+                        .WithMany("Recipients")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Entity.User", "User")
+                        .WithMany("NotificationStatuses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MyProject.Entity.TaskItem", b =>
                 {
                     b.HasOne("MyProject.Entity.User", "AssignedTo")
-                        .WithMany("Tasks")
+                        .WithMany("AssignedTasks")
                         .HasForeignKey("AssignedToId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MyProject.Entity.User", "Sender")
+                        .WithMany("SentTasks")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("AssignedTo");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("MyProject.Entity.User", b =>
@@ -559,6 +608,11 @@ namespace MyProject.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.Notification", b =>
+                {
+                    b.Navigation("Recipients");
+                });
+
             modelBuilder.Entity("MyProject.Entity.Role", b =>
                 {
                     b.Navigation("Users");
@@ -566,9 +620,13 @@ namespace MyProject.Migrations
 
             modelBuilder.Entity("MyProject.Entity.User", b =>
                 {
+                    b.Navigation("AssignedTasks");
+
                     b.Navigation("Attendances");
 
                     b.Navigation("GroupChatMemberships");
+
+                    b.Navigation("NotificationStatuses");
 
                     b.Navigation("ReceivedMessages");
 
@@ -576,7 +634,9 @@ namespace MyProject.Migrations
 
                     b.Navigation("SentMessages");
 
-                    b.Navigation("Tasks");
+                    b.Navigation("SentNotifications");
+
+                    b.Navigation("SentTasks");
                 });
 #pragma warning restore 612, 618
         }

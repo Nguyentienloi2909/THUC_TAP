@@ -19,7 +19,6 @@ namespace MyProject.Controllers
 
         [HttpGet]
         [Authorize(Policy = "ADMIN")]
-
         public async Task<IActionResult> GetAll()
         {
             try

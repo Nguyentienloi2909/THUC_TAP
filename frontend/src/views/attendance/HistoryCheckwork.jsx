@@ -40,6 +40,7 @@ const HistoryCheckwork = () => {
             const month = format(currentDate, 'M');
             const year = format(currentDate, 'yyyy');
             const response = await ApiService.getAttendance(month, year);
+            console.log('User role from localStorage:', localStorage.getItem('role'));
 
             if (!Array.isArray(response)) {
                 throw new Error('Invalid response format');

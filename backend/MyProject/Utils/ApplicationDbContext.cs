@@ -85,12 +85,17 @@ namespace MyProject.Utils
                 .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Cấu hình quan hệ User - TaskItem (1 -> N)
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Tasks)
-                .WithOne(t => t.AssignedTo)
-                .HasForeignKey(t => t.AssignedToId)
-                .OnDelete(DeleteBehavior.SetNull); // Giữ lại TaskItem khi xóa User
+            modelBuilder.Entity<TaskItem>()
+               .HasOne(t => t.AssignedTo)
+               .WithMany(u => u.AssignedTasks)
+               .HasForeignKey(t => t.AssignedToId)
+               .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.Sender)
+                .WithMany(u => u.SentTasks)
+                .HasForeignKey(t => t.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
                .HasMany(u => u.Salaries) // Mối quan hệ giữa User và Salary

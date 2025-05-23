@@ -1,7 +1,7 @@
 [
   {
     "ContainingType": "Program\u002B\u003C\u003Ec",
-    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_5",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_6",
     "RelativePath": "",
     "HttpMethod": "GET",
     "IsController": false,
@@ -37,6 +37,37 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.AttendanceController",
+    "Method": "GetAllAttendancesInMonth",
+    "RelativePath": "api/Attendance/attendanceAll",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[MyProject.Dto.AttendanceDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "MyProject.Controllers.AttendanceController",
@@ -335,7 +366,12 @@
         "IsRequired": false
       },
       {
-        "Name": "Tasks",
+        "Name": "AssignedTasks",
+        "Type": "System.Collections.Generic.ICollection\u00601[[MyProject.Dto.TaskItemDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SentTasks",
         "Type": "System.Collections.Generic.ICollection\u00601[[MyProject.Dto.TaskItemDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": false
       },
@@ -559,13 +595,145 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "MyProject.Controllers.MessageController",
+    "ContainingType": "MyProject.Controllers.GroupChatController",
     "Method": "GetAllGroups",
-    "RelativePath": "api/Message/chatGroups",
+    "RelativePath": "api/GroupChat",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupChatController",
+    "Method": "CreateGroup",
+    "RelativePath": "api/GroupChat",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "MyProject.Dto.CreateGroupChatRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupChatController",
+    "Method": "AddUser",
+    "RelativePath": "api/GroupChat/{groupChatId}/add-user/{userId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupChatId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupChatController",
+    "Method": "RemoveUser",
+    "RelativePath": "api/GroupChat/{groupChatId}/remove-user/{userId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupChatId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupChatController",
+    "Method": "UpdateGroupChat",
+    "RelativePath": "api/GroupChat/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "groupChat",
+        "Type": "MyProject.Entity.GroupChat",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupChatController",
+    "Method": "DeleteGroupChat",
+    "RelativePath": "api/GroupChat/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.MessageController",
+    "Method": "UpdateContent",
+    "RelativePath": "api/Message/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "newContent",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.MessageController",
+    "Method": "Delete",
+    "RelativePath": "api/Message/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -951,6 +1119,16 @@
         "IsRequired": false
       },
       {
+        "Name": "SenderId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SenderName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
         "Name": "AssignedToId",
         "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
@@ -1013,6 +1191,16 @@
       },
       {
         "Name": "Status",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "SenderId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SenderName",
         "Type": "System.String",
         "IsRequired": false
       },
@@ -1227,7 +1415,12 @@
         "IsRequired": false
       },
       {
-        "Name": "Tasks",
+        "Name": "AssignedTasks",
+        "Type": "System.Collections.Generic.ICollection\u00601[[MyProject.Dto.TaskItemDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SentTasks",
         "Type": "System.Collections.Generic.ICollection\u00601[[MyProject.Dto.TaskItemDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": false
       },

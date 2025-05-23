@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
 using MyProject.Entity;
@@ -74,39 +75,7 @@ namespace MyProject.Service.impl
             _dbContext.TaskItems.Update(taskItem);
             await _dbContext.SaveChangesAsync();
 
-
-            // thôg báo về email cho người dùng
-            EmailRequest requestEmail = new EmailRequest
-                {
-                    To = existingUser.Email,
-                    Subject = $"{taskItem.Title}",
-                    Description = $@"
-                        <div style='font-size:16px; font-family:Arial, sans-serif;'>
-                          <p><strong>Thời gian hoàn thành:</strong> {taskItem.EndTime:HH:mm dd/MM/yyyy}</p>
-                          <p><strong>Mô tả:</strong> {taskItem.Description}</p>
-                          {(string.IsNullOrEmpty(taskItem.UrlFile) ? "" : $@"
-                            <p>
-                              <strong>File mô tả:</strong><br />
-                              <a href='{taskItem.UrlFile}'
-                                 style='
-                                   display:inline-block;
-                                   padding:10px 18px;
-                                   background-color:#28a745;
-                                   color:#fff;
-                                   text-decoration:none;
-                                   border-radius:6px;
-                                   font-size:16px;
-                                   font-weight:bold;'>
-                                 📎 Tải file
-                              </a>
-                            </p>
-                          ")}
-                        </div>"
-
-
-
-            };
-            await _emailService.SendEmailAsync(requestEmail);
+            BackgroundJob.Enqueue<IEmailService>(job => job.SendTaskAssignmentEmailAsync(existingUser.ToDto(), taskItem.ToDto()));
 
             var result = taskItem.ToDto();
             return (true, null, result); ;

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import ApiService from 'src/service/ApiService';
+import connection from 'src/service/SignalR'; // Import SignalR connection
 
 export const NotificationContext = createContext();
 
@@ -21,10 +22,23 @@ export const NotificationProvider = ({ children }) => {
 
     useEffect(() => {
         fetchNotifications();
-        // Polling every 30 seconds to check for new notifications
-        const interval = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(interval);
     }, [fetchNotifications]);
+
+    // Listen for SignalR events
+    useEffect(() => {
+        connection.start().then(() => {
+            console.log('SignalR Connected');
+            connection.on('ReceiveNotification', (notification) => {
+                setNotifications((prev) => [...prev, notification]);
+            });
+        }).catch((error) => {
+            console.error('SignalR Connection Error:', error);
+        });
+
+        return () => {
+            connection.stop();
+        };
+    }, []);
 
     const markAsRead = useCallback(async (notificationId) => {
         try {

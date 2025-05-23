@@ -26,9 +26,11 @@ namespace MyProject.Entity
         public int? GroupId { get; set; }
         public Group? Group { get; set; }
 
+
+        public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>(); // Nhiệm vụ được giao
+        public ICollection<TaskItem> SentTasks { get; set; } = new List<TaskItem>(); // Nhiệm vụ đã gửi
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
         public ICollection<Salary> Salaries { get; set; } = new List<Salary>();
-        public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
         public ICollection<Message> SentMessages { get; set; } = new List<Message>();
         public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
         public ICollection<GroupChatMember> GroupChatMemberships { get; set; } = new List<GroupChatMember>();

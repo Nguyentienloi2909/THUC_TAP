@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
+using MyProject.Entity;
 using MyProject.Service.interfac;
 using MyProject.Utils;
 
@@ -9,26 +10,11 @@ namespace MyProject.Service.impl
     public class MessageService : IMessageService
     {
         private readonly ApplicationDbContext _dbContext;
-
         public MessageService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
-
-        public async Task<List<GroupChatDto>> GetAllChatGroups(int userId)
-        {
-            var groups = await _dbContext.GroupChatMembers
-            .Where(gm => gm.UserId == userId)
-            .Select(gm => new GroupChatDto
-            {
-                Id = gm.GroupChat.Id,
-                Name = gm.GroupChat.Name
-            })
-            .ToListAsync();
-
-            return groups;
-        }
-
+        
         public async Task<List<MessageDto>> GetChatGroupMessages(int userId, int groupChatId)
         {
             var isMember = await _dbContext.GroupChatMembers
@@ -59,7 +45,6 @@ namespace MyProject.Service.impl
 
             return messages;
         }
-
         public async Task<List<MessageDto>> GetPrivateMessages(int userId, int otherUserId)
         {
             var messages = await _dbContext.Messages
@@ -82,5 +67,26 @@ namespace MyProject.Service.impl
             .ToListAsync();
             return messages;
         }
+        public async Task<bool> UpdateContentAsync(int messageId, int userId, string newContent)
+        {
+            var message = await _dbContext.Messages.FindAsync(messageId);
+            if (message == null || message.SenderId != userId)
+                return false;
+
+            message.Content = newContent;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> DeleteMessageAsync(int messageId, int userId)
+        {
+            var message = await _dbContext.Messages.FindAsync(messageId);
+            if (message == null || message.SenderId != userId)
+                return false;
+
+            _dbContext.Messages.Remove(message);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
     }
 }
