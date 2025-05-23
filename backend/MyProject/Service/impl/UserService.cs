@@ -58,12 +58,15 @@ namespace MyProject.Service.impl
             try
             {
                 var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
                 if (user == null)
                     return new Response { statusCode = 404, message = "User not found" };
 
                 if (!BCrypt.Net.BCrypt.Verify(request.PasswordHash, user.PasswordHash))
                     return new Response { statusCode = 401, message = "Invalid password" };
 
+                if(user.Status == Entity.Enum.StatusUser.Inactive)
+                    return new Response { statusCode = 403, message = "User is inactive" };
                 // Lấy Role và Group nếu cần set cho GenerateToken
                 var role = await _dbContext.Roles.FindAsync(user.RoleId);
                 var group = user.GroupId.HasValue ? await _dbContext.Groups.FindAsync(user.GroupId) : null;
@@ -126,7 +129,7 @@ namespace MyProject.Service.impl
                 Group group = await _dbContext.Groups.FindAsync(request.GroupId);
                 if (group == null)
                 {
-                    return (false, "Role not found", null);
+                    newUser.GroupId = null;
                 }
 
                 _dbContext.Users.Add(newUser);
@@ -282,7 +285,8 @@ namespace MyProject.Service.impl
                 .Include(u => u.Group)
                 .Include(u => u.Attendances)
                 .Include(u => u.Salaries)
-                .Include(u => u.Tasks)
+                .Include(u => u.AssignedTasks)
+                .Include(u => u.SentTasks)
                 .Include(u => u.SentMessages)
                 .Include(u => u.ReceivedMessages)
                 .FirstOrDefaultAsync(u => u.Email == email);
@@ -295,7 +299,8 @@ namespace MyProject.Service.impl
             var userDto = MapperToDto.ToDto(user);
             userDto.Attendances = user.Attendances.Select(a => a.ToDto()).ToList();
             userDto.Salaries = user.Salaries.Select(s => s.ToDto()).ToList();
-            userDto.Tasks = user.Tasks.Select(t => t.ToDto()).ToList();
+            userDto.AssignedTasks = user.AssignedTasks.Select(t => t.ToDto()).ToList();
+            userDto.SentTasks = user.SentTasks.Select(t => t.ToDto()).ToList();
             userDto.SentMessages = user.SentMessages.Select(m => m.ToDto()).ToList();
             userDto.ReceivedMessages = user.ReceivedMessages.Select(m => m.ToDto()).ToList();
             return userDto;
@@ -323,7 +328,6 @@ namespace MyProject.Service.impl
                 return null;
             }
         }
-
         public async Task<(bool IsSuccess, string? ErrorMessage)> ChangePassword(string email, string oldPassword, string newPassword, string againNewPassword)
         {
             try
@@ -346,5 +350,8 @@ namespace MyProject.Service.impl
                 return (false, $"lỗi: {ex}");
             }
         }
+        
+
+    
     }
 }

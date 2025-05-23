@@ -75,6 +75,7 @@ namespace MyProject.Mappers
                 StartTime = dto.StartTime ?? DateTime.MinValue,
                 EndTime = dto.EndTime ?? DateTime.MinValue,
                 Status = Enum.TryParse<StatusTask>(dto.Status, out var status) ? status : StatusTask.Pending,
+                SenderId = dto.SenderId,
                 AssignedToId = dto.AssignedToId
             };
         }
@@ -134,7 +135,7 @@ namespace MyProject.Mappers
                 Id = dto.Id ?? 0,
                 Title = dto.Title ,
                 Description = dto.Description,
-                SentAt = dto.SentAt ?? DateTime.Now,
+                SentAt = DateTime.Now,
                 Display = true,
                 SenderId = dto.SenderId,
             };

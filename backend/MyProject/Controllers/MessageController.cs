@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MyProject.Dto;
 using MyProject.Service.interfac;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -17,17 +18,6 @@ namespace MyProject.Controllers
         {
             _messageService = messageService;
             _userService = userService;
-        }
-
-        [HttpGet("chatGroups")]
-        public async Task<IActionResult> GetAllGroups()
-        {
-            var username = GetUsernameFromToken();
-            if (string.IsNullOrEmpty(username))
-                return Unauthorized(new { message = "Invalid token" });
-            var user = await _userService.GetMyInfo(username);
-            var groups = await _messageService.GetAllChatGroups(user.Id ?? 0);
-            return Ok(groups);
         }
 
         [HttpGet("chatGroups/{groupChatId}")]
@@ -60,6 +50,23 @@ namespace MyProject.Controllers
             return Ok(messages);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateContent(int id, [FromBody] string newContent)
+        {
+            var email = GetUsernameFromToken(); 
+            var user = await _userService.GetMyInfo(email);
+            var result = await _messageService.UpdateContentAsync(id, user.Id ?? 0, newContent);
+            return result ? Ok() : Forbid(); // Trả về 403 nếu không phải người gửi
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var email = GetUsernameFromToken();
+            var user = await _userService.GetMyInfo(email);
+            var result = await _messageService.DeleteMessageAsync(id, user.Id ?? 0);
+            return result ? Ok() : Forbid();
+        }
 
         private string? GetUsernameFromToken()
         {

@@ -127,6 +127,20 @@ namespace MyProject.Service.impl
             return attendances.Select(Mappers.MapperToDto.ToDto).ToList();
         }
 
+        public async Task<List<AttendanceDto>> GetAllAttendancesInMonthAsync(int month, int year)
+        {
+            var firstDayOfMonth = new DateTime(year, month, 1);
+            var firstDayOfNextMonth = firstDayOfMonth.AddMonths(1);
+
+            var attendances = await _dbContext.Attendances
+                .Include(a => a.User)
+                .Where(a => a.Workday >= firstDayOfMonth && a.Workday < firstDayOfNextMonth)
+                .ToListAsync();
+
+            return attendances.Select(Mappers.MapperToDto.ToDto).ToList();
+        }
+
+
         public Task<AttendanceSummaryDto> GetMonthlySummaryAsync(int month, int year)
         {
             var start = new DateTime(year, month, 1);
@@ -183,19 +197,25 @@ namespace MyProject.Service.impl
             double totalOvertime = attendances.Sum(a => a.Overtime ?? 0);
 
             int absentDays = 0;
+            int totalWorkingDays = 0;
 
             foreach (var group in groupedByDay)
             {
-                var checkedInUserIds = group.Value
-                    .Where(a => a.CheckIn != null && a.UserId != null)
-                    .Select(a => a.UserId.Value) // Ép kiểu từ int? sang int
-                    .Distinct()
-                    .ToHashSet();
+                var attendanceList = group.Value;
 
+                // ✅ Nếu có ít nhất 1 người có check-in và check-out → là ngày làm việc
+                bool isWorkingDay = attendanceList.Any(a => a.CheckIn != null && a.CheckOut != null);
 
-                // Chỉ tính ngày đó là có người check-in nếu có ít nhất 1 bản ghi có CheckIn
-                if (checkedInUserIds.Any())
+                if (isWorkingDay)
                 {
+                    totalWorkingDays++;
+
+                    var checkedInUserIds = attendanceList
+                        .Where(a => a.CheckIn != null && a.UserId != null)
+                        .Select(a => a.UserId.Value)
+                        .Distinct()
+                        .ToHashSet();
+
                     var missingUserIds = users.Except(checkedInUserIds);
                     absentDays += missingUserIds.Count();
                 }
@@ -206,8 +226,9 @@ namespace MyProject.Service.impl
                 TotalPresentDays = presentDays,
                 TotalLateDays = lateDays,
                 TotalLeaveDays = leaveDays,
-                TotalAbsentDays = absentDays,
-                TotalOvertimeHours = Math.Round(totalOvertime, 2)
+                TotalAbsentDays = absentDays - leaveDays,
+                TotalOvertimeHours = Math.Round(totalOvertime, 2),
+                TotalWorkingDays = totalWorkingDays,
             };
         }
 
@@ -240,40 +261,39 @@ namespace MyProject.Service.impl
             var start = new DateTime(year, month, 1);
             var end = start.AddMonths(1).AddDays(-1);
 
-            // Lấy danh sách điểm danh của user trong tháng
             var attendances = await _dbContext.Attendances
-                .Where(a => a.UserId == userId && a.Workday >= start && a.Workday <= end)
+                .Where(a => a.Workday >= start && a.Workday <= end)
                 .ToListAsync();
 
-            // Lấy danh sách tất cả các ngày trong tháng
+            var userAttendances = attendances
+                .Where(a => a.UserId == userId)
+                .ToList();
+
             var totalDays = (end - start).Days + 1;
             var allDaysInMonth = Enumerable.Range(0, totalDays)
                 .Select(i => start.AddDays(i).Date)
                 .ToList();
 
-            int presentDays = attendances.Count(a => a.Status == StatusAttendance.Present);
-            int lateDays = attendances.Count(a => a.Status == StatusAttendance.Late);
-            int leaveDays = attendances.Count(a => a.Status == StatusAttendance.Leave);
-            double totalOvertime = attendances.Sum(a => a.Overtime ?? 0);
-
-            // Sử dụng nhóm bản ghi theo ngày làm việc để kiểm tra có ít nhất 1 người check-in không
-            var groupedByDay = attendances
-                .GroupBy(a => a.Workday.Date)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            int presentDays = userAttendances.Count(a => a.Status == StatusAttendance.Present);
+            int lateDays = userAttendances.Count(a => a.Status == StatusAttendance.Late);
+            int leaveDays = userAttendances.Count(a => a.Status == StatusAttendance.Leave);
+            double totalOvertime = userAttendances.Sum(a => a.Overtime ?? 0);
 
             int absentDays = 0;
+            int totalWorkingDays = 0;
 
-            // Kiểm tra từng ngày trong tháng
             foreach (var day in allDaysInMonth)
             {
-                // Nếu ngày có ít nhất 1 người check-in
-                if (groupedByDay.ContainsKey(day) && groupedByDay[day].Any(a => a.CheckIn != null))
-                {
-                    // Kiểm tra nếu user không có bản ghi check-in trong ngày này
-                    var userCheckedIn = attendances
-                        .Where(a => a.Workday.Date == day && a.UserId == userId && a.CheckIn != null)
-                        .Any();
+                // Có ít nhất 1 người check-in và check-out → là ngày làm việc
+                bool isWorkingDay = attendances.Any(a =>
+                    a.Workday.Date == day && a.CheckIn != null && a.CheckOut != null);
 
+                if (isWorkingDay)
+                {
+                    totalWorkingDays++;
+
+                    // Nếu user không check-in trong ngày làm việc đó → vắng mặt
+                    bool userCheckedIn = userAttendances.Any(a => a.Workday.Date == day && a.CheckIn != null);
                     if (!userCheckedIn)
                     {
                         absentDays++;
@@ -286,10 +306,12 @@ namespace MyProject.Service.impl
                 TotalPresentDays = presentDays,
                 TotalLateDays = lateDays,
                 TotalLeaveDays = leaveDays,
-                TotalAbsentDays = absentDays,
-                TotalOvertimeHours = Math.Round(totalOvertime, 2)
+                TotalAbsentDays = absentDays - leaveDays,
+                TotalOvertimeHours = Math.Round(totalOvertime, 2),
+                TotalWorkingDays = totalWorkingDays
             };
         }
+
 
         public async Task<List<(int WeekNumber, AttendanceSummaryDto Summary)>> GetUserWeeklySummaryInMonthAsync(int userId, int month, int year)
         {
@@ -297,7 +319,6 @@ namespace MyProject.Service.impl
 
             var startDate = new DateTime(year, month, 1);
             var endDate = startDate.AddMonths(1).AddDays(-1);
-
             int weekIndex = 1;
 
             for (DateTime weekStart = startDate; weekStart <= endDate;)
@@ -306,12 +327,10 @@ namespace MyProject.Service.impl
                 if (weekEnd > endDate)
                     weekEnd = endDate;
 
-                // Lấy toàn bộ bản ghi attendance trong tuần đó (của tất cả user)
                 var weekAttendances = await _dbContext.Attendances
                     .Where(a => a.Workday >= weekStart && a.Workday <= weekEnd)
                     .ToListAsync();
 
-                // Lọc bản ghi chỉ của user cần tính
                 var userAttendances = weekAttendances
                     .Where(a => a.UserId == userId)
                     .ToList();
@@ -322,17 +341,20 @@ namespace MyProject.Service.impl
                 double totalOvertime = userAttendances.Sum(a => a.Overtime ?? 0);
 
                 int absentDays = 0;
+                int totalWorkingDays = 0;
 
-                // Duyệt qua từng ngày trong tuần
                 for (var day = weekStart.Date; day <= weekEnd.Date; day = day.AddDays(1))
                 {
-                    // Kiểm tra có ít nhất 1 người check-in trong ngày đó
-                    bool hasAnyoneCheckedIn = weekAttendances.Any(a => a.Workday.Date == day && a.CheckIn != null);
+                    bool isWorkingDay = weekAttendances.Any(a =>
+                        a.Workday.Date == day && a.CheckIn != null && a.CheckOut != null);
 
-                    if (hasAnyoneCheckedIn)
+                    if (isWorkingDay)
                     {
-                        // Kiểm tra user đang xét có check-in không
-                        bool userCheckedIn = userAttendances.Any(a => a.Workday.Date == day && a.CheckIn != null);
+                        totalWorkingDays++;
+
+                        bool userCheckedIn = userAttendances.Any(a =>
+                            a.Workday.Date == day && a.CheckIn != null);
+
                         if (!userCheckedIn)
                         {
                             absentDays++;
@@ -345,8 +367,9 @@ namespace MyProject.Service.impl
                     TotalPresentDays = presentDays,
                     TotalLateDays = lateDays,
                     TotalLeaveDays = leaveDays,
-                    TotalAbsentDays = absentDays,
-                    TotalOvertimeHours = Math.Round(totalOvertime, 2)
+                    TotalAbsentDays = absentDays - leaveDays,
+                    TotalOvertimeHours = Math.Round(totalOvertime, 2),
+                    TotalWorkingDays = totalWorkingDays
                 };
 
                 summaries.Add((weekIndex, summary));
@@ -357,6 +380,7 @@ namespace MyProject.Service.impl
 
             return summaries;
         }
+
 
 
     }

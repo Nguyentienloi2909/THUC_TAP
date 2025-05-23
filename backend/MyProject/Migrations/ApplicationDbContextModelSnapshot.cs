@@ -336,6 +336,9 @@ namespace MyProject.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -352,6 +355,8 @@ namespace MyProject.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedToId");
+
+                    b.HasIndex("SenderId");
 
                     b.ToTable("TaskItems");
                 });
@@ -547,11 +552,18 @@ namespace MyProject.Migrations
             modelBuilder.Entity("MyProject.Entity.TaskItem", b =>
                 {
                     b.HasOne("MyProject.Entity.User", "AssignedTo")
-                        .WithMany("Tasks")
+                        .WithMany("AssignedTasks")
                         .HasForeignKey("AssignedToId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("MyProject.Entity.User", "Sender")
+                        .WithMany("SentTasks")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("AssignedTo");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("MyProject.Entity.User", b =>
@@ -605,6 +617,8 @@ namespace MyProject.Migrations
 
             modelBuilder.Entity("MyProject.Entity.User", b =>
                 {
+                    b.Navigation("AssignedTasks");
+
                     b.Navigation("Attendances");
 
                     b.Navigation("GroupChatMemberships");
@@ -619,7 +633,7 @@ namespace MyProject.Migrations
 
                     b.Navigation("SentNotifications");
 
-                    b.Navigation("Tasks");
+                    b.Navigation("SentTasks");
                 });
 #pragma warning restore 612, 618
         }

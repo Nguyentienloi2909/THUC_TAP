@@ -29,6 +29,9 @@ namespace MyProject.Controllers
         [Authorize(Policy = "ADMIN")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationDto request)
         {
+            var username = GetUsernameFromToken();
+            var user = await _userService.GetMyInfo(username);
+            request.SenderId = user.Id;
             var result = await _notificationService.SendNotificationAsync(request);
 
             if (result == null)

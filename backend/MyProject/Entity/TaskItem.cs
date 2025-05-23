@@ -12,6 +12,9 @@ namespace MyProject.Entity
         public DateTime EndTime { get; set; }
         public StatusTask Status { get; set; } = StatusTask.Pending;
 
+        public int? SenderId { get; set; } // New property for the sender
+        public User? Sender { get; set; }
+
         public int? AssignedToId { get; set;}
         public User? AssignedTo { get; set; }
 

@@ -6,6 +6,6 @@ namespace MyProject.Dto
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public List<GroupChatMember> Members { get; set; }
+        public List<GroupChatMemberDto> Members { get; set; }
     }
 }
