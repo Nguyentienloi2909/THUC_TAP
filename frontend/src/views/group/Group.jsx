@@ -32,7 +32,7 @@ const Group = () => {
     const [groupToDelete, setGroupToDelete] = useState(null);
     const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
     const [groupIdToAddMember, setGroupIdToAddMember] = useState(null);
-    const [fetchError, setFetchError] = useState(false); // State to track fetch errors
+    const [fetchError, setFetchError] = useState(false);
 
     const [loading, setLoading] = useState(true);
 
@@ -40,8 +40,9 @@ const Group = () => {
         const fetchGroups = async () => {
             setLoading(true);
             try {
+                console.log('Fetching groups...');
                 const groupData = await ApiService.getAllGroups();
-                console.log('Groups:', groupData);
+                console.log('Groups fetched:', groupData);
                 setGroups(groupData);
                 setFetchError(false);
             } catch (error) {
@@ -56,6 +57,7 @@ const Group = () => {
     }, []);
 
     const handleOpenMembers = (group) => {
+        console.log('Opening member dialog for group:', group);
         setSelectedGroup(group);
         setOpenMemberDialog(true);
     };
@@ -99,10 +101,11 @@ const Group = () => {
 
     const handleCreateGroup = async (data) => {
         try {
+            console.log('Creating group with data:', data);
             await ApiService.createGroup(data);
             setOpenCreateModal(false);
-            // Refresh group list
             const groupData = await ApiService.getAllGroups();
+            console.log('Groups after creation:', groupData);
             setGroups(groupData);
         } catch (error) {
             console.error('Failed to create group:', error);
@@ -111,11 +114,12 @@ const Group = () => {
 
     const handleUpdateGroup = async (data) => {
         try {
+            console.log('Updating group with data:', data);
             await ApiService.updateGroup(data.id, data);
             setOpenUpdateModal(false);
             setGroupToUpdate(null);
-            // Refresh group list
             const groupData = await ApiService.getAllGroups();
+            console.log('Groups after update:', groupData);
             setGroups(groupData);
         } catch (error) {
             console.error('Failed to update group:', error);
@@ -136,7 +140,6 @@ const Group = () => {
             console.log('Deleted groupId:', groupToDelete);
             setOpenDeleteModal(false);
             setGroupToDelete(null);
-            // Refresh group list
             const groupData = await ApiService.getAllGroups();
             console.log('Groups after delete:', groupData);
             setGroups(groupData);
@@ -150,7 +153,6 @@ const Group = () => {
     if (loading) {
         return <div>Loading...</div>;
     }
-
 
     return (
         <PageContainer title="Quản lý nhóm" description="Quản lý nhóm và thành viên">
@@ -201,7 +203,7 @@ const Group = () => {
                                                     </Typography>
 
                                                     <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                                                        Trưởng nhóm: {group.users.find(user => user.roleId === 3)?.fullName || 'N/A'}
+                                                        Trưởng nhóm: {group.users.find(user => user.roleId === 2)?.fullName || 'N/A'}
                                                     </Typography>
 
                                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -228,7 +230,6 @@ const Group = () => {
                         </Grid>
                     </Grid>
                 ) : (
-                    // Regular user view - Show only their group
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <DashboardCard title={`Nhóm: ${userGroup?.groupName}`}>
@@ -237,7 +238,7 @@ const Group = () => {
                                         {userGroup?.departmentName}
                                     </Typography>
                                     <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                                        Trưởng nhóm: {userGroup?.users.find(user => user.roleId === 3)?.fullName || 'N/A'}
+                                        Trưởng nhóm: {userGroup?.users.find(user => user.roleId === 2)?.fullName || 'N/A'}
                                     </Typography>
                                 </Box>
                                 {userGroup && renderMemberList(userGroup.users)}
@@ -279,16 +280,16 @@ const Group = () => {
                                 <React.Fragment key={member.id}>
                                     <ListItem
                                         secondaryAction={
-                                            member.roleId !== 3 && (
+                                            member.roleId !== 2 && (
                                                 <Stack direction="row" spacing={1}>
                                                     <Chip
                                                         label={
-                                                            member.roleId === 3
+                                                            member.roleId === 2
                                                                 ? "Trưởng nhóm"
                                                                 : "Thành viên"
                                                         }
                                                         size="small"
-                                                        color={member.roleId === 3 ? 'primary' : 'default'}
+                                                        color={member.roleId === 2 ? 'primary' : 'default'}
                                                     />
                                                     <IconButton color="error">
                                                         <IconTrash size={18} />
@@ -302,7 +303,7 @@ const Group = () => {
                                             <Box>
                                                 <Typography variant="subtitle2">
                                                     {member.fullName}
-                                                    {member.roleId === 3 && (
+                                                    {member.roleId === 2 && (
                                                         <Chip
                                                             label="Trưởng nhóm"
                                                             size="small"
@@ -330,13 +331,11 @@ const Group = () => {
                 </Dialog>
             )}
 
-
             <CreateGroupModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}
                 onCreate={handleCreateGroup}
             />
-
 
             <UpdateGroupModal
                 open={openUpdateModal}
@@ -378,12 +377,12 @@ const Group = () => {
                 groupId={groupIdToAddMember}
                 onAdd={async () => {
                     setOpenAddMemberModal(false);
-                    // Refresh group list after adding member
                     const groupData = await ApiService.getAllGroups();
+                    console.log('Groups after adding member:', groupData);
                     setGroups(groupData);
-                    // Optionally, update selectedGroup if needed
                     if (groupIdToAddMember) {
                         const updatedGroup = groupData.find(g => g.id === groupIdToAddMember);
+                        console.log('Updated group:', updatedGroup);
                         setSelectedGroup(updatedGroup);
                     }
                 }}

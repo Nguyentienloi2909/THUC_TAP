@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import { styled, Container, Box, Typography, Link, useTheme } from "@mui/material";
+// src/layouts/FullLayout.jsx
+import React, { useState, useEffect, Suspense } from "react";
+import { styled, Container, Box, Typography, useTheme } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
-
+import { useUser } from "../../contexts/UserContext";
 import Header from "./header/Header";
 import Sidebar from "./sidebar/Sidebar";
 
@@ -16,7 +17,7 @@ const PageWrapper = styled("div")(({ theme }) => ({
   flexGrow: 1,
   flexDirection: "column",
   zIndex: 1,
-  backgroundColor: theme.palette.background.default, // Sử dụng màu nền từ theme
+  backgroundColor: theme.palette.background.default,
   width: "100%",
   overflow: "hidden",
 }));
@@ -27,79 +28,15 @@ const ContentBox = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   minHeight: "calc(100vh - 64px)",
   width: "100%",
-  backgroundColor: theme.palette.background.paper, // Đảm bảo nền nội dung theo theme
+  backgroundColor: theme.palette.background.paper,
 }));
 
 const FullLayout = () => {
+  const { user, logout } = useUser();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
-  const mediaPlayPromiseRef = useRef({});
-  const theme = useTheme(); // Lấy theme hiện tại
-
-  // Giữ nguyên logic useEffect cho media cleanup
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const mediaElements = document.querySelectorAll('audio, video');
-      mediaElements.forEach(media => {
-        if (!media.paused) {
-          try {
-            media.pause();
-          } catch (e) {
-            console.warn('Error pausing media:', e);
-          }
-        }
-      });
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    const cleanup = () => {
-      const mediaElements = document.querySelectorAll('audio, video');
-      mediaElements.forEach(media => {
-        const mediaId = media.id || Math.random().toString(36);
-        if (mediaPlayPromiseRef.current[mediaId]) {
-          mediaPlayPromiseRef.current[mediaId]
-            .then(() => {
-              if (!media.paused) {
-                media.pause();
-              }
-            })
-            .catch(err => {
-              console.warn('Media play promise rejected:', err);
-            });
-        } else if (!media.paused) {
-          media.pause();
-        }
-      });
-    };
-
-    cleanup();
-    return () => {
-      cleanup();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const handlePlay = (event) => {
-      const media = event.target;
-      const mediaId = media.id || Math.random().toString(36);
-      mediaPlayPromiseRef.current[mediaId] = media.play();
-      mediaPlayPromiseRef.current[mediaId]
-        .then(() => {
-          delete mediaPlayPromiseRef.current[mediaId];
-        })
-        .catch(() => {
-          delete mediaPlayPromiseRef.current[mediaId];
-        });
-    };
-
-    document.addEventListener('play', handlePlay, true);
-    return () => {
-      document.removeEventListener('play', handlePlay, true);
-    };
-  }, []);
+  const theme = useTheme();
 
   return (
     <MainWrapper className="mainwrapper">
@@ -108,6 +45,7 @@ const FullLayout = () => {
         isSidebarOpen={isSidebarOpen}
         isMobileSidebarOpen={isMobileSidebarOpen}
         onSidebarClose={() => setMobileSidebarOpen(false)}
+        userRole={user.role} // Truyền role để hiển thị menu phù hợp
       />
 
       {/* Main Wrapper */}
@@ -116,6 +54,8 @@ const FullLayout = () => {
         <Header
           toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           toggleMobileSidebar={() => setMobileSidebarOpen(true)}
+          user={user}
+          logout={logout}
         />
 
         {/* PageContent */}
@@ -128,12 +68,13 @@ const FullLayout = () => {
               flexGrow: 1,
               display: "flex",
               flexDirection: "column",
-              backgroundColor: theme.palette.background.paper, // Đồng bộ nền Container
+              backgroundColor: theme.palette.background.paper,
             }}
           >
-            {/* Page Route */}
             <Box sx={{ flexGrow: 1 }}>
-              <Outlet />
+              <Suspense fallback={<div>Đang tải trang...</div>}>
+                <Outlet />
+              </Suspense>
             </Box>
           </Container>
 
@@ -145,12 +86,12 @@ const FullLayout = () => {
               display: "flex",
               justifyContent: "center",
               width: "100%",
-              borderTop: `1px solid ${theme.palette.divider}`, // Sử dụng divider từ theme
-              backgroundColor: theme.palette.background.paper, // Nền footer theo theme
+              borderTop: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              © 2025 Company Name
+              © 2025 LD Technogry Company
             </Typography>
           </Box>
         </ContentBox>

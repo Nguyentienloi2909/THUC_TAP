@@ -5,12 +5,11 @@ import {
     IconCalendarTime,
     IconCalendarStats,
     IconClockCheck,
-    IconReportAnalytics,
     IconClockPause,
     IconClockEdit
 } from '@tabler/icons-react';
 
-const AttendanceMiniTools = () => {
+const AttendanceMiniTools = ({ onSuccess }) => {
     const navigate = useNavigate();
     const tools = [
         { icon: IconClockCheck, label: 'Hôm nay', color: 'success', path: '/manage/attendance' },
@@ -21,6 +20,7 @@ const AttendanceMiniTools = () => {
     const handleClick = (path) => {
         if (path) {
             navigate(path);
+            if (onSuccess) onSuccess();
         }
     };
 

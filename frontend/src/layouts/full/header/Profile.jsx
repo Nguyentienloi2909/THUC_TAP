@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+// src/layouts/header/Profile.jsx
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import ApiService from '../../../service/ApiService';
+import { useUser } from 'src/contexts/UserContext';
 import {
   Avatar,
   Box,
@@ -9,7 +10,8 @@ import {
   IconButton,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Typography,
 } from '@mui/material';
 import { IconListCheck, IconUser, IconKey } from '@tabler/icons-react';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
@@ -17,36 +19,18 @@ import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const navigate = useNavigate();
-  const [user, setUser] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        setLoading(true);
-        const userData = await ApiService.getUserProfile();
-        setUser(userData);
-      } catch (error) {
-        setError(error.response?.data?.message || error.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
+  const { user, logout } = useUser();
 
   const handleClick2 = (event) => setAnchorEl2(event.currentTarget);
   const handleClose2 = () => setAnchorEl2(null);
 
-  const handelClickLogout = async () => {
+  const handleLogout = async () => {
     try {
-      await ApiService.logout();
+      logout();
       navigate('/auth/login');
       window.location.reload();
     } catch (error) {
-      console.error(error);
+      console.error('Lỗi đăng xuất:', error);
     }
   };
 
@@ -55,7 +39,7 @@ const Profile = () => {
       const trimmed = user.avatar.trim();
       return trimmed.startsWith('http')
         ? trimmed
-        : `/uploads/avatars/${trimmed}`;
+        : `/Uploads/avatars/${trimmed}`;
     }
     return ProfileImg;
   };
@@ -87,28 +71,52 @@ const Profile = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{ '& .MuiMenu-paper': { width: '200px' } }}
       >
-        <MenuItem component={Link} to="/profile">
-          <ListItemIcon><IconUser width={20} /></ListItemIcon>
-          <ListItemText>Tài khoản</ListItemText>
-        </MenuItem>
-        <MenuItem component={Link} to="/auth/changepassword">
-          <ListItemIcon><IconKey width={20} /></ListItemIcon>
-          <ListItemText>Đổi mật khẩu</ListItemText>
-        </MenuItem>
-        <MenuItem component={Link} to="/manage/task">
-          <ListItemIcon><IconListCheck width={20} /></ListItemIcon>
-          <ListItemText>Nhiệm vụ</ListItemText>
-        </MenuItem>
-        <Box mt={1} py={1} px={2}>
-          <Button
-            onClick={handelClickLogout}
-            variant="outlined"
-            color="primary"
-            fullWidth
+        {user.isAuthenticated ? [
+          <MenuItem key="role" disabled>
+            <ListItemText>
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                align="center"
+                color="red"
+              >
+                {user.fullName || 'Người dùng'}
+              </Typography>
+            </ListItemText>
+          </MenuItem>,
+          <MenuItem key="profile" component={Link} to="/profile" onClick={handleClose2}>
+            <ListItemIcon><IconUser width={20} /></ListItemIcon>
+            <ListItemText>Tài khoản</ListItemText>
+          </MenuItem>,
+          <MenuItem key="change-password" component={Link} to="/auth/changepassword" onClick={handleClose2}>
+            <ListItemIcon><IconKey width={20} /></ListItemIcon>
+            <ListItemText>Đổi mật khẩu</ListItemText>
+          </MenuItem>,
+          <MenuItem key="tasks" component={Link} to="/manage/task" onClick={handleClose2}>
+            <ListItemIcon><IconListCheck width={20} /></ListItemIcon>
+            <ListItemText>Nhiệm vụ</ListItemText>
+          </MenuItem>,
+          <MenuItem
+            key="logout"
+            onClick={handleLogout}
+            sx={{
+              textAlign: 'center',
+              color: 'white',
+              backgroundColor: 'error.main',
+              '&:hover': {
+                backgroundColor: 'error.dark',
+              },
+              borderRadius: '4px',
+              margin: '8px',
+            }}
           >
-            Đăng xuất
-          </Button>
-        </Box>
+            <ListItemText>Đăng xuất</ListItemText>
+          </MenuItem>
+        ] : (
+          <MenuItem component={Link} to="/auth/login" onClick={handleClose2} >
+            <ListItemText>Đăng nhập</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

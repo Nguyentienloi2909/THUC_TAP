@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
     TextField,
@@ -16,42 +16,38 @@ import {
 } from '@mui/material';
 import { IconSend, IconEye, IconArrowLeft, IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import DashboardCard from '../../components/shared/DashboardCard';
+import DashboardCard from 'src/components/shared/DashboardCard';
 import ApiService from 'src/service/ApiService';
 
-const AddNotification = () => {
+const EditNotification = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { notification } = location.state || {};
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        senderName: '' // Add senderName field
     });
     const [showPreview, setShowPreview] = useState(false);
     const [openConfirm, setOpenConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
+    // Khởi tạo formData từ notification khi component mount
     useEffect(() => {
-        const fetchUserProfile = async () => {
-            try {
-                const userProfile = await ApiService.getUserProfile();
-                setFormData(prev => ({
-                    ...prev,
-                    senderName: userProfile.fullName // Set senderName from user profile
-                }));
-            } catch (error) {
-                console.error('Failed to fetch user profile:', error);
-            }
-        };
-
-        fetchUserProfile();
-    }, []);
+        if (notification) {
+            setFormData({
+                title: notification.title || '',
+                description: notification.description || '',
+            });
+        }
+    }, [notification]);
 
     // Xử lý thay đổi dữ liệu trong form
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     };
 
@@ -61,30 +57,31 @@ const AddNotification = () => {
         setOpenConfirm(true); // Mở dialog xác nhận
     };
 
-    // Xử lý khi xác nhận gửi thông báo
+    // Xử lý khi xác nhận lưu thông báo
     const handleConfirmSubmit = async () => {
-        setOpenConfirm(false); // Đóng dialog
-        setLoading(true); // Hiển thị loading
+        setOpenConfirm(false);
+        setLoading(true);
         try {
-            const response = await ApiService.sendNotification(formData);
-            console.log('Notification sent:', response);
-            alert('Thông báo gửi thành công!');
-            navigate('/home');
+            const updatedNotification = {
+                id: notification.id,
+                title: formData.title,
+                description: formData.description,
+            };
+            const response = await ApiService.updateNotification(updatedNotification); // Giả định API cập nhật
+            console.log('Notification updated:', response);
+            alert('Thông báo đã được cập nhật thành công!');
+            navigate(`/home`, { state: { notification: response } });
         } catch (error) {
-            console.error('Error sending notification:', error);
-            alert('Có lỗi xảy ra khi gửi thông báo');
+            console.error('Error updating notification:', error);
+            alert('Có lỗi xảy ra khi cập nhật thông báo');
         } finally {
-            setLoading(false); // Tắt loading
+            setLoading(false);
         }
     };
 
     // Xử lý khi nhấn nút Hủy
     const handleCancel = () => {
-        if (formData.title || formData.description) {
-            setOpenConfirm(true); // Mở dialog nếu có dữ liệu
-        } else {
-            navigate(-1); // Trở lại nếu không có dữ liệu
-        }
+        navigate(-1); // Trở lại trang trước (NotificationDetail)
     };
 
     // Xử lý khi xác nhận hủy
@@ -93,8 +90,16 @@ const AddNotification = () => {
         navigate(-1);
     };
 
+    if (!notification) {
+        return (
+            <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>
+                Không có thông báo được chọn để chỉnh sửa
+            </Typography>
+        );
+    }
+
     return (
-        <PageContainer title="Tạo thông báo" description="Tạo thông báo mới">
+        <PageContainer title="Chỉnh sửa thông báo" description="Chỉnh sửa thông báo hiện có">
             {/* Hiển thị CircularProgress khi đang loading */}
             {loading && (
                 <Box
@@ -108,7 +113,7 @@ const AddNotification = () => {
                         zIndex: 1000,
                         display: 'flex',
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
                     }}
                 >
                     <CircularProgress />
@@ -117,9 +122,9 @@ const AddNotification = () => {
 
             {/* Dialog xác nhận */}
             <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
-                <DialogTitle>Xác nhận gửi thông báo</DialogTitle>
+                <DialogTitle>Xác nhận cập nhật thông báo</DialogTitle>
                 <DialogContent>
-                    <Typography>Bạn có chắc chắn muốn gửi thông báo này không?</Typography>
+                    <Typography>Bạn có chắc chắn muốn lưu các thay đổi cho thông báo này không?</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenConfirm(false)} color="error">
@@ -153,7 +158,7 @@ const AddNotification = () => {
                                 gutterBottom
                                 sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2 }}
                             >
-                                Tạo thông báo mới
+                                Chỉnh sửa thông báo
                             </Typography>
                             <Divider sx={{ mb: 3 }} />
 
@@ -203,7 +208,7 @@ const AddNotification = () => {
                                                 variant="contained"
                                                 startIcon={<IconSend />}
                                             >
-                                                Lưu và gửi
+                                                Lưu thay đổi
                                             </Button>
                                         </Stack>
                                     </Grid>
@@ -234,12 +239,7 @@ const AddNotification = () => {
                                 </Typography>
                                 <Box sx={{ mt: 2 }}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Người gửi: {formData.senderName || 'Không xác định'}
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Thời gian gửi: {new Date().toLocaleString('vi-VN')}
+                                        Thời gian cập nhật: {new Date().toLocaleString('vi-VN')}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -251,4 +251,4 @@ const AddNotification = () => {
     );
 };
 
-export default AddNotification;
+export default EditNotification;

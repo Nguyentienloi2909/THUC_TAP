@@ -1,31 +1,24 @@
 import React, { useState } from 'react';
-import { 
-    Box, 
-    TextField, 
-    IconButton, 
-    useTheme, 
+import {
+    Box,
+    TextField,
+    IconButton,
+    useTheme,
     Tooltip,
     Fade
 } from '@mui/material';
-import { 
-    IconSend, 
-    IconPaperclip, 
-    IconMoodSmile, 
-    IconMicrophone 
+import {
+    IconSend,
 } from '@tabler/icons-react';
 
-// In your MessageInput component, update the props to include sx
 const MessageInput = ({ onSendMessage, disabled, sx }) => {
     const [message, setMessage] = useState('');
     const theme = useTheme();
 
     const handleSend = () => {
         if (message.trim()) {
-            // Handle send message logic
             if (onSendMessage) {
                 onSendMessage(message.trim());
-            } else {
-                console.log('Sending message:', message);
             }
             setMessage('');
         }
@@ -47,37 +40,9 @@ const MessageInput = ({ onSendMessage, disabled, sx }) => {
             borderTop: `1px solid ${theme.palette.divider}`,
             bgcolor: theme.palette.background.paper,
             width: '100%',
-            ...sx // Apply any additional styles passed from parent
+            minHeight: 72,
+            ...sx
         }}>
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="Attach file" arrow placement="top">
-                    <IconButton 
-                        color="primary"
-                        sx={{
-                            bgcolor: theme.palette.action.hover,
-                            '&:hover': {
-                                bgcolor: theme.palette.action.selected
-                            }
-                        }}
-                    >
-                        <IconPaperclip size={20} />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Emoji" arrow placement="top">
-                    <IconButton 
-                        color="primary"
-                        sx={{
-                            bgcolor: theme.palette.action.hover,
-                            '&:hover': {
-                                bgcolor: theme.palette.action.selected
-                            }
-                        }}
-                    >
-                        <IconMoodSmile size={20} />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-            
             <TextField
                 fullWidth
                 placeholder="Type a message..."
@@ -109,22 +74,7 @@ const MessageInput = ({ onSendMessage, disabled, sx }) => {
                     }
                 }}
             />
-            
             <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="Voice message" arrow placement="top">
-                    <IconButton 
-                        color="primary"
-                        sx={{
-                            bgcolor: theme.palette.action.hover,
-                            '&:hover': {
-                                bgcolor: theme.palette.action.selected
-                            }
-                        }}
-                    >
-                        <IconMicrophone size={20} />
-                    </IconButton>
-                </Tooltip>
-                
                 <IconButton
                     color="primary"
                     onClick={handleSend}
@@ -132,6 +82,9 @@ const MessageInput = ({ onSendMessage, disabled, sx }) => {
                     sx={{
                         bgcolor: message.trim() ? theme.palette.primary.main : theme.palette.action.hover,
                         color: message.trim() ? theme.palette.primary.contrastText : theme.palette.text.primary,
+                        borderRadius: '50%',
+                        width: 40,
+                        height: 40,
                         '&:hover': {
                             bgcolor: message.trim() ? theme.palette.primary.dark : theme.palette.action.selected,
                         },

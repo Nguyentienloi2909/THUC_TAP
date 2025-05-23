@@ -38,9 +38,8 @@ const PayrollList = () => {
     const [page, setPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
-    const [monthFilter, setMonthFilter] = useState('');
-    const [yearFilter, setYearFilter] = useState('');
-    const [quarterFilter, setQuarterFilter] = useState('');
+    const [monthFilter, setMonthFilter] = useState(new Date().getMonth() + 1); // Mặc định là tháng hiện tại (5)
+    const [yearFilter, setYearFilter] = useState(new Date().getFullYear());   // Mặc định là năm hiện tại (2025)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -50,13 +49,11 @@ const PayrollList = () => {
                 const employeesData = await ApiService.getAllUsers();
                 let payrollsData;
                 if (monthFilter && yearFilter) {
-                    payrollsData = await ApiService.calculateAllSalaries(monthFilter, yearFilter);
-                } else if (quarterFilter && yearFilter) {
-                    payrollsData = await ApiService.getSalariesByQuarter(yearFilter, quarterFilter);
+                    payrollsData = await ApiService.getSalariesByMonth(yearFilter, monthFilter);
                 } else if (yearFilter) {
                     payrollsData = await ApiService.getSalariesByYear(yearFilter);
                 } else {
-                    payrollsData = await ApiService.getSalariesByQuarter(2025, 2); // Default
+                    payrollsData = await ApiService.getSalariesByMonth(2025, 5); // Mặc định tháng 5, năm 2025
                 }
 
                 console.log('Fetched departments:', departmentsData);
@@ -73,7 +70,7 @@ const PayrollList = () => {
             }
         };
         fetchData();
-    }, [monthFilter, yearFilter, quarterFilter]);
+    }, [monthFilter, yearFilter]);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -87,7 +84,6 @@ const PayrollList = () => {
 
     const handleMonthFilter = (e) => {
         setMonthFilter(e.target.value);
-        setQuarterFilter(''); // Reset quarter filter when month is selected
         setPage(1);
     };
 
@@ -96,17 +92,15 @@ const PayrollList = () => {
         setPage(1);
     };
 
-    const handleQuarterFilter = (e) => {
-        setQuarterFilter(e.target.value);
-        setMonthFilter(''); // Reset month filter when quarter is selected
-        setPage(1);
-    };
-
     const handlePageChange = (event, value) => {
         setPage(value);
     };
 
     const handleViewDetail = (userId, month, year) => {
+        if (!userId || !month || !year) {
+            console.error('Thiếu thông tin để xem chi tiết bảng lương:', { userId, month, year });
+            return;
+        }
         navigate(`/manage/payroll/detail/${userId}/${month}/${year}`);
     };
 
@@ -178,15 +172,6 @@ const PayrollList = () => {
                             <MenuItem value="">Tất cả</MenuItem>
                             {[...Array(12).keys()].map(i => (
                                 <MenuItem key={i + 1} value={i + 1}>{i + 1}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                        <InputLabel>Quý</InputLabel>
-                        <Select value={quarterFilter} onChange={handleQuarterFilter} label="Quý">
-                            <MenuItem value="">Tất cả</MenuItem>
-                            {[1, 2, 3, 4].map(q => (
-                                <MenuItem key={q} value={q}>Quý {q}</MenuItem>
                             ))}
                         </Select>
                     </FormControl>

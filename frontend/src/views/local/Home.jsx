@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Grid, CardContent, Typography, Button, Box } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -16,13 +15,13 @@ const HomePage = () => {
     const { notifications } = useContext(NotificationContext);
 
     useEffect(() => {
-        const role = ApiService.isAdmin() ? 'ADMIN' : 'USER';
+        // Lấy role từ sessionStorage thay vì localStorage
+        const role = sessionStorage.getItem('role') || 'USER';
         setUserRole(role);
 
-        // Log localStorage data for debugging
-        console.log('localStorage data:', localStorage);
-        console.log('User role from localStorage:', localStorage.getItem('role'));
-
+        // Log sessionStorage data for debugging
+        console.log('sessionStorage data:', sessionStorage);
+        console.log('User role from sessionStorage:', sessionStorage.getItem('role'));
     }, []);
 
     const handleChangePage = (event, newPage) => {

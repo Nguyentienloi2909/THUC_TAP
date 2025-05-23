@@ -2,73 +2,73 @@ const typography = {
   fontFamily: "'Plus Jakarta Sans', sans-serif;",
   h1: {
     fontWeight: 400,
-    fontSize: '3rem',       // Reduced from 5rem (~80px) to 3rem (~48px)
-    lineHeight: 1.2,        // Proportional, was 7.5rem
+    fontSize: '2.4rem',
+    lineHeight: 1.2,
   },
   h2: {
     fontWeight: 400,
-    fontSize: '2.5rem',     // Reduced from 4rem (~64px) to 2.5rem (~40px)
-    lineHeight: 1.2,        // Proportional, was 5rem
+    fontSize: '2rem',
+    lineHeight: 1.2,
   },
   h3: {
     fontWeight: 400,
-    fontSize: '2rem',       // Reduced from 3rem (~48px) to 2rem (~32px)
-    lineHeight: 1.2,        // Proportional, was 3.75rem
+    fontSize: '1.6rem',
+    lineHeight: 1.2,
   },
   h4: {
     fontWeight: 400,
-    fontSize: '1.75rem',    // Kept at 1.75rem (~28px), was 2.25rem
-    lineHeight: 1.2,        // Proportional, was 3rem
+    fontSize: '1.4rem',
+    lineHeight: 1.2,
   },
   h5: {
     fontWeight: 400,
-    fontSize: '1.5rem',     // Reduced from 1.75rem (~28px) to 1.5rem (~24px)
-    lineHeight: 1.2,        // Proportional, was 2.3rem
+    fontSize: '1.2rem',
+    lineHeight: 1.2,
   },
   h6: {
     fontWeight: 500,
-    fontSize: '1.25rem',    // Kept at 1.25rem (~20px)
-    lineHeight: 1.2,        // Proportional, was 1.75rem
+    fontSize: '1rem',
+    lineHeight: 1.2,
   },
   h7: {
     fontWeight: 500,
-    fontSize: '1.0rem',    // Kept at 1.25rem (~20px)
-    lineHeight: 1.2,        // Proportional, was 1.75rem
+    fontSize: '0.8rem',
+    lineHeight: 1.2,
   },
   button: {
     textTransform: 'capitalize',
     fontWeight: 500,
-    fontSize: '1rem',       // ~16px, unchanged
-    lineHeight: 1.75,       // Proportional, was 1.75rem
+    fontSize: '0.8rem',
+    lineHeight: 1.75,
   },
   body1: {
-    fontSize: '1.125rem',   // ~18px, unchanged
+    fontSize: '0.9rem',
     fontWeight: 400,
-    lineHeight: 1.5,        // Proportional, was 1.6875rem (~1.5x)
+    lineHeight: 1.5,
   },
   body2: {
-    fontSize: '1rem',       // ~16px, unchanged
+    fontSize: '0.8rem',
     letterSpacing: '0rem',
     fontWeight: 400,
-    lineHeight: 1.5,        // Proportional, was 1.5rem
+    lineHeight: 1.5,
   },
   subtitle1: {
-    fontSize: '1.125rem',   // ~18px, unchanged
+    fontSize: '0.9rem',
     fontWeight: 400,
-    lineHeight: 1.5,        // Proportional, was 1.6rem
+    lineHeight: 1.5,
   },
   subtitle2: {
-    fontSize: '1rem',       // ~16px, unchanged
+    fontSize: '0.8rem',
     fontWeight: 500,
-    lineHeight: 1.5,        // Proportional, was 1.6rem
+    lineHeight: 1.5,
   },
   caption: {
-    fontSize: '0.875rem',   // ~14px, added for small text
+    fontSize: '0.7rem',
     fontWeight: 400,
     lineHeight: 1.5,
   },
   overline: {
-    fontSize: '0.75rem',    // ~12px, added for uppercase labels
+    fontSize: '0.6rem',
     fontWeight: 500,
     lineHeight: 1.5,
     textTransform: 'uppercase',

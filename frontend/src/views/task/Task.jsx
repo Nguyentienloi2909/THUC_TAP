@@ -1,19 +1,21 @@
+// src/views/task/task.jsx
 import React, { useState, useEffect } from 'react';
 import {
     Grid, Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Paper, Tooltip, IconButton, CircularProgress,
-    Button, Dialog, DialogTitle, DialogContent, DialogActions
+    Button, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
     IconPlus, IconEdit, IconTrash, IconDownload,
-    IconCheck, IconClockHour4, IconClock, IconAlertCircle
+    IconCheck, IconClockHour4, IconClock, IconAlertCircle,
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useNavigate } from 'react-router-dom';
 import AddTaskPage from './Add';
 import ApiService from '../../service/ApiService';
 import TaskActions from './TaskActions';
+import { useUser } from 'src/contexts/UserContext'; // Thêm useUser
 
 // Hàm ánh xạ trạng thái từ API sang cấu hình hiển thị
 const createStatusConfig = (statusList) => {
@@ -21,28 +23,28 @@ const createStatusConfig = (statusList) => {
         pending: {
             label: 'Chờ xử lý',
             color: 'warning',
-            icon: <IconClock size={16} />
+            icon: <IconClock size={16} />,
         },
         inprogress: {
             label: 'Đang thực hiện',
             color: 'primary',
-            icon: <IconClockHour4 size={16} />
+            icon: <IconClockHour4 size={16} />,
         },
         late: {
             label: 'Muộn',
             color: 'error',
-            icon: <IconAlertCircle size={16} />
+            icon: <IconAlertCircle size={16} />,
         },
         completed: {
             label: 'Hoàn thành',
             color: 'success',
-            icon: <IconCheck size={16} />
+            icon: <IconCheck size={16} />,
         },
         cancelled: {
             label: 'Đã hủy',
             color: 'default',
-            icon: <IconAlertCircle size={16} />
-        }
+            icon: <IconAlertCircle size={16} />,
+        },
     };
 
     const config = {};
@@ -52,7 +54,7 @@ const createStatusConfig = (statusList) => {
             ...defaultConfig[normalizedStatus],
             label: defaultConfig[normalizedStatus]?.label || status.name,
             color: defaultConfig[normalizedStatus]?.color || 'default',
-            icon: defaultConfig[normalizedStatus]?.icon || <IconClock size={16} />
+            icon: defaultConfig[normalizedStatus]?.icon || <IconClock size={16} />,
         };
     });
 
@@ -64,7 +66,7 @@ const TaskStatusChip = ({ status }) => {
     const config = status && statusConfig[status.toLowerCase().replace(/\s+/g, '')] || {
         label: 'Không xác định',
         color: 'default',
-        icon: <IconClock size={16} />
+        icon: <IconClock size={16} />,
     };
     return (
         <Chip
@@ -81,13 +83,13 @@ let statusConfig = {};
 
 const Task = () => {
     const navigate = useNavigate();
+    const { user } = useUser(); // Lấy user từ UserContext
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState(0);
     const [error, setError] = useState(null);
     const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
-    const [role, setRole] = useState('USER');
     const [statusList, setStatusList] = useState([]);
 
     const fetchStatusList = async () => {
@@ -101,11 +103,12 @@ const Task = () => {
         }
     };
 
-    const fetchUserTasks = async (userId) => {
+    const fetchUserTasks = async () => {
+        if (!user.isAuthenticated || !user.userId) return;
         try {
             setLoading(true);
             setError(null);
-            const userTasks = await ApiService.getTasksByUser(userId);
+            const userTasks = await ApiService.getTasksByUser(user.userId);
             setTasks(userTasks);
         } catch (err) {
             console.error('Error fetching tasks:', err);
@@ -120,26 +123,18 @@ const Task = () => {
     };
 
     useEffect(() => {
-        const fetchUserProfile = async () => {
-            try {
-                const userProfile = await ApiService.getUserProfile();
-                setRole(userProfile.roleName);
-                await fetchUserTasks(userProfile.id);
-                await fetchStatusList();
-            } catch (err) {
-                console.error('Error fetching user profile:', err);
-                setError('Cannot retrieve user information.');
-            }
-        };
-        fetchUserProfile();
-    }, []);
+        if (user.isAuthenticated && user.userId) {
+            fetchUserTasks();
+            fetchStatusList();
+        }
+    }, [user.isAuthenticated, user.userId]);
 
     const tabs = [
         { label: "Tất cả", value: "all" },
         ...statusList.map(status => ({
             label: statusConfig[status.name.toLowerCase().replace(/\s+/g, '')]?.label || status.name,
-            value: status.name.toLowerCase().replace(/\s+/g, '')
-        }))
+            value: status.name.toLowerCase().replace(/\s+/g, ''),
+        })),
     ];
 
     const getFilteredTasksByStatus = () => {
@@ -151,14 +146,6 @@ const Task = () => {
     };
 
     const filteredTasks = getFilteredTasksByStatus();
-
-    const [newTask, setNewTask] = useState({
-        title: '',
-        description: '',
-        assignedToName: '',
-        startTime: '',
-        endTime: ''
-    });
 
     const viewTaskDetails = (taskId) => {
         navigate(`/manage/task/${taskId}`);
@@ -185,18 +172,13 @@ const Task = () => {
                 alert('Failed to delete task. Please try again.');
             }
         } else if (action === 'edit') {
-            navigate(`/manage/task/edit/${taskId}`);
+            navigate(`/manage/task/update/${taskId}`);
         }
         setConfirmDialog({ open: false, action: null, taskId: null });
     };
 
-    const handleTaskClick = (taskId) => {
-        navigate(`/manage/task/${taskId}`);
-    };
-
     const handleAddTask = async (newTask) => {
         try {
-            console.log('Adding new task:', newTask);
             if (!newTask.title || !newTask.description || !newTask.startTime || !newTask.endTime || !newTask.assignedToId) {
                 alert('Please fill in all required fields.');
                 return;
@@ -234,7 +216,7 @@ const Task = () => {
                     <Typography variant="h5" fontWeight="bold">
                         Quản lý nhiệm vụ
                     </Typography>
-                    {role === 'LEADER' && (
+                    {user.role === 'LEADER' && (
                         <Button
                             variant="contained"
                             startIcon={<IconPlus />}
@@ -253,8 +235,8 @@ const Task = () => {
                         borderColor: 'divider',
                         '& .MuiTab-root': {
                             minWidth: 120,
-                            fontWeight: 500
-                        }
+                            fontWeight: 500,
+                        },
                     }}
                 >
                     {tabs.map((tab, index) => (
@@ -276,6 +258,10 @@ const Task = () => {
                 ) : error ? (
                     <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
                         {error}
+                    </Box>
+                ) : !user.isAuthenticated ? (
+                    <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
+                        Vui lòng đăng nhập để xem nhiệm vụ
                     </Box>
                 ) : (
                     <TableContainer>
@@ -328,7 +314,7 @@ const Task = () => {
                                                     task={task}
                                                     onEdit={handleEdit}
                                                     onDelete={handleDelete}
-                                                    role={role}
+                                                    role={user.role} // Sử dụng user.role
                                                 />
                                             </TableCell>
                                         </TableRow>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Box, Typography, Divider, ButtonGroup, Button } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -6,7 +5,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import { NotificationContext } from '../../contexts/NotificationContext';
-import ApiService from 'src/service/ApiService'; // Import ApiService
+import ApiService from 'src/service/ApiService';
 
 const NotificationDetail = () => {
     const navigate = useNavigate();
@@ -14,12 +13,12 @@ const NotificationDetail = () => {
     const { notification } = location.state || {};
     const { markAsRead } = useContext(NotificationContext);
     const [readTime, setReadTime] = useState(null);
-    const [user, setUser] = useState(null); // State to store user data
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const userData = await ApiService.getUserProfile(); // Fetch user data
+                const userData = await ApiService.getUserProfile();
                 setUser(userData);
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -43,19 +42,18 @@ const NotificationDetail = () => {
     }
 
     const handleEdit = () => {
-        console.log('Edit notification:', notification.id);
-        // Navigate to edit page or handle edit logic
+        navigate('/notification/edit', { state: { notification } });
     };
 
     const handleDelete = async () => {
-        const confirmed = window.confirm('Are you sure you want to delete this notification?');
+        const confirmed = window.confirm('Bạn có muốn tiếp tục thao tác xóa thông báo này sao?');
         if (confirmed) {
             try {
                 await ApiService.deleteNotification(notification.id);
-                console.log('Notification deleted successfully');
-                navigate('/home'); // Go back to the previous page
+                console.log('Xóa thông báo thành công!');
+                navigate('/home');
             } catch (error) {
-                console.error('Error deleting notification:', error);
+                console.error('Có lỗi xảy ra khi xóa thông báo:', error);
             }
         }
     };
@@ -99,36 +97,41 @@ const NotificationDetail = () => {
             </Box>
             <DashboardCard title="" sx={{ maxWidth: '800px', margin: 'auto', mt: 4, boxShadow: 3, borderRadius: 2 }}>
                 <Box sx={{ p: 4 }}>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2 }}>
-                        {notification.title}
+                    <Typography
+                        variant="h4"
+                        gutterBottom
+                        sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2 }}
+                    >
+                        Chi tiết thông báo
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
-                    <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.6 }}>
-                        {notification.description}
+                    <Typography variant="h5" sx={{ textAlign: 'center' }} gutterBottom>
+                        {notification.title || 'Tiêu đề thông báo'}
+                    </Typography>
+                    <Typography variant="h5" sx={{ textAlign: 'center' }} gutterBottom>
+                        --------------------------@@@------------------------
+                    </Typography>
+                    {/* Add margin to create space between title and description */}
+                    <Box sx={{ height: 20 }} /> {/* Adjust height as needed */}
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            whiteSpace: 'pre-wrap',
+                            lineHeight: 1.8,
+                            mb: 3,
+                        }}
+                    >
+                        {notification.description || 'Nội dung thông báo'}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Ngày đăng: {new Date(notification.sentAt).toLocaleString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                        })}
+                        Thời gian gửi: {new Date(notification.sentAt).toLocaleString('vi-VN')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Thời gian đọc: {readTime ? readTime.toLocaleString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                        }) : 'Đang tải...'}
+                        Thời gian đọc: {readTime ? readTime.toLocaleString('vi-VN') : 'Đang tải...'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
-                        Người đăng: {notification.senderName}
+                        Người đăng: {notification.senderName || 'Không xác định'}
                     </Typography>
                 </Box>
             </DashboardCard>

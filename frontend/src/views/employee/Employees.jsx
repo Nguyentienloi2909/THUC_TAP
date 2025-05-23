@@ -149,12 +149,12 @@ const Employees = () => {
                                                         onClick={() => handleEmployeeClick(employee.id)}
                                                     >
                                                         <TableCell align="center">{employee.id}</TableCell>
-                                                        <TableCell>{employee.fullName}</TableCell>
-                                                        <TableCell align="center">{getGenderDisplay(employee.gender)}</TableCell>
-                                                        <TableCell align="center">{employee.roleName}</TableCell>
-                                                        <TableCell align="center">{employee.groupName}</TableCell>
-                                                        <TableCell align="center">{employee.phoneNumber}</TableCell>
-                                                        <TableCell align="center">{employee.email}</TableCell>
+                                                        <TableCell>{employee.fullName || '-----'}</TableCell>
+                                                        <TableCell align="center">{getGenderDisplay(employee.gender) || '-----'}</TableCell>
+                                                        <TableCell align="center">{employee.roleName || '-----'}</TableCell>
+                                                        <TableCell align="center">{employee.groupName || '-----'}</TableCell>
+                                                        <TableCell align="center">{employee.phoneNumber || '-----'}</TableCell>
+                                                        <TableCell align="center">{employee.email || '-----'}</TableCell>
                                                     </TableRow>
                                                 );
                                             })

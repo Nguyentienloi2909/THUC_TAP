@@ -1,7 +1,7 @@
-import { TextField, useTheme } from '@mui/material';
+import { TextField, useTheme, InputAdornment } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 
-const SearchBox = () => {
+const SearchBox = ({ onSearch }) => {
     const theme = useTheme();
 
     return (
@@ -10,27 +10,31 @@ const SearchBox = () => {
             placeholder="Search messages..."
             variant="outlined"
             size="small"
+            onChange={e => onSearch && onSearch(e.target.value)}
             InputProps={{
                 startAdornment: (
-                    <IconSearch
-                        size={20}
-                        style={{
-                            marginRight: theme.spacing(1),
-                            color: theme.palette.text.secondary
-                        }}
-                    />
+                    <InputAdornment position="start">
+                        <IconSearch
+                            size={20}
+                            style={{
+                                color: theme.palette.text.secondary
+                            }}
+                        />
+                    </InputAdornment>
                 ),
-                sx: {
+            }}
+            sx={{
+                height: 48,
+                '& .MuiOutlinedInput-root': {
                     borderRadius: '20px',
                     bgcolor: theme.palette.background.paper,
-                    '& .MuiOutlinedInput-root': {
-                        '& fieldset': {
-                            borderColor: theme.palette.divider,
-                        },
-                        '&:hover fieldset': {
-                            borderColor: theme.palette.primary.main,
-                        },
-                    }
+                    height: 48,
+                    '& fieldset': {
+                        borderColor: theme.palette.divider,
+                    },
+                    '&:hover fieldset': {
+                        borderColor: theme.palette.primary.main,
+                    },
                 }
             }}
         />

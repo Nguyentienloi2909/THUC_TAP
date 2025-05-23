@@ -1,3 +1,4 @@
+// src/views/authentication/auth/AuthLogin.jsx
 import React, { useState } from 'react';
 import {
     Box,
@@ -11,12 +12,13 @@ import {
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
-
+import { useUser } from '../../../contexts/UserContext'; // Thêm useUser
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import ApiService from '../../../service/ApiService';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
     const navigate = useNavigate();
+    const { login } = useUser(); // Lấy login từ UserContext
 
     const [loginData, setLoginData] = useState({
         email: '',
@@ -25,7 +27,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setLoginData({
@@ -45,24 +47,32 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
         try {
             const loginPayload = {
-                email: loginData.email,
-                passwordHash: loginData.password
+                Email: loginData.email,
+                PasswordHash: loginData.password
             };
 
             console.log('Attempting to login with payload:', loginPayload);
             console.log('API Endpoint:', ApiService.BASE_URL);
 
-            const res = await ApiService.loginUser(loginPayload);
+            // Gọi login từ UserContext thay vì ApiService trực tiếp
+            const loginResult = await login(loginData.email, loginData.password);
 
-            if (!res || res.statusCode === 401) {
-                throw new Error(res.message || 'Empty response from server');
+            // Nếu login trả về lỗi custom
+            if (loginResult && loginResult.error) {
+                setError(loginResult.error);
+                setLoading(false);
+                return;
             }
 
-            console.log('Login response:', res);
-            localStorage.setItem('token', res.token);
-            localStorage.setItem('role', res.role);
+            // Nếu login trả về false hoặc không có token, báo lỗi và không chuyển trang
+            if (!loginResult || !sessionStorage.getItem('authToken')) {
+                setError('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
+                setLoading(false);
+                return;
+            }
 
-            navigate('/'); // Redirect to home page on successful login
+            console.log('Login successful, navigating to /home');
+            navigate('/home');
         } catch (err) {
             console.error('Login error details:', {
                 message: err.message,
@@ -75,6 +85,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                 setError('Mật khẩu không hợp lệ. Vui lòng thử lại.');
             } else if (err.code === 'ERR_NETWORK') {
                 setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+            } else if (err.response?.data?.message) {
+                setError(err.response.data.message);
             } else {
                 setError('Đăng nhập thất bại. Vui lòng thử lại sau.');
             }
@@ -128,12 +140,6 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                         />
                     </Box>
                     <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-                        {/* <FormGroup>
-                            <FormControlLabel
-                                control={<Checkbox defaultChecked />}
-                                label="Ghi nhớ lịch sử đăng nhập"
-                            />
-                        </FormGroup> */}
                         <Typography
                             component={Link}
                             to="/forgot-password"
