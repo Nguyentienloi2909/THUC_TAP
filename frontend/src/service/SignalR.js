@@ -13,7 +13,7 @@ const chatConnection = new signalR.HubConnectionBuilder()
     .withUrl("http://192.168.1.126:7247/chatHub",
         {
             accessTokenFactory: () => {
-                return localStorage.getItem("authToken");
+                return sessionStorage.getItem("authToken");
             }
         })
     .withAutomaticReconnect()

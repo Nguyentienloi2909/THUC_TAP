@@ -37,8 +37,8 @@ const CheckWork = Loadable(lazy(() => import('../views/attendance/CheckWork')));
 const History = Loadable(lazy(() => import('../views/attendance/HistoryCheckwork')));
 const TKCheckwork = Loadable(lazy(() => import('../views/attendance/TKCheckwork')));
 const Attendance = Loadable(lazy(() => import('../views/attendance/Attendance')));
-const WeeklyAttendance = Loadable(lazy(() => import('../views/attendance/WeeklyAttendance')));
-const MonthlyAttendance = Loadable(lazy(() => import('../views/attendance/MonthlyAttendance')));
+const WeekAttendance = Loadable(lazy(() => import('../views/attendance/WeekAttendance')));
+const MonthAttendance = Loadable(lazy(() => import('../views/attendance/MonthAttendance')));
 
 // Notification Pages
 const NotificationDetails = Loadable(lazy(() => import('../views/notification/NotificationDetail')));
@@ -95,8 +95,8 @@ const Router = [
 
       // Attendance Management
       { path: '/manage/attendance', element: <ProtectedRoute element={Attendance} /> },
-      { path: '/manage/attendance/week', element: <ProtectedRoute element={WeeklyAttendance} /> },
-      { path: '/manage/attendance/month', element: <ProtectedRoute element={MonthlyAttendance} /> },
+      { path: '/manage/attendance/week', element: <ProtectedRoute element={WeekAttendance} /> },
+      { path: '/manage/attendance/month', element: <ProtectedRoute element={MonthAttendance} /> },
 
       // Payroll
       { path: '/manage/payroll', element: <ProtectedRoute element={Payroll} /> },

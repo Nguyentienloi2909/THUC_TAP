@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, Avatar, useTheme, Badge, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
-import { IconCircleFilled, IconMenu2 } from '@tabler/icons-react';
+import { IconCircleFilled, IconMenu2, IconUsers } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import CreateGroupChat from './creategroupchat';
 import AddUserToGroup from './addusertogroup';
 import DeleteUserInGroup from './DeleteUserInGroup';
+import UsersToGroup from './UsersToGroup'; // import modal hiển thị user group
 
 const ChatHeader = ({ selectedUser, selectedGroup }) => {
     const theme = useTheme();
@@ -14,6 +15,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
     const [openCreateGroupModal, setOpenCreateGroupModal] = useState(false);
     const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
     const [openRemoveMemberModal, setOpenRemoveMemberModal] = useState(false);
+    const [openUsersModal, setOpenUsersModal] = useState(false); // state cho modal danh sách user
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const [anchorEl, setAnchorEl] = useState(null);
     const openMenu = Boolean(anchorEl);
@@ -63,6 +65,16 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
             return;
         }
         setOpenRemoveMemberModal(true);
+        handleMenuClose();
+    };
+
+    // Thêm: Xử lý mở modal xem danh sách user
+    const handleShowUsers = () => {
+        if (!selectedGroup) {
+            alert('Vui lòng chọn một nhóm để xem thành viên.');
+            return;
+        }
+        setOpenUsersModal(true);
         handleMenuClose();
     };
 
@@ -200,6 +212,9 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                 <MenuItem onClick={handleRemoveMember} disabled={!selectedGroup}>
                     Xóa thành viên khỏi nhóm
                 </MenuItem>
+                <MenuItem onClick={handleShowUsers} disabled={!selectedGroup}>
+                    Xem danh sách thành viên
+                </MenuItem>
             </Menu>
 
             {loggedInUserId && (
@@ -223,6 +238,14 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                             loggedInUserId={loggedInUserId}
                             groupId={selectedGroup.id}
                             selectedGroup={selectedGroup}
+                        />
+                    )}
+                    {/* Modal hiển thị danh sách user */}
+                    {selectedGroup && (
+                        <UsersToGroup
+                            open={openUsersModal}
+                            onClose={() => setOpenUsersModal(false)}
+                            group={selectedGroup}
                         />
                     )}
                 </>

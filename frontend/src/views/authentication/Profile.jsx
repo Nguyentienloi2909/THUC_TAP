@@ -7,19 +7,41 @@ import { IconEdit, IconLogout } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
+import { useUser } from 'src/contexts/UserContext';
 
 const Profile = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user: contextUser, setUser: setContextUser } = useUser();
+    const [user, setUser] = useState(contextUser);
+    const [loading, setLoading] = useState(!contextUser?.userId); // Nếu context đã có userId thì không loading
     const [error, setError] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '' });
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Nếu context đã có user chi tiết thì không cần gọi lại API
+        if (contextUser && contextUser.userId) {
+            setUser(contextUser);
+            setLoading(false);
+            return;
+        }
+        // Nếu chưa có, gọi API lấy profile
         const fetchUserProfile = async () => {
             try {
+                setLoading(true);
                 const userData = await ApiService.getUserProfile();
                 setUser(userData);
+                if (setContextUser) {
+                    setContextUser(prev => ({
+                        ...prev,
+                        ...userData,
+                        userId: userData.id,
+                        fullName: userData.fullName,
+                        avatar: userData.avatar,
+                        email: userData.email,
+                        phoneNumber: userData.phoneNumber,
+                        // ...thêm các trường khác nếu cần
+                    }));
+                }
             } catch (err) {
                 setError(err.response?.data?.message || err.message || 'Lỗi khi tải hồ sơ');
             } finally {
@@ -28,7 +50,8 @@ const Profile = () => {
         };
 
         fetchUserProfile();
-    }, []);
+        // eslint-disable-next-line
+    }, [contextUser?.userId]);
 
     const handleLogout = () => {
         ApiService.logout();
@@ -190,8 +213,8 @@ const InfoItem = ({ label, value }) => (
         <ListItemText
             primary={label}
             secondary={value || '---'}
-            primaryTypographyProps={{ sx: { fontWeight: 'bold', color: 'text.primary', fontSize: '1.1rem' } }} // Increased font size
-            secondaryTypographyProps={{ sx: { color: 'text.secondary', fontSize: '1rem' } }} // Increased font size
+            primaryTypographyProps={{ sx: { fontWeight: 'bold', color: 'text.primary', fontSize: '1.1rem' } }}
+            secondaryTypographyProps={{ sx: { color: 'text.secondary', fontSize: '1rem' } }}
         />
     </ListItem>
 );

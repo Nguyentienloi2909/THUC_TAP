@@ -6,9 +6,9 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
-        const savedRole = localStorage.getItem('role');
-        const savedToken = localStorage.getItem('authToken');
-        const savedFullName = localStorage.getItem('fullName'); // Thêm nếu muốn lưu fullName
+        const savedRole = sessionStorage.getItem('role');
+        const savedToken = sessionStorage.getItem('authToken');
+        const savedFullName = sessionStorage.getItem('fullName');
         return {
             role: savedRole || null,
             isAuthenticated: !!savedToken,
@@ -18,7 +18,6 @@ export const UserProvider = ({ children }) => {
             email: null,
             fullName: savedFullName || null,
             phoneNumber: null,
-            // Thêm các trường khác nếu cần, ví dụ: department, createdAt, v.v.
         };
     });
 
@@ -28,16 +27,30 @@ export const UserProvider = ({ children }) => {
                 try {
                     const profile = await ApiService.getUserProfile();
                     console.log('User profile:', profile); // Log để kiểm tra
+
+                    // Loại bỏ các trường lương và tin nhắn trước khi lưu vào sessionStorage
+                    const {
+                        salaries,
+                        sentMessages,
+                        receivedMessages,
+                        ...profileToStore
+                    } = profile;
+
+                    // Lưu các trường còn lại vào sessionStorage
+                    sessionStorage.setItem('userProfile', JSON.stringify(profileToStore));
+
                     setUser((prev) => ({
                         ...prev,
+                        ...profileToStore,
                         userId: profile?.id || prev.userId,
                         avatar: profile?.avatar || prev.avatar,
                         email: profile?.email || prev.email,
                         fullName: profile?.fullName || prev.fullName,
                         phoneNumber: profile?.phoneNumber || prev.phoneNumber,
+                        bankName: profile?.bankName || prev.bankName,
+                        bankNumber: profile?.bankNumber || prev.bankNumber,
+                        monthSalary: profile?.monthSalary || prev.monthSalary,
                         role: prev.role, // Giữ nguyên role từ login
-                        // Thêm các trường khác từ profile nếu cần
-                        // ví dụ: department: profile?.department || prev.department,
                     }));
                     // Lưu fullName vào localStorage (tùy chọn)
                     if (profile?.fullName) {
@@ -66,29 +79,45 @@ export const UserProvider = ({ children }) => {
                 Email: username,
                 PasswordHash: password
             });
+            console.log('API login response:', response);
+
+            // Nếu tài khoản bị xóa hoặc bị khóa
+            if (response.statusCode === 403 && response.message === 'User is inactive') {
+                return { error: 'Tài khoản của bạn đã bị khóa hoặc bị xóa. Vui lòng liên hệ quản trị viên.' };
+            }
+
+            const { role, token, fullName } = response;
+            if (!token) {
+                return { error: 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.' };
+            }
+
             const newUser = {
-                role: response.role,
+                role,
                 isAuthenticated: true,
-                token: response.token,
+                token,
                 userId: null,
                 avatar: null,
                 email: null,
                 fullName: null,
                 phoneNumber: null,
-                // Thêm các trường khác nếu cần
             };
             setUser(newUser);
-            localStorage.setItem('authToken', response.token);
-            localStorage.setItem('role', response.role);
+            sessionStorage.setItem('authToken', token);
+            sessionStorage.setItem('role', role);
+            sessionStorage.setItem('fullName', fullName);
             console.log('User set after login:', newUser);
+            return true;
         } catch (error) {
             console.error('Login error:', error);
-            throw new Error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+            return { error: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.' };
         }
     };
 
     const logout = () => {
         ApiService.logout();
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('role');
+        sessionStorage.removeItem('fullName');
         setUser({
             role: null,
             isAuthenticated: false,
@@ -99,9 +128,6 @@ export const UserProvider = ({ children }) => {
             fullName: null,
             phoneNumber: null,
         });
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('role');
-        localStorage.removeItem('fullName'); // Xóa fullName nếu đã lưu
     };
 
     const value = useMemo(() => ({ user, login, logout }), [user]);

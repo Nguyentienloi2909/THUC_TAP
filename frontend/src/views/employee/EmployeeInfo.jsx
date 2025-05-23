@@ -193,7 +193,7 @@ const EmployeesInfo = () => {
                                 {employee.fullName}
                             </Typography>
                             <Typography variant="subtitle1" color="textSecondary" gutterBottom sx={{ fontSize: '1.1rem' }}>
-                                Chức vụ: {employee.roleName || 'N/A'}
+                                Chức vụ: {employee.roleName || '-----'}
                             </Typography>
                             <Chip
                                 label={employee.status || 'Hoạt động'}
@@ -222,16 +222,16 @@ const EmployeesInfo = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                <InfoItem icon={<IconPhone />} label="Số điện thoại" value={employee.phoneNumber} />
-                                <InfoItem icon={<IconMail />} label="Email" value={employee.email} />
-                                <InfoItem icon={<IconCalendar />} label="Ngày sinh" value={employee.birthDate ? new Date(employee.birthDate).toLocaleDateString('en-GB') : 'N/A'} />
-                                <InfoItem icon={<IconCalendarEvent />} label="Ngày bắt đầu" value={employee.startDate ? new Date(employee.startDate).toLocaleDateString('en-GB') : 'N/A'} />
-                                <InfoItem icon={<IconDeviceIpadDollar />} label="Lương tháng" value={employee.monthSalary ? `${employee.monthSalary.toLocaleString('vi-VN')} VND` : 'N/A'} />
-                                <InfoItem icon={<IconGenderBigender />} label="Giới tính" value={employee.gender === true ? 'Nam' : employee.gender === false ? 'Nữ' : 'N/A'} />
-                                <InfoItem icon={<IconMapPin />} label="Địa chỉ" value={employee.address} />
-                                <InfoItem icon={<IconBuildingBank />} label="Ngân hàng" value={employee.bankName} />
-                                <InfoItem icon={<IconDeviceIpadDollar />} label="Số tài khoản" value={employee.bankNumber} />
-                                <InfoItem icon={<IconUsers />} label="Phòng ban" value={employee.groupName} />
+                                <InfoItem icon={<IconPhone />} label="Số điện thoại" value={employee?.phoneNumber || '-----'} />
+                                <InfoItem icon={<IconMail />} label="Email" value={employee?.email || '-----'} />
+                                <InfoItem icon={<IconCalendar />} label="Ngày sinh" value={employee?.birthDate ? new Date(employee.birthDate).toLocaleDateString('en-GB') : '-----'} />
+                                <InfoItem icon={<IconCalendarEvent />} label="Ngày bắt đầu" value={employee?.startDate ? new Date(employee.startDate).toLocaleDateString('en-GB') : '-----'} />
+                                <InfoItem icon={<IconDeviceIpadDollar />} label="Lương tháng" value={employee?.monthSalary ? `${employee.monthSalary.toLocaleString('vi-VN')} VND` : '-----'} />
+                                <InfoItem icon={<IconGenderBigender />} label="Giới tính" value={employee?.gender === true ? 'Nam' : employee?.gender === false ? 'Nữ' : '-----'} />
+                                <InfoItem icon={<IconMapPin />} label="Địa chỉ" value={employee?.address || '-----'} />
+                                <InfoItem icon={<IconBuildingBank />} label="Ngân hàng" value={employee?.bankName || '-----'} />
+                                <InfoItem icon={<IconDeviceIpadDollar />} label="Số tài khoản" value={employee?.bankNumber || '-----'} />
+                                <InfoItem icon={<IconUsers />} label="Phòng ban" value={employee?.groupName || '-----'} />
                             </TableBody>
                         </Table>
                     </TableContainer>

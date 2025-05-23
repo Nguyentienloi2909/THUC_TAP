@@ -55,10 +55,24 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             console.log('API Endpoint:', ApiService.BASE_URL);
 
             // Gọi login từ UserContext thay vì ApiService trực tiếp
-            await login(loginData.email, loginData.password);
+            const loginResult = await login(loginData.email, loginData.password);
+
+            // Nếu login trả về lỗi custom
+            if (loginResult && loginResult.error) {
+                setError(loginResult.error);
+                setLoading(false);
+                return;
+            }
+
+            // Nếu login trả về false hoặc không có token, báo lỗi và không chuyển trang
+            if (!loginResult || !sessionStorage.getItem('authToken')) {
+                setError('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
+                setLoading(false);
+                return;
+            }
 
             console.log('Login successful, navigating to /home');
-            navigate('/home'); // Điều hướng tới /home
+            navigate('/home');
         } catch (err) {
             console.error('Login error details:', {
                 message: err.message,
@@ -71,6 +85,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                 setError('Mật khẩu không hợp lệ. Vui lòng thử lại.');
             } else if (err.code === 'ERR_NETWORK') {
                 setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.');
+            } else if (err.response?.data?.message) {
+                setError(err.response.data.message);
             } else {
                 setError('Đăng nhập thất bại. Vui lòng thử lại sau.');
             }

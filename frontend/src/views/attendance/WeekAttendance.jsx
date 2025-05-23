@@ -11,7 +11,7 @@ import ApiService from '../../service/ApiService';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, addWeeks, subWeeks } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const WeeklyAttendance = () => {
+const WeekAttendance = () => {
     const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [attendanceData, setAttendanceData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const WeeklyAttendance = () => {
     const [rowsPerPage] = useState(10);
 
     const daysOfWeek = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-    
+
     // Use useMemo to memoize weekDays calculation
     const weekDays = useMemo(() => {
         return eachDayOfInterval({
@@ -36,11 +36,10 @@ const WeeklyAttendance = () => {
                 setError(null);
                 const month = currentWeekStart.getMonth() + 1;
                 const year = currentWeekStart.getFullYear();
-                console.log('Fetching attendance data for:', { month, year, weekStart: format(currentWeekStart, 'yyyy-MM-dd') });
-                
-                const response = await ApiService.getAttendance(month, year);
-                console.log('API Response:', response);
-                
+
+                // SỬ DỤNG API LẤY TOÀN BỘ LỊCH SỬ CHẤM CÔNG
+                const response = await ApiService.getAllAttendance(month, year);
+
                 if (!Array.isArray(response)) {
                     throw new Error('Dữ liệu chấm công không hợp lệ');
                 }
@@ -51,25 +50,19 @@ const WeeklyAttendance = () => {
                         acc[item.userFullName] = { userId: item.userId, days: {} };
                     }
                     const workday = new Date(item.workday);
-                    console.log('Processing workday:', format(workday, 'yyyy-MM-dd'), 'for user:', item.userFullName);
-                    
+
+                    // Chỉ lấy dữ liệu trong tuần hiện tại
                     const dayIndex = weekDays.findIndex(day =>
                         format(day, 'yyyy-MM-dd') === format(workday, 'yyyy-MM-dd')
                     );
-                    console.log('Day index in current week:', dayIndex, 'Status:', item.status);
-                    
                     if (dayIndex !== -1) {
                         acc[item.userFullName].days[dayIndex] = item.status;
                     }
                     return acc;
                 }, {});
 
-                console.log('Grouped attendance data:', groupedData);
-                console.log('Final attendance data array:', Object.entries(groupedData));
-                
                 setAttendanceData(Object.entries(groupedData));
             } catch (err) {
-                console.error('Error in fetchAttendance:', err);
                 setError(err.message || 'Không thể tải dữ liệu chấm công');
             } finally {
                 setLoading(false);
@@ -77,10 +70,8 @@ const WeeklyAttendance = () => {
         };
 
         if (ApiService.isAdmin()) {
-            console.log('User is admin, fetching attendance data');
             fetchAttendance();
         } else {
-            console.log('User is not admin, showing error');
             setError('Bạn không có quyền xem dữ liệu chấm công của tất cả nhân viên');
             setLoading(false);
         }
@@ -215,4 +206,4 @@ const WeeklyAttendance = () => {
     );
 };
 
-export default WeeklyAttendance;
+export default WeekAttendance;

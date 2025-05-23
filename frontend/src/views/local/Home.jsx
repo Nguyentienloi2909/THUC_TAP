@@ -12,27 +12,17 @@ const HomePage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(10);
     const [userRole, setUserRole] = useState('');
-    const { notifications, fetchNotifications } = useContext(NotificationContext);
+    const { notifications } = useContext(NotificationContext);
 
     useEffect(() => {
-        const role = ApiService.isAdmin() ? 'ADMIN' : 'USER';
+        // Lấy role từ sessionStorage thay vì localStorage
+        const role = sessionStorage.getItem('role') || 'USER';
         setUserRole(role);
 
-        // Log localStorage data for debugging
-        console.log('localStorage data:', localStorage);
-        console.log('User role from localStorage:', localStorage.getItem('role'));
+        // Log sessionStorage data for debugging
+        console.log('sessionStorage data:', sessionStorage);
+        console.log('User role from sessionStorage:', sessionStorage.getItem('role'));
     }, []);
-
-    // Thêm useEffect để gọi fetchNotifications khi trang Home được tải
-    useEffect(() => {
-        const fetchAndSortNotifications = async () => {
-            await fetchNotifications();
-            notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            console.log('Sorted notifications:', notifications);
-        };
-
-        fetchAndSortNotifications();
-    }, [fetchNotifications]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);

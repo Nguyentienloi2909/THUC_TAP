@@ -5,10 +5,10 @@ export default class ApiService {
     // static BASE_URL = "http://localhost:7247/api";
 
     static getHeader() {
-        const authToken = localStorage.getItem("authToken");
+        const token = sessionStorage.getItem('authToken');
         return {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
         };
     }
 
@@ -37,22 +37,22 @@ export default class ApiService {
     }
 
     static logout() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('role');
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('role');
     }
 
     static isAuthenticated() {
-        const authToken = localStorage.getItem('authToken');
+        const authToken = sessionStorage.getItem('authToken');
         return !!authToken;
     }
 
     static isAdmin() {
-        const role = localStorage.getItem('role');
+        const role = sessionStorage.getItem('role');
         return role === 'ADMIN';
     }
 
     static isUser() {
-        const role = localStorage.getItem('role');
+        const role = sessionStorage.getItem('role');
         return role === 'USER';
     }
 
@@ -153,6 +153,14 @@ export default class ApiService {
         }
         return this.handleRequest('get', `/Attendance/attendance?month=${month}&year=${year}`);
     }
+
+    static getAllAttendance(month, year) {
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Attendance/attendanceAll?month=${month}&year=${year}`);
+    }
+
 
     static getTKAttendanceToWeekByUser(month, year) {
         if (!month || !year || month < 1 || month > 12 || year < 2000) {
@@ -444,13 +452,13 @@ export default class ApiService {
         if (!groupId || !userId) {
             throw new Error('ID nhóm chat hoặc ID người dùng không được để trống');
         }
-        return this.handleRequest('post', `/Message/${groupId}/add-user/${userId}`);
+        return this.handleRequest('post', `/GroupChat/${groupId}/add-user/${userId}`);
     }
 
     static deleteUserFromGroupChat(groupId, userId) {
         if (!groupId || !userId) {
             throw new Error('ID nhóm chat hoặc ID người dùng không được để trống');
         }
-        return this.handleRequest('delete', `/Message/${groupId}/remove-user/${userId}`);
+        return this.handleRequest('delete', `/GroupChat/${groupId}/remove-user/${userId}`);
     }
 }

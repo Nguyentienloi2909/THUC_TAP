@@ -1,6 +1,6 @@
 // src/layouts/FullLayout.jsx
-import React, { useState, useEffect, useRef } from "react";
-import { styled, Container, Box, Typography, Link, useTheme } from "@mui/material";
+import React, { useState, useEffect, Suspense } from "react";
+import { styled, Container, Box, Typography, useTheme } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext";
 import Header from "./header/Header";
@@ -36,71 +36,7 @@ const FullLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
-  const mediaPlayPromiseRef = useRef({});
   const theme = useTheme();
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const mediaElements = document.querySelectorAll('audio, video');
-      mediaElements.forEach(media => {
-        if (!media.paused) {
-          try {
-            media.pause();
-          } catch (e) {
-            console.warn('Error pausing media:', e);
-          }
-        }
-      });
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    const cleanup = () => {
-      const mediaElements = document.querySelectorAll('audio, video');
-      mediaElements.forEach(media => {
-        const mediaId = media.id || Math.random().toString(36);
-        if (mediaPlayPromiseRef.current[mediaId]) {
-          mediaPlayPromiseRef.current[mediaId]
-            .then(() => {
-              if (!media.paused) {
-                media.pause();
-              }
-            })
-            .catch(err => {
-              console.warn('Media play promise rejected:', err);
-            });
-        } else if (!media.paused) {
-          media.pause();
-        }
-      });
-    };
-
-    cleanup();
-    return () => {
-      cleanup();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const handlePlay = (event) => {
-      const media = event.target;
-      const mediaId = media.id || Math.random().toString(36);
-      mediaPlayPromiseRef.current[mediaId] = media.play();
-      mediaPlayPromiseRef.current[mediaId]
-        .then(() => {
-          delete mediaPlayPromiseRef.current[mediaId];
-        })
-        .catch(() => {
-          delete mediaPlayPromiseRef.current[mediaId];
-        });
-    };
-
-    document.addEventListener('play', handlePlay, true);
-    return () => {
-      document.removeEventListener('play', handlePlay, true);
-    };
-  }, []);
 
   return (
     <MainWrapper className="mainwrapper">
@@ -136,7 +72,9 @@ const FullLayout = () => {
             }}
           >
             <Box sx={{ flexGrow: 1 }}>
-              <Outlet />
+              <Suspense fallback={<div>Đang tải trang...</div>}>
+                <Outlet />
+              </Suspense>
             </Box>
           </Container>
 

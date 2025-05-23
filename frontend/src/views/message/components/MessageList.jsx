@@ -193,15 +193,15 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
                                     : isFirstMessage
                                         ? '18px 18px 4px 18px'
                                         : isLastMessage
-                                            ? '4px 18px 18px 18px'
-                                            : '4px 18px 4px 18px'
+                                            ? '18px 4px 18px 18px'
+                                            : '18px 4px 4px 18px'
                                 : isFirstMessage && isLastMessage
                                     ? '18px'
                                     : isFirstMessage
                                         ? '18px 18px 18px 4px'
                                         : isLastMessage
-                                            ? '18px 4px 18px 18px'
-                                            : '18px 4px 18px 4px';
+                                            ? '4px 18px 18px 18px'
+                                            : '4px 18px 18px 4px';
 
                             return (
                                 <Box

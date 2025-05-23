@@ -17,83 +17,60 @@ const Message = () => {
     const [userMessages, setUserMessages] = useState({});
     const [groupMessages, setGroupMessages] = useState({});
     const [loggedInUserId, setLoggedInUserId] = useState(null);
+    const [users, setUsers] = useState([]);
     const { chatConnection, connectionState } = useSignalR();
 
-    const users = useMemo(() => [
-        {
-            id: 1,
-            name: 'John Doe',
-            avatar: 'https://www.bootdey.com/img/Content/avatar/avatar1.png',
-            status: 'Online',
-            lastMessage: 'See you tomorrow!',
-            unreadCount: 2,
-        },
-        {
-            id: 2,
-            name: 'Jane Smith',
-            avatar: 'https://www.bootdey.com/img/Content/avatar/avatar2.png',
-            status: 'Offline',
-            lastMessage: 'Sounds good to me',
-            unreadCount: 0,
-        },
-    ], []);
-
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) =>
-            user.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [users, searchQuery]);
-
+    // Lấy danh sách users thực tế từ API
     useEffect(() => {
-        const fetchUserId = async () => {
+        const fetchUsers = async () => {
             try {
-                console.log('Fetching user profile...');
                 const userProfile = await ApiService.getUserProfile();
-                console.log('User profile retrieved:', userProfile);
                 setLoggedInUserId(userProfile.id);
+                const allUsers = await ApiService.getAllUsers();
+                // Loại bỏ chính mình khỏi danh sách chat
+                setUsers(allUsers.filter(u => u.id !== userProfile.id));
             } catch (error) {
-                console.error('Failed to retrieve user profile:', error);
+                console.error('Failed to fetch users:', error);
             }
         };
-        fetchUserId();
+        fetchUsers();
     }, []);
 
+    const filteredUsers = useMemo(() =>
+        users.filter((user) =>
+            (user.fullName || user.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+        ), [users, searchQuery]
+    );
+
+    // Lắng nghe tin nhắn mới qua SignalR
     useEffect(() => {
-        if (!chatConnection || connectionState !== 'Connected') return;
+        if (!chatConnection || connectionState !== 'Connected' || !loggedInUserId) return;
 
         const handleReceiveMessage = (messageDto) => {
-            console.log('Received private message:', messageDto);
             if (!messageDto || typeof messageDto !== 'object') return;
-
             const userId = messageDto.senderId === loggedInUserId ? messageDto.receiverId : messageDto.senderId;
             setUserMessages((prev) => {
                 const userMsgList = prev[userId] || [];
                 if (!userMsgList.some((msg) => msg.id === messageDto.id)) {
-                    const updatedMessages = {
+                    return {
                         ...prev,
                         [userId]: [...userMsgList, messageDto],
                     };
-                    console.log('Updated userMessages:', updatedMessages);
-                    return updatedMessages;
                 }
                 return prev;
             });
         };
 
         const handleReceiveGroupMessage = (messageDto) => {
-            console.log('Received group message:', messageDto);
             if (!messageDto || typeof messageDto !== 'object') return;
-
             const groupId = messageDto.groupChatId;
             setGroupMessages((prev) => {
                 const groupMsgList = prev[groupId] || [];
                 if (!groupMsgList.some((msg) => msg.id === messageDto.id)) {
-                    const updatedMessages = {
+                    return {
                         ...prev,
                         [groupId]: [...groupMsgList, messageDto],
                     };
-                    console.log('Updated groupMessages:', updatedMessages);
-                    return updatedMessages;
                 }
                 return prev;
             });
@@ -108,33 +85,31 @@ const Message = () => {
         };
     }, [chatConnection, connectionState, loggedInUserId]);
 
+    // Chỉ fetch messages khi chưa có
     useEffect(() => {
         const fetchMessages = async () => {
             try {
                 if (selectedUser?.id && !userMessages[selectedUser.id]) {
-                    console.log('Fetching messages for user:', selectedUser.id);
                     const data = await ApiService.handleRequest('get', `/Message/private/${selectedUser.id}`);
-                    console.log('Fetched user messages:', data);
                     setUserMessages((prev) => ({
                         ...prev,
                         [selectedUser.id]: data || [],
                     }));
                 } else if (selectedGroup?.id && !groupMessages[selectedGroup.id]) {
-                    console.log('Fetching messages for group:', selectedGroup.id);
                     const data = await ApiService.handleRequest('get', `/Message/chatGroups/${selectedGroup.id}`);
-                    console.log('Fetched group messages:', data);
                     setGroupMessages((prev) => ({
                         ...prev,
                         [selectedGroup.id]: data || [],
                     }));
                 }
             } catch (error) {
-                console.error('Failed to fetch messages:', error.response ? error.response.data : error.message);
+                console.error('Failed to fetch messages:', error);
             }
         };
         fetchMessages();
     }, [selectedUser, selectedGroup, userMessages, groupMessages]);
 
+    // Gửi tin nhắn
     const handleSendMessage = async (content) => {
         if (!loggedInUserId || connectionState !== 'Connected') {
             console.error('Cannot send message: Not connected or user not logged in');
@@ -146,31 +121,24 @@ const Message = () => {
             } else if (selectedGroup?.id) {
                 await chatConnection.invoke('SendGroupMessage', loggedInUserId, selectedGroup.id, content);
             }
-            console.log('Tin nhắn gửi thành công');
         } catch (error) {
             console.error('Gửi tin nhắn thất bại:', error);
         }
     };
 
+    // Chỉ render messages của user/group đang chọn
     const displayedMessages = useMemo(() => {
-        // Sửa lỗi: Thêm kiểm tra selectedUser và selectedGroup trước khi truy cập id
-        const messages = selectedUser && selectedUser.id
-            ? userMessages[selectedUser.id] || []
-            : selectedGroup && selectedGroup.id
-                ? groupMessages[selectedGroup.id] || []
-                : [];
-        console.log('Displayed messages:', messages);
-        return messages;
+        if (selectedUser?.id) return userMessages[selectedUser.id] || [];
+        if (selectedGroup?.id) return groupMessages[selectedGroup.id] || [];
+        return [];
     }, [selectedUser, selectedGroup, userMessages, groupMessages]);
 
     const handleSelectUser = (user) => {
-        console.log('User selected:', user);
         setSelectedUser(user);
         setSelectedGroup(null);
     };
 
     const handleSelectGroup = (group) => {
-        console.log('Group selected:', group);
         setSelectedGroup(group);
         setSelectedUser(null);
     };
