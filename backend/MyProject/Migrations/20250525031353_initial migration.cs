@@ -162,6 +162,35 @@ namespace MyProject.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LeaveRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SenderId = table.Column<int>(type: "int", nullable: false),
+                    AcceptorId = table.Column<int>(type: "int", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LeaveRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LeaveRequests_Users_AcceptorId",
+                        column: x => x.AcceptorId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_LeaveRequests_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Messages",
                 columns: table => new
                 {
@@ -370,6 +399,16 @@ namespace MyProject.Migrations
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LeaveRequests_AcceptorId",
+                table: "LeaveRequests",
+                column: "AcceptorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveRequests_SenderId",
+                table: "LeaveRequests",
+                column: "SenderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Messages_GroupChatId",
                 table: "Messages",
                 column: "GroupChatId");
@@ -431,6 +470,9 @@ namespace MyProject.Migrations
 
             migrationBuilder.DropTable(
                 name: "GroupChatMembers");
+
+            migrationBuilder.DropTable(
+                name: "LeaveRequests");
 
             migrationBuilder.DropTable(
                 name: "Messages");

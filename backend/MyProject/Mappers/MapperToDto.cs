@@ -161,6 +161,24 @@ namespace MyProject.Mappers
                 SenderName = notification.Sender?.FullName
             };
         }
+        
+        public static LeaveRequestDto ToDto(this LeaveRequest leaveRequest)
+        {
+            return new LeaveRequestDto
+            {
+                Id = leaveRequest.Id,
+                SenderId = leaveRequest.SenderId,
+                SenderName = leaveRequest.Sender?.FullName,
+                StartDate = leaveRequest.StartDate,
+                EndDate = leaveRequest.EndDate,
+                Reason = leaveRequest.Reason,
+                Status = leaveRequest.Status.ToString(),
+                AcceptorId = leaveRequest.AcceptorId,
+                AcceptorName = leaveRequest.Acceptor?.FullName,
+                Display = leaveRequest.Display
+            };
+        }
+
     }
 
 }

@@ -38,5 +38,9 @@ namespace MyProject.Entity
         public ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();
         public ICollection<StatusNotification> NotificationStatuses { get; set; } = new List<StatusNotification>();
 
+        public ICollection<LeaveRequest> LeaveRequestsSent { get; set; } = new List<LeaveRequest>();
+
+        // Đơn đã duyệt
+        public ICollection<LeaveRequest> LeaveRequestsAccepted { get; set; } = new List<LeaveRequest>();
     }
 }

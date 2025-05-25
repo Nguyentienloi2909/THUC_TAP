@@ -22,11 +22,27 @@ namespace MyProject.Utils
         public DbSet<Comment> Comments { get; set; }
         public DbSet<GroupChatMember> GroupChatMembers { get; set; }
         public DbSet<GroupChat> GroupChats { get; set; }
-
         public DbSet<StatusNotification> StatusNotifications { get; set; }
+        public DbSet<LeaveRequest> LeaveRequests { get; set; } // Thêm DbSet cho StatusLeave
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            modelBuilder.Entity<LeaveRequest>(entity =>
+            {
+                // Người gửi (Sender) - bắt buộc
+                entity.HasOne(lr => lr.Sender)
+                      .WithMany(u => u.LeaveRequestsSent)
+                      .HasForeignKey(lr => lr.SenderId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                // Người duyệt (Acceptor) - không bắt buộc
+                entity.HasOne(lr => lr.Acceptor)
+                      .WithMany(u => u.LeaveRequestsAccepted)
+                      .HasForeignKey(lr => lr.AcceptorId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
             // Composite key cho StatusNotification
             modelBuilder.Entity<StatusNotification>()
                 .HasKey(sn => new { sn.UserId, sn.NotificationId });

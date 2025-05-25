@@ -12,8 +12,8 @@ using MyProject.Utils;
 namespace MyProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250522022250_initial migration")]
-    partial class initialmigration
+    [Migration("20250525033734_update LeaveRequest")]
+    partial class updateLeaveRequest
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -173,6 +173,45 @@ namespace MyProject.Migrations
                     b.HasIndex("GroupChatId");
 
                     b.ToTable("GroupChatMembers");
+                });
+
+            modelBuilder.Entity("MyProject.Entity.LeaveRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AcceptorId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Display")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcceptorId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("LeaveRequests");
                 });
 
             modelBuilder.Entity("MyProject.Entity.Message", b =>
@@ -489,6 +528,24 @@ namespace MyProject.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MyProject.Entity.LeaveRequest", b =>
+                {
+                    b.HasOne("MyProject.Entity.User", "Acceptor")
+                        .WithMany("LeaveRequestsAccepted")
+                        .HasForeignKey("AcceptorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MyProject.Entity.User", "Sender")
+                        .WithMany("LeaveRequestsSent")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Acceptor");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("MyProject.Entity.Message", b =>
                 {
                     b.HasOne("MyProject.Entity.GroupChat", "GroupChat")
@@ -625,6 +682,10 @@ namespace MyProject.Migrations
                     b.Navigation("Attendances");
 
                     b.Navigation("GroupChatMemberships");
+
+                    b.Navigation("LeaveRequestsAccepted");
+
+                    b.Navigation("LeaveRequestsSent");
 
                     b.Navigation("NotificationStatuses");
 

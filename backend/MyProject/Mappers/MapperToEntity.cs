@@ -140,5 +140,19 @@ namespace MyProject.Mappers
                 SenderId = dto.SenderId,
             };
         }
+        
+        public static LeaveRequest ToEntity(this LeaveRequestDto dto)
+        {
+            return new LeaveRequest
+            {
+                Id = dto.Id ?? 0,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Reason = dto.Reason,
+                Status = Enum.TryParse<StatusLeave>(dto.Status, out var status) ? status : StatusLeave.Pending,
+                SenderId = dto.SenderId ?? 0,
+                AcceptorId = dto.AcceptorId ?? 0,
+            };
+        }
     }
 }

@@ -1,32 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\dto\\salarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\dto\\salarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\dto\\attendancesummarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\dto\\attendancesummarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\fileuser.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\fileuser.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -34,7 +9,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 115,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -43,84 +18,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "fileUser.txt",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\fileUser.txt",
-              "RelativeDocumentMoniker": "MyProject\\fileUser.txt",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\fileUser.txt",
-              "RelativeToolTip": "MyProject\\fileUser.txt",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAA+AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
-              "WhenOpened": "2025-05-23T07:57:33.758Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "UserService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\UserService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\UserService.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAA3wEQAAABbAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-23T07:55:34.663Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "AttendanceSummaryDto.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\AttendanceSummaryDto.cs",
-              "RelativeDocumentMoniker": "MyProject\\Dto\\AttendanceSummaryDto.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\AttendanceSummaryDto.cs",
-              "RelativeToolTip": "MyProject\\Dto\\AttendanceSummaryDto.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAuAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-23T07:49:43.354Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "AttendanceController.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\AttendanceController.cs",
-              "RelativeDocumentMoniker": "MyProject\\Controllers\\AttendanceController.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\AttendanceController.cs",
-              "RelativeToolTip": "MyProject\\Controllers\\AttendanceController.cs",
-              "ViewState": "AgIAAKEAAAAAAAAAAAAqwPUAAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-23T07:40:32.502Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "SalaryDto.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\SalaryDto.cs",
-              "RelativeDocumentMoniker": "MyProject\\Dto\\SalaryDto.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\SalaryDto.cs",
-              "RelativeToolTip": "MyProject\\Dto\\SalaryDto.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-23T07:38:16.203Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "AttendanceService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ViewState": "AgIAAJ8AAAAAAAAAAAAcwAIBAABrAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-23T07:31:30.573Z",
-              "EditorCaption": ""
             }
           ]
         },
