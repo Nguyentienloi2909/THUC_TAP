@@ -8,6 +8,7 @@ import { IconUserPlus, IconTrash } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import AddMemberModal from './modal/AddUser';
+import Snackbar from '@mui/material/Snackbar';
 
 // Styled components
 const StyledContainer = styled(Box)(({ theme }) => ({
@@ -40,7 +41,7 @@ const StyledHeader = styled(Box)(({ theme }) => ({
 
 const MemberCard = styled(Card)(({ theme }) => ({
     display: 'flex',
-    flexDirection: 'column', // Xếp chồng theo chiều dọc
+    flexDirection: 'column',
     padding: theme.spacing(2),
     backgroundColor: theme.palette.background.paper,
     borderRadius: theme.shape.borderRadius * 2,
@@ -59,6 +60,9 @@ const GroupById = () => {
     const [error, setError] = useState('');
     const [groupId, setGroupId] = useState(null);
     const [openAddModal, setOpenAddModal] = useState(false);
+    const [removingUserId, setRemovingUserId] = useState(null);
+    const [removeError, setRemoveError] = useState('');
+    const [removeSuccess, setRemoveSuccess] = useState('');
 
     // Lấy groupId từ API getUserProfile
     const fetchGroupId = useCallback(async () => {
@@ -66,9 +70,7 @@ const GroupById = () => {
             setLoading(true);
             setError('');
             const userProfile = await ApiService.getUserProfile();
-            if (!userProfile || !userProfile.groupId) {
-                throw new Error('Không tìm thấy ID nhóm trong thông tin người dùng');
-            }
+            if (!userProfile?.groupId) throw new Error('Không tìm thấy ID nhóm trong thông tin người dùng');
             setGroupId(userProfile.groupId);
         } catch (err) {
             setError(err.message || 'Không thể lấy thông tin người dùng');
@@ -79,14 +81,11 @@ const GroupById = () => {
     // Lấy thông tin nhóm dựa trên groupId
     const fetchGroup = useCallback(async () => {
         if (!groupId) return;
-
         try {
             setLoading(true);
             setError('');
             const data = await ApiService.getGroup(groupId);
-            if (!data || !data.id) {
-                throw new Error('Dữ liệu nhóm không hợp lệ');
-            }
+            if (!data?.id) throw new Error('Dữ liệu nhóm không hợp lệ');
             setGroupData(data);
         } catch (err) {
             setError(err.message || 'Không thể tải thông tin nhóm');
@@ -95,27 +94,37 @@ const GroupById = () => {
         }
     }, [groupId]);
 
-    useEffect(() => {
-        fetchGroupId();
-    }, [fetchGroupId]);
-
-    useEffect(() => {
-        fetchGroup();
-    }, [fetchGroup]);
+    useEffect(() => { fetchGroupId(); }, [fetchGroupId]);
+    useEffect(() => { fetchGroup(); }, [fetchGroup]);
 
     const handleAddMember = useCallback(updatedGroup => {
         setGroupData(updatedGroup);
     }, []);
 
-    const handleRemoveMember = async (userId) => {
+    const handleRemoveMember = useCallback(async (userId) => {
+        setRemoveError('');
+        setRemoveSuccess('');
+        if (!window.confirm('Bạn có chắc chắn muốn xóa thành viên này?')) return;
+        setRemovingUserId(userId);
         try {
-            const updatedGroup = await ApiService.removeMemberFromGroup(groupId, userId);
+            // Gọi API xóa thành viên khỏi nhóm
+            await ApiService.removeUserFromGroup(groupData.id, userId);
+
+            // Lấy lại thông tin nhóm mới nhất
+            const updatedGroup = await ApiService.getGroup(groupData.id);
             setGroupData(updatedGroup);
+            setRemoveSuccess('Xóa thành viên thành công!');
         } catch (err) {
-            console.error('Failed to remove member:', err);
-            setError('Không thể xóa thành viên');
+            console.error('Lỗi khi xóa thành viên:', err);
+            setRemoveError(
+                err?.response?.data?.message ||
+                err?.message ||
+                'Không thể xóa thành viên. Bạn có thể không đủ quyền hoặc có lỗi hệ thống.'
+            );
+        } finally {
+            setRemovingUserId(null);
         }
-    };
+    }, [groupData]);
 
     if (loading) {
         return (
@@ -129,7 +138,7 @@ const GroupById = () => {
         return (
             <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
                 <Alert severity="error" action={
-                    <Button color="inherit" size="small" onClick={() => navigate('/group')}>
+                    <Button color="inherit" size="small" onClick={() => navigate(-1)}>
                         Quay lại
                     </Button>
                 }>
@@ -175,6 +184,18 @@ const GroupById = () => {
             <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
                 Danh sách thành viên
             </Typography>
+            {removeError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {removeError}
+                </Alert>
+            )}
+            <Snackbar
+                open={!!removeSuccess}
+                autoHideDuration={3000}
+                onClose={() => setRemoveSuccess('')}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                message={removeSuccess}
+            />
             <Grid container spacing={4}>
                 {groupData.users.map(user => (
                     <Grid item key={user.id} xs={12} sm={6} md={4}>
@@ -198,22 +219,26 @@ const GroupById = () => {
                                 <IconButton color="primary" aria-label="Xem chi tiết">
                                     {/* Thêm logic chi tiết nếu cần */}
                                 </IconButton>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    startIcon={<IconTrash size={18} />}
-                                    onClick={() => handleRemoveMember(user.id)}
-                                    sx={{
-                                        borderRadius: 1,
-                                        textTransform: 'none',
-                                        '&:hover': {
-                                            backgroundColor: '#f44336',
-                                            color: '#fff',
-                                        },
-                                    }}
-                                >
-                                    Xóa
-                                </Button>
+                                {/* Ẩn nút xóa nếu user là LEADER */}
+                                {user.roleId !== 2 && (
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<IconTrash size={18} />}
+                                        onClick={() => handleRemoveMember(user.id)}
+                                        disabled={removingUserId === user.id}
+                                        sx={{
+                                            borderRadius: 1,
+                                            textTransform: 'none',
+                                            '&:hover': {
+                                                backgroundColor: '#f44336',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    >
+                                        {removingUserId === user.id ? 'Đang xóa...' : 'Xóa'}
+                                    </Button>
+                                )}
                             </CardActions>
                         </MemberCard>
                     </Grid>

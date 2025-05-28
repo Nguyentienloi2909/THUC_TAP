@@ -15,19 +15,14 @@ import DashboardCard from '../../components/shared/DashboardCard';
 import {
     IconUsers,
     IconCurrencyDollar,
-    IconChecklist,
-    IconStar,
-    IconChartBar,
-    IconFileAnalytics,
-    IconSchool
+    IconChecklist
 } from '@tabler/icons-react';
 
 // Mock data (replace with API call)
 const mockData = {
     totalEmployees: 150,
     monthlyPayroll: 750000000, // VND
-    attendanceRate: 93.5, // Percentage
-    avgPerformance: 85 // Percentage
+    attendanceRate: 93.5 // Percentage
 };
 
 const Statistics = () => {
@@ -64,19 +59,13 @@ const Statistics = () => {
             value: `${mockData.attendanceRate}%`,
             icon: <IconChecklist size={32} />,
             color: theme.palette.success.main
-        },
-        {
-            title: 'Hiệu suất công việc',
-            value: `${mockData.avgPerformance}%`,
-            icon: <IconStar size={32} />,
-            color: theme.palette.warning.main
         }
     ];
 
     const navigationCards = [
         {
             title: 'Thống kê nhân viên',
-            description: 'Phân tích nhân viên theo phòng ban, vai trò, và hiệu suất.',
+            description: 'Phân tích nhân viên theo phòng ban, vai trò.',
             route: '/manage/statistics/employees',
             icon: <IconUsers size={48} />
         },
@@ -91,12 +80,6 @@ const Statistics = () => {
             description: 'Theo dõi tỷ lệ điểm danh và thời gian làm việc.',
             route: '/manage/statistics/attendance',
             icon: <IconChecklist size={48} />
-        },
-        {
-            title: 'Thống kê hiệu suất',
-            description: 'Đánh giá hiệu suất nhân viên và KPI.',
-            route: '/manage/statistics/performance',
-            icon: <IconStar size={48} />
         }
     ];
 
@@ -107,7 +90,7 @@ const Statistics = () => {
     if (loading) {
         return (
             <PageContainer title="Tổng quan nhân sự" description="Tổng quan hệ thống quản lý nhân sự">
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
                     <CircularProgress />
                 </Box>
             </PageContainer>
@@ -117,7 +100,7 @@ const Statistics = () => {
     if (error) {
         return (
             <PageContainer title="Tổng quan nhân sự" description="Tổng quan hệ thống quản lý nhân sự">
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
                     <Typography variant="h6" color="error">{error}</Typography>
                 </Box>
             </PageContainer>
@@ -127,84 +110,104 @@ const Statistics = () => {
     return (
         <PageContainer title="Tổng quan nhân sự" description="Tổng quan hệ thống quản lý nhân sự">
             <DashboardCard>
-                <Box sx={{ p: 4, backgroundColor: '#f5f5f5' }}>
+                <Box sx={{
+                    p: { xs: 2, sm: 4 },
+                    backgroundColor: '#f5f5f5',
+                    minHeight: '100vh'
+                }}>
                     {/* Header */}
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a202c', mb: 2 }}>
-                        Tổng quan nhân sự
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 4 }}>
-                        Xem các số liệu chính và truy cập các báo cáo chi tiết về nhân sự
-                    </Typography>
+                    <Box sx={{ textAlign: 'center', mb: 4 }}>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a202c', mb: 1 }}>
+                            Tổng quan nhân sự
+                        </Typography>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                            Xem các số liệu chính và truy cập các báo cáo chi tiết về nhân sự
+                        </Typography>
+                    </Box>
 
-                    {/* Summary Cards */}
-                    <Grid container spacing={3} sx={{ mb: 6 }}>
+                    {/* Summary Cards - căn giữa và giãn đều */}
+                    <Grid container spacing={4} justifyContent="center" sx={{ mb: 6 }}>
                         {summaryCards.map((card, index) => (
-                            <Grid item xs={12} sm={6} md={3} key={index}>
+                            <Grid item xs={12} sm={6} md={4} key={index}>
                                 <Card
                                     sx={{
                                         backgroundColor: card.color,
                                         color: '#fff',
+                                        borderRadius: 3,
+                                        boxShadow: theme.shadows[3],
+                                        textAlign: 'center',
+                                        minHeight: 140,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                         transition: 'transform 0.3s',
                                         '&:hover': {
-                                            transform: 'scale(1.05)',
+                                            transform: 'scale(1.04)',
                                             boxShadow: theme.shadows[8]
                                         }
                                     }}
                                 >
-                                    <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                                         {card.icon}
-                                        <Box>
-                                            <Typography variant="h6">{card.title}</Typography>
-                                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                                {card.value}
-                                            </Typography>
-                                        </Box>
+                                        <Typography variant="h6" sx={{ mt: 1 }}>{card.title}</Typography>
+                                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                                            {card.value}
+                                        </Typography>
                                     </CardContent>
                                 </Card>
                             </Grid>
                         ))}
                     </Grid>
 
-                    {/* Navigation Cards */}
-                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, color: '#1a202c' }}>
+                    {/* Navigation Cards - căn giữa, đều, responsive */}
+                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, color: '#1a202c', textAlign: 'center' }}>
                         Truy cập thống kê chi tiết
                     </Typography>
-                    <Grid container spacing={3}>
+                    <Grid container spacing={4} justifyContent="center">
                         {navigationCards.map((card, index) => (
-                            <Grid item xs={12} md={6} key={index}>
+                            <Grid item xs={12} sm={6} md={4} key={index}>
                                 <Card
                                     sx={{
+                                        borderRadius: 3,
+                                        boxShadow: theme.shadows[2],
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
                                         transition: 'transform 0.3s',
                                         '&:hover': {
-                                            transform: 'scale(1.05)',
+                                            transform: 'scale(1.04)',
                                             boxShadow: theme.shadows[8]
                                         }
                                     }}
                                 >
-                                    <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                                    <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                                         <Box sx={{ color: theme.palette.primary.main }}>
                                             {card.icon}
                                         </Box>
-                                        <Box sx={{ flex: 1 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                                                {card.title}
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                                                {card.description}
-                                            </Typography>
-                                            <Button
-                                                variant="contained"
-                                                onClick={() => handleNavigate(card.route)}
-                                                sx={{
-                                                    backgroundColor: theme.palette.primary.main,
-                                                    '&:hover': {
-                                                        backgroundColor: theme.palette.primary.dark
-                                                    }
-                                                }}
-                                            >
-                                                Xem chi tiết
-                                            </Button>
-                                        </Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, textAlign: 'center' }}>
+                                            {card.title}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, textAlign: 'center' }}>
+                                            {card.description}
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => handleNavigate(card.route)}
+                                            sx={{
+                                                backgroundColor: theme.palette.primary.main,
+                                                borderRadius: 2,
+                                                px: 4,
+                                                mt: 1,
+                                                alignSelf: 'center',
+                                                '&:hover': {
+                                                    backgroundColor: theme.palette.primary.dark
+                                                }
+                                            }}
+                                        >
+                                            Xem chi tiết
+                                        </Button>
                                     </CardContent>
                                 </Card>
                             </Grid>

@@ -11,7 +11,7 @@ const NotificationDetail = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { notification } = location.state || {};
-    const { markAsRead } = useContext(NotificationContext);
+    const { markAsRead, fetchNotifications } = useContext(NotificationContext); // Thêm fetchNotifications
     const [readTime, setReadTime] = useState(null);
     const [user, setUser] = useState(null);
 
@@ -50,7 +50,8 @@ const NotificationDetail = () => {
         if (confirmed) {
             try {
                 await ApiService.deleteNotification(notification.id);
-                console.log('Xóa thông báo thành công!');
+                // Cập nhật lại danh sách thông báo ngay sau khi xóa
+                if (fetchNotifications) await fetchNotifications();
                 navigate('/home');
             } catch (error) {
                 console.error('Có lỗi xảy ra khi xóa thông báo:', error);

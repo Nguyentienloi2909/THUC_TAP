@@ -39,6 +39,7 @@ const TKCheckwork = Loadable(lazy(() => import('../views/attendance/TKCheckwork'
 const Attendance = Loadable(lazy(() => import('../views/attendance/Attendance')));
 const WeekAttendance = Loadable(lazy(() => import('../views/attendance/WeekAttendance')));
 const MonthAttendance = Loadable(lazy(() => import('../views/attendance/MonthAttendance')));
+const HRLeave = Loadable(lazy(() => import('../views/attendance/HRLeave')));
 
 // Notification Pages
 const NotificationDetails = Loadable(lazy(() => import('../views/notification/NotificationDetail')));
@@ -97,6 +98,8 @@ const Router = [
       { path: '/manage/attendance', element: <ProtectedRoute element={Attendance} /> },
       { path: '/manage/attendance/week', element: <ProtectedRoute element={WeekAttendance} /> },
       { path: '/manage/attendance/month', element: <ProtectedRoute element={MonthAttendance} /> },
+      { path: '/manage/attendance/hrleave', element: <ProtectedRoute element={HRLeave} /> },
+      // { path: '/manage/attendance/hrleave', element: <LeaderRoute element={HRLeave} /> },
 
       // Payroll
       { path: '/manage/payroll', element: <ProtectedRoute element={Payroll} /> },

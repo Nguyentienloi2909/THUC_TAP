@@ -293,8 +293,8 @@ const MonthAttendance = () => {
                                             key={i}
                                             align="center"
                                             sx={{
-                                                bgcolor: day === 0 || day === 6 ? '#f5f5f5' : undefined, // Tô màu xám cho T7, CN
-                                                color: day === 0 || day === 6 ? '#bdbdbd' : undefined,   // Chữ mờ cho T7, CN
+                                                bgcolor: day === 0 ? '#f5f5f5' : undefined, // Chỉ CN mới tô xám
+                                                color: day === 0 ? '#bdbdbd' : undefined,   // Chỉ CN mới mờ
                                                 fontWeight: 600,
                                                 fontSize: '0.95rem',
                                                 minWidth: 36,
@@ -323,23 +323,23 @@ const MonthAttendance = () => {
                                             const status = data.days[i + 1];
                                             const date = new Date(currentYear, currentMonth, i + 1);
                                             const day = date.getDay();
-                                            const isWeekend = day === 0 || day === 6;
+                                            const isSunday = day === 0;
                                             return (
                                                 <TableCell
                                                     key={i}
                                                     align="center"
                                                     sx={{
-                                                        bgcolor: isWeekend
+                                                        bgcolor: isSunday
                                                             ? '#f5f5f5'
                                                             : status
                                                                 ? statusBg(status)
                                                                 : undefined,
-                                                        color: isWeekend ? '#bdbdbd' : undefined,
+                                                        color: isSunday ? '#bdbdbd' : undefined,
                                                         borderRadius: 1,
                                                         p: 0.5,
                                                     }}
                                                 >
-                                                    {isWeekend ? (
+                                                    {isSunday ? (
                                                         <span style={{ color: '#bdbdbd' }}>–</span>
                                                     ) : status ? (
                                                         <Tooltip title={statusText(status)}>

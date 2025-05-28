@@ -1,23 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Grid,
-    Typography,
-    Button,
-    IconButton,
-    Collapse,
-    Modal,
-    Box,
-    CircularProgress,
-    Alert,
-    Card,
+    Grid, Typography, Button, IconButton, Collapse, Modal, Box, CircularProgress, Alert, Card, Snackbar
 } from '@mui/material';
 import {
-    IconPlus,
-    IconEdit,
-    IconTrash,
-    IconChevronDown,
-    IconChevronRight
+    IconPlus, IconEdit, IconTrash, IconChevronDown, IconChevronRight, IconAlertTriangle
 } from '@tabler/icons-react';
+import MuiAlert from '@mui/material/Alert';
+import Slide from '@mui/material/Slide';
 
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
@@ -29,82 +18,61 @@ import GCreate from './components/gcreate';
 import GUpdate from './components/GUpdate';
 
 // ================== DepartmentCard ==================
-const DepartmentCard = ({ dept, expanded, onToggle, onEdit, onDelete, onAddGroup, children }) => {
-    return (
-        <Card
-            sx={{
-                mb: 3,
-                borderRadius: 2,
-                boxShadow: 2,
-                overflow: 'hidden',
-                transition: 'transform 0.2s ease',
-                '&:hover': {
-                    boxShadow: 4,
-                    transform: 'translateY(-2px)',
-                }
-            }}
-        >
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    px: 2,
-                    py: 1.5,
-                    bgcolor: 'grey.100',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                }}
-            >
-                <Box display="flex" alignItems="center">
-                    <IconButton onClick={() => onToggle(dept.id)} size="small">
-                        {expanded ? <IconChevronDown /> : <IconChevronRight />}
-                    </IconButton>
-                    <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 600, color: 'primary.dark' }}>
-                        {dept.departmentName}
-                    </Typography>
-                </Box>
-                <Box>
-                    <IconButton onClick={() => onEdit(dept)} size="small"><IconEdit /></IconButton>
-                    <IconButton onClick={() => onDelete(dept)} size="small"><IconTrash /></IconButton>
-                </Box>
-            </Box>
-            <Collapse in={expanded} timeout="auto">
-                <Box sx={{ px: 2, py: 2, bgcolor: 'grey.50' }}>
-                    {children}
-                    <Box mt={2}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<IconPlus />}
-                            size="small"
-                            onClick={() => onAddGroup(dept)}
-                        >
-                            Thêm nhóm
-                        </Button>
-                    </Box>
-                </Box>
-            </Collapse>
-        </Card>
-    );
-};
-
-// ================== GroupCard ==================
-const GroupCard = ({ group, onEdit, onDelete }) => (
+const DepartmentCard = React.memo(({ dept, expanded, onToggle, onEdit, onDelete, onAddGroup, children }) => (
     <Card
         sx={{
-            p: 2,
+            mb: 3,
             borderRadius: 2,
-            height: '100%',
-            backgroundColor: 'white',
-            border: '1px solid',
-            borderColor: 'grey.300',
-            transition: 'all 0.2s ease',
-            boxShadow: 0,
-            '&:hover': {
-                boxShadow: 2,
-                transform: 'translateY(-2px)',
-                borderColor: 'primary.light'
-            }
+            boxShadow: 2,
+            overflow: 'hidden',
+            transition: 'transform 0.2s ease',
+            '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' }
+        }}
+    >
+        <Box
+            sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                px: 2, py: 1.5, bgcolor: 'grey.100', borderBottom: '1px solid', borderColor: 'grey.200'
+            }}
+        >
+            <Box display="flex" alignItems="center">
+                <IconButton onClick={() => onToggle(dept.id)} size="small">
+                    {expanded ? <IconChevronDown /> : <IconChevronRight />}
+                </IconButton>
+                <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 600, color: 'primary.dark' }}>
+                    {dept.departmentName}
+                </Typography>
+            </Box>
+            <Box>
+                <IconButton onClick={() => onEdit(dept)} size="small"><IconEdit /></IconButton>
+                <IconButton onClick={() => onDelete(dept)} size="small" color="error"><IconTrash /></IconButton>
+            </Box>
+        </Box>
+        <Collapse in={expanded} timeout="auto">
+            <Box sx={{ px: 2, py: 2, bgcolor: 'grey.50' }}>
+                {children}
+                <Box mt={2}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<IconPlus />}
+                        size="small"
+                        onClick={() => onAddGroup(dept)}
+                    >
+                        Thêm nhóm
+                    </Button>
+                </Box>
+            </Box>
+        </Collapse>
+    </Card>
+));
+
+// ================== GroupCard ==================
+const GroupCard = React.memo(({ group, onEdit, onDelete }) => (
+    <Card
+        sx={{
+            p: 2, borderRadius: 2, height: '100%', backgroundColor: 'white',
+            border: '1px solid', borderColor: 'grey.300', transition: 'all 0.2s ease', boxShadow: 0,
+            '&:hover': { boxShadow: 2, transform: 'translateY(-2px)', borderColor: 'primary.light' }
         }}
     >
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -120,7 +88,7 @@ const GroupCard = ({ group, onEdit, onDelete }) => (
             👥 {group.users?.length || 0} thành viên
         </Typography>
     </Card>
-);
+));
 
 // ================== Main Component ==================
 const Department = () => {
@@ -136,42 +104,45 @@ const Department = () => {
     const [selectedDept, setSelectedDept] = useState(null);
     const [selectedDeptForGroup, setSelectedDeptForGroup] = useState(null);
 
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
     useEffect(() => {
         fetchDepartments();
     }, []);
 
-    const fetchDepartments = async () => {
+    const fetchDepartments = useCallback(async () => {
         try {
             setLoading(true);
             const response = await ApiService.getAllDepartments();
             setDepartments(response);
+            setError(null);
         } catch (error) {
             setError(error.message);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleExpandDepartment = (deptId) => {
+    const handleExpandDepartment = useCallback((deptId) => {
         setExpandedDept(prev => ({
             ...prev,
             [deptId]: !prev[deptId]
         }));
-    };
+    }, []);
 
-    const handleOpenCreateDeptModal = () => {
+    const handleOpenCreateDeptModal = useCallback(() => {
         setSelectedDept(null);
         setSelectedDeptForGroup(null);
         setCreateModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenCreateGroupModal = (dept) => {
+    const handleOpenCreateGroupModal = useCallback((dept) => {
         setSelectedDeptForGroup(dept);
         setSelectedDept(null);
         setCreateModalOpen(true);
-    };
+    }, []);
 
-    const handleOpenEditModal = (item) => {
+    const handleOpenEditModal = useCallback((item) => {
         if (item.groupName && (!item.departmentId || !item.departmentName)) {
             const foundDept = departments.find(dept => dept.groups?.some(g => g.id === item.id));
             if (foundDept) {
@@ -184,51 +155,126 @@ const Department = () => {
         }
         setSelectedDept(item);
         setEditModalOpen(true);
-    };
+    }, [departments]);
 
-    const handleOpenDeleteModal = (item) => {
+    const handleOpenDeleteModal = useCallback((item) => {
+        if (item.groupName && (!item.departmentId || !item.departmentName)) {
+            const foundDept = departments.find(dept => dept.groups?.some(g => g.id === item.id));
+            if (foundDept) {
+                item = {
+                    ...item,
+                    departmentId: foundDept.id,
+                    departmentName: foundDept.departmentName
+                };
+            }
+        }
         setSelectedDept(item);
         setDeleteModalOpen(true);
-    };
+    }, [departments]);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setCreateModalOpen(false);
         setEditModalOpen(false);
         setDeleteModalOpen(false);
         setSelectedDept(null);
         setSelectedDeptForGroup(null);
-    };
+    }, []);
 
-    const handleDepartmentCreated = () => {
+    const handleDepartmentCreated = useCallback((isGroup = false) => {
+        setSnackbar({
+            open: true,
+            message: isGroup ? 'Tạo mới nhóm thành công!' : 'Tạo mới phòng ban thành công!',
+            severity: 'success'
+        });
         handleCloseModal();
         fetchDepartments();
-    };
+    }, [fetchDepartments, handleCloseModal]);
 
-    const handleItemUpdated = () => {
+    const handleItemUpdated = useCallback((isGroup = false) => {
+        setSnackbar({
+            open: true,
+            message: isGroup ? 'Cập nhật nhóm thành công!' : 'Cập nhật phòng ban thành công!',
+            severity: 'success'
+        });
         handleCloseModal();
         fetchDepartments();
-    };
+    }, [fetchDepartments, handleCloseModal]);
 
-    const handleDeleteItem = async () => {
+    const handleDeleteDepartment = useCallback(async () => {
         try {
-            if (selectedDept?.departmentName) {
+            if (selectedDept?.departmentName && selectedDept?.id) {
                 await ApiService.deleteDepartment(selectedDept.id);
+                setSnackbar({
+                    open: true,
+                    message: 'Xóa phòng ban thành công!',
+                    severity: 'success'
+                });
+                await fetchDepartments();
+                handleCloseModal();
             } else {
-                await ApiService.deleteGroup(selectedDept.id);
+                setSnackbar({ open: true, message: 'Không xác định được phòng ban cần xóa!', severity: 'error' });
             }
-            handleCloseModal();
-            fetchDepartments();
         } catch (error) {
-            console.error("Delete error:", error);
+            setSnackbar({ open: true, message: 'Xóa phòng ban thất bại!', severity: 'error' });
         }
-    };
+    }, [selectedDept, fetchDepartments, handleCloseModal]);
 
-    if (loading) return <Box display="flex" justifyContent="center" mt={5}><CircularProgress /></Box>;
+    const handleDeleteGroup = useCallback(async () => {
+        try {
+            if (selectedDept?.groupName && selectedDept?.id) {
+                await ApiService.deleteGroup(selectedDept.id);
+                setSnackbar({
+                    open: true,
+                    message: 'Xóa nhóm thành công!',
+                    severity: 'success'
+                });
+                await fetchDepartments();
+                handleCloseModal();
+            } else {
+                setSnackbar({ open: true, message: 'Không xác định được nhóm cần xóa!', severity: 'error' });
+            }
+        } catch (error) {
+            setSnackbar({ open: true, message: 'Xóa nhóm thất bại!', severity: 'error' });
+        }
+    }, [selectedDept, fetchDepartments, handleCloseModal]);
+
+    // Tổng số phòng ban và nhóm
+    const totalGroups = useMemo(() => departments.reduce((sum, dept) => sum + (dept.groups?.length || 0), 0), [departments]);
+
+    if (loading) return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
+            <CircularProgress />
+        </Box>
+    );
     if (error) return <Alert severity="error">{error}</Alert>;
 
     return (
         <PageContainer title="Quản lý phòng ban" description="Danh sách phòng ban và nhóm">
-            <Grid container spacing={3} sx={{ mt: 3 }}>
+            {/* Snackbar ở đầu trang */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                TransitionComponent={Slide}
+            >
+                <MuiAlert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                    elevation={6}
+                    variant="filled"
+                >
+                    {snackbar.message}
+                </MuiAlert>
+            </Snackbar>
+
+            {/* Tổng số phòng ban và nhóm */}
+            {/* <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                {departments.length} phòng ban, {totalGroups} nhóm
+            </Typography> */}
+
+            <Grid container spacing={3} sx={{ mt: 1 }}>
                 <Grid item xs={12}>
                     <DashboardCard
                         title="Danh sách phòng ban"
@@ -271,30 +317,30 @@ const Department = () => {
 
             {/* Create Modal */}
             <Modal open={createModalOpen} onClose={handleCloseModal}>
-                <Box sx={{ width: '50%', p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
+                <Box sx={{ width: { xs: '95%', md: '50%' }, p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
                     {selectedDeptForGroup ? (
                         <GCreate
                             departmentId={selectedDeptForGroup.id}
                             departmentName={selectedDeptForGroup.departmentName}
-                            onCreated={handleDepartmentCreated}
+                            onCreated={() => handleDepartmentCreated(true)}
                             onCancel={handleCloseModal}
                         />
                     ) : (
-                        <DCreate onCreated={handleDepartmentCreated} onCancel={handleCloseModal} />
+                        <DCreate onCreated={() => handleDepartmentCreated(false)} onCancel={handleCloseModal} />
                     )}
                 </Box>
             </Modal>
 
             {/* Edit Modal */}
             <Modal open={editModalOpen} onClose={handleCloseModal}>
-                <Box sx={{ width: '50%', p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
+                <Box sx={{ width: { xs: '95%', md: '50%' }, p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
                     {selectedDept?.departmentName && !selectedDept?.groupName ? (
-                        <DUpdate department={selectedDept} onUpdated={handleItemUpdated} onCancel={handleCloseModal} />
+                        <DUpdate department={selectedDept} onUpdated={() => handleItemUpdated(false)} onCancel={handleCloseModal} />
                     ) : (
                         <GUpdate
                             group={selectedDept}
                             departmentId={selectedDept?.departmentId}
-                            onUpdated={handleItemUpdated}
+                            onUpdated={() => handleItemUpdated(true)}
                             onCancel={handleCloseModal}
                         />
                     )}
@@ -303,13 +349,19 @@ const Department = () => {
 
             {/* Delete Modal */}
             <Modal open={deleteModalOpen} onClose={handleCloseModal}>
-                <Box sx={{ width: '40%', p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
-                    <Typography variant="h6" mb={3}>
-                        Xác nhận xóa {selectedDept?.departmentName || selectedDept?.groupName}?
-                    </Typography>
+                <Box sx={{ width: { xs: '90%', md: '40%' }, p: 4, bgcolor: 'background.paper', borderRadius: 2, mx: 'auto', mt: '10%' }}>
+                    <Box display="flex" alignItems="center" mb={2}>
+                        <IconAlertTriangle color="#f44336" style={{ marginRight: 8 }} />
+                        <Typography variant="h6">
+                            Xác nhận xóa {selectedDept?.departmentName || selectedDept?.groupName}?
+                        </Typography>
+                    </Box>
                     <Box display="flex" justifyContent="flex-end" gap={2}>
                         <Button onClick={handleCloseModal} variant="outlined">Hủy</Button>
-                        <Button onClick={handleDeleteItem} variant="contained" color="error">Xóa</Button>
+                        {selectedDept?.groupName
+                            ? <Button onClick={handleDeleteGroup} variant="contained" color="error">Xóa</Button>
+                            : <Button onClick={handleDeleteDepartment} variant="contained" color="error">Xóa</Button>
+                        }
                     </Box>
                 </Box>
             </Modal>

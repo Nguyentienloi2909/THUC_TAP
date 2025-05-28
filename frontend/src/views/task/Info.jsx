@@ -35,21 +35,21 @@ const Info = () => {
     useEffect(() => {
         const fetchTaskDetails = async () => {
             if (!taskId) {
-                console.error('Task ID is undefined', new Error().stack);
-                setError('Task ID is missing. Please go back and try again.');
+                setError('Task ID is missing. Vui lòng quay lại và thử lại.');
                 setLoading(false);
                 return;
             }
 
             try {
-                console.log('Fetching task details for task ID:', taskId);
                 const data = await ApiService.getTask(taskId);
-                console.log('Fetched task details:', data);
                 setTaskDetails(data);
                 setLoading(false);
             } catch (error) {
-                console.error('Failed to fetch task details:', error);
-                setError('Failed to load task details. Please try again later.');
+                // Không log ra console, chỉ hiển thị cho người dùng
+                setError(
+                    error?.response?.data?.message ||
+                    'Không thể tải thông tin nhiệm vụ. Vui lòng thử lại sau.'
+                );
                 setLoading(false);
             }
         };
@@ -201,13 +201,17 @@ const Info = () => {
     }
 
     const getStatusConfig = (status) => {
+        // Đồng bộ với statusConfig ở Task.jsx
         const statusMap = {
-            Pending: { color: 'warning', label: 'Chờ xử lý' },
-            'In Progress': { color: 'primary', label: 'Đang thực hiện' },
-            Completed: { color: 'success', label: 'Hoàn thành' },
-            Overdue: { color: 'error', label: 'Quá hạn' },
+            pending: { color: 'warning', label: 'Chờ xử lý' },
+            inprogress: { color: 'primary', label: 'Đang thực hiện' },
+            late: { color: 'error', label: 'Muộn' },
+            completed: { color: 'success', label: 'Hoàn thành' },
+            cancelled: { color: 'default', label: 'Đã hủy' },
         };
-        return statusMap[status] || { color: 'default', label: status || 'N/A' };
+        if (!status) return { color: 'default', label: 'N/A' };
+        const key = status.toLowerCase().replace(/\s+/g, '');
+        return statusMap[key] || { color: 'default', label: status };
     };
 
     const statusConfig = getStatusConfig(taskDetails?.status);
@@ -247,7 +251,7 @@ const Info = () => {
                     >
                         <Box
                             sx={{
-                                height: '8px',
+                                height: '20px',
                                 backgroundColor: `${statusConfig.color}.main`,
                                 width: '100%',
                             }}
@@ -277,7 +281,7 @@ const Info = () => {
                                                 <strong>Người giao:</strong>
                                             </Typography>
                                             <Typography variant="body2">
-                                                {taskDetails?.assignedByName || 'N/A'}
+                                                {taskDetails?.senderName || 'N/A'}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>

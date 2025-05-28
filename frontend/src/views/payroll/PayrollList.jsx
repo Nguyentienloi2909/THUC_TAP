@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Box,
     CircularProgress,
@@ -38,79 +38,99 @@ const PayrollList = () => {
     const [page, setPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
-    const [monthFilter, setMonthFilter] = useState(new Date().getMonth() + 1); // Mặc định là tháng hiện tại (5)
-    const [yearFilter, setYearFilter] = useState(new Date().getFullYear());   // Mặc định là năm hiện tại (2025)
+    const [monthFilter, setMonthFilter] = useState(new Date().getMonth() + 1);
+    const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
 
     useEffect(() => {
+        let isMounted = true;
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const departmentsData = await ApiService.getAllDepartments();
-                const employeesData = await ApiService.getAllUsers();
+                const [departmentsData, employeesData] = await Promise.all([
+                    ApiService.getAllDepartments(),
+                    ApiService.getAllUsers()
+                ]);
                 let payrollsData;
                 if (monthFilter && yearFilter) {
                     payrollsData = await ApiService.getSalariesByMonth(yearFilter, monthFilter);
                 } else if (yearFilter) {
                     payrollsData = await ApiService.getSalariesByYear(yearFilter);
                 } else {
-                    payrollsData = await ApiService.getSalariesByMonth(2025, 5); // Mặc định tháng 5, năm 2025
+                    payrollsData = await ApiService.getSalariesByMonth(2025, 5);
                 }
-
-                console.log('Fetched departments:', departmentsData);
-                console.log('Fetched employees:', employeesData);
-                console.log('Fetched payrolls:', payrollsData);
-
-                setDepartments(departmentsData);
-                setEmployees(employeesData);
-                setPayrolls(payrollsData);
+                if (isMounted) {
+                    setDepartments(departmentsData);
+                    setEmployees(employeesData);
+                    setPayrolls(payrollsData);
+                    setError('');
+                }
             } catch (err) {
-                setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+                if (isMounted) setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
         fetchData();
+        return () => { isMounted = false; };
     }, [monthFilter, yearFilter]);
 
-    const handleSearch = (e) => {
+    const handleSearch = useCallback((e) => {
         setSearchTerm(e.target.value);
         setPage(1);
-    };
+    }, []);
 
-    const handleDepartmentFilter = (e) => {
+    const handleDepartmentFilter = useCallback((e) => {
         setDepartmentFilter(e.target.value);
         setPage(1);
-    };
+    }, []);
 
-    const handleMonthFilter = (e) => {
+    const handleMonthFilter = useCallback((e) => {
         setMonthFilter(e.target.value);
         setPage(1);
-    };
+    }, []);
 
-    const handleYearFilter = (e) => {
+    const handleYearFilter = useCallback((e) => {
         setYearFilter(e.target.value);
         setPage(1);
-    };
+    }, []);
 
-    const handlePageChange = (event, value) => {
+    const handlePageChange = useCallback((event, value) => {
         setPage(value);
-    };
+    }, []);
 
-    const handleViewDetail = (userId, month, year) => {
+    const handleViewDetail = useCallback((userId, month, year) => {
         if (!userId || !month || !year) {
             console.error('Thiếu thông tin để xem chi tiết bảng lương:', { userId, month, year });
             return;
         }
         navigate(`/manage/payroll/detail/${userId}/${month}/${year}`);
-    };
+    }, [navigate]);
 
+    // Chuẩn bị map employeeId -> employee và groupId -> department để tra cứu nhanh
+    const employeeMap = useMemo(() => {
+        const map = new Map();
+        employees.forEach(emp => map.set(emp.id, emp));
+        return map;
+    }, [employees]);
+
+    const groupToDepartmentMap = useMemo(() => {
+        const map = new Map();
+        departments.forEach(dept => {
+            dept.groups?.forEach(group => {
+                map.set(group.id, dept);
+            });
+        });
+        return map;
+    }, [departments]);
+
+    // Lọc payrolls hiệu quả
     const filteredPayrolls = useMemo(() => payrolls.filter((payroll) => {
-        const employee = employees.find(emp => emp.id === payroll.userId);
-        const department = departments.find(dept => dept.groups?.some(group => group.id === employee?.groupId));
+        const employee = employeeMap.get(payroll.userId);
+        const department = groupToDepartmentMap.get(employee?.groupId);
         const matchesName = payroll.userFullName?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesDept = departmentFilter === '' || department?.id === parseInt(departmentFilter);
         return matchesName && matchesDept;
-    }), [payrolls, employees, departments, searchTerm, departmentFilter]);
+    }), [payrolls, employeeMap, groupToDepartmentMap, searchTerm, departmentFilter]);
 
     const paginatedPayrolls = useMemo(() => {
         const startIndex = (page - 1) * ITEMS_PER_PAGE;
@@ -145,7 +165,36 @@ const PayrollList = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h5" fontWeight="bold">Quản lý lương</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                            style={{
+                                background: '#1976d2',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '8px 16px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                            disabled={loading}
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    await ApiService.calculateAllSalaries(monthFilter, yearFilter);
+                                    alert('Kết toán lương toàn hệ thống thành công!');
+                                } catch (err) {
+                                    alert('Kết toán thất bại. Vui lòng thử lại.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                        >
+                            Kết toán lương toàn hệ thống
+                        </button>
+                    </Box>
                 </Box>
+
+
 
                 {/* Filters */}
                 <Paper elevation={1} sx={{ p: 2, mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -185,6 +234,10 @@ const PayrollList = () => {
                         </Select>
                     </FormControl>
                 </Paper>
+                {/* Tổng số bảng lương */}
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    Có {filteredPayrolls.length} bảng lương được tìm thấy
+                </Typography>
 
                 {/* Table */}
                 <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
@@ -209,8 +262,8 @@ const PayrollList = () => {
                                 </TableRow>
                             ) : (
                                 paginatedPayrolls.map((payroll) => {
-                                    const employee = employees.find(emp => emp.id === payroll.userId);
-                                    const department = departments.find(dept => dept.groups?.some(group => group.id === employee?.groupId));
+                                    const employee = employeeMap.get(payroll.userId);
+                                    const department = groupToDepartmentMap.get(employee?.groupId);
                                     return (
                                         <TableRow key={payroll.id} hover>
                                             <TableCell>{payroll.userFullName}</TableCell>

@@ -40,24 +40,33 @@ const HistoryCheckwork = () => {
             const month = format(currentDate, 'M');
             const year = format(currentDate, 'yyyy');
             const response = await ApiService.getAttendance(month, year);
-            console.log('User role from localStorage:', localStorage.getItem('role'));
+            console.log('User role from sessionStorage:', sessionStorage.getItem('role'));
 
             if (!Array.isArray(response)) {
                 throw new Error('Invalid response format');
             }
 
-            const formattedData = response.map((item, index) => {
-                const workday = new Date(item.workday);
-                return {
-                    id: item.id || index,
-                    date: isNaN(workday.getTime()) ? '--/--/----' : format(workday, 'dd/MM/yyyy'),
-                    checkIn: item.checkIn ? format(new Date(item.checkIn), 'HH:mm') : '--:--',
-                    checkOut: item.checkOut ? format(new Date(item.checkOut), 'HH:mm') : '--:--',
-                    status: transformStatus(item.status),
-                    note: item.note || '--',
-                    workHours: calculateWorkHours(item.checkIn, item.checkOut)
-                };
-            });
+            const today = new Date();
+            const formattedData = response
+                .map((item, index) => {
+                    const workday = new Date(item.workday);
+                    return {
+                        id: item.id || index,
+                        date: isNaN(workday.getTime()) ? '--/--/----' : format(workday, 'dd/MM/yyyy'),
+                        checkIn: item.checkIn ? format(new Date(item.checkIn), 'HH:mm') : '--:--',
+                        checkOut: item.checkOut ? format(new Date(item.checkOut), 'HH:mm') : '--:--',
+                        status: transformStatus(item.status),
+                        note: item.note || '--',
+                        workHours: calculateWorkHours(item.checkIn, item.checkOut),
+                        workdayObj: workday // giữ lại object ngày để lọc
+                    };
+                })
+                // Lọc chỉ lấy các ngày <= hôm nay
+                .filter(item => {
+                    if (isNaN(item.workdayObj.getTime())) return false;
+                    // So sánh chỉ theo ngày, bỏ qua giờ phút
+                    return item.workdayObj <= new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+                });
 
             setAttendanceData(formattedData);
             setError(null);

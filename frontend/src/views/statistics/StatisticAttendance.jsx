@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -43,6 +42,8 @@ const StatisticAttendance = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [data, setData] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1); // 1-12
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const navigate = useNavigate();
     const theme = useTheme();
     const primary = theme.palette.primary.main;
@@ -54,12 +55,9 @@ const StatisticAttendance = () => {
             try {
                 let response;
                 if (timeFilter === 'yearly') {
-                    response = await ApiService.getTKAttendanceToYear(new Date().getFullYear());
+                    response = await ApiService.getTKAttendanceToYear(selectedYear);
                 } else if (timeFilter === 'monthly') {
-                    response = await ApiService.getTKAttendanceToMonth(
-                        new Date().getMonth() + 1,
-                        new Date().getFullYear()
-                    );
+                    response = await ApiService.getTKAttendanceToMonth(selectedMonth, selectedYear);
                 } else if (timeFilter === 'weekly') {
                     response = await ApiService.getTKAttendanceToWeek();
                 } else {
@@ -138,7 +136,7 @@ const StatisticAttendance = () => {
             }
         };
         fetchData();
-    }, [timeFilter]);
+    }, [timeFilter, selectedMonth, selectedYear]);
 
     const handleTimeFilterChange = (event) => {
         setTimeFilter(event.target.value);
@@ -330,11 +328,66 @@ const StatisticAttendance = () => {
                         <FormControl sx={{ minWidth: 200 }}>
                             <InputLabel>Khoảng thời gian</InputLabel>
                             <Select value={timeFilter} onChange={handleTimeFilterChange} label="Khoảng thời gian">
-                                <MenuItem value="monthly">Hàng tháng</MenuItem>
-                                <MenuItem value="weekly">Hàng tuần</MenuItem>
-                                <MenuItem value="yearly">Hàng năm</MenuItem>
+                                <MenuItem value="monthly">Tháng</MenuItem>
+                                {/* <MenuItem value="weekly">Hàng tuần</MenuItem> */}
+                                <MenuItem value="yearly">Năm</MenuItem>
                             </Select>
                         </FormControl>
+                        {timeFilter === 'monthly' && (
+                            <>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Tháng</InputLabel>
+                                    <Select
+                                        value={selectedMonth}
+                                        label="Tháng"
+                                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                                    >
+                                        {[...Array(12)].map((_, i) => (
+                                            <MenuItem key={i + 1} value={i + 1}>
+                                                Tháng {i + 1}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl sx={{ minWidth: 120 }}>
+                                    <InputLabel>Năm</InputLabel>
+                                    <Select
+                                        value={selectedYear}
+                                        label="Năm"
+                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                    >
+                                        {Array.from({ length: 5 }, (_, i) => {
+                                            const year = new Date().getFullYear() - i;
+                                            return (
+                                                <MenuItem key={year} value={year}>
+                                                    {year}
+                                                </MenuItem>
+                                            );
+                                        })}
+                                    </Select>
+                                </FormControl>
+                            </>
+                        )}
+                        {/* Thêm thanh chọn năm khi xem thống kê năm */}
+                        {timeFilter === 'yearly' && (
+                            <FormControl sx={{ minWidth: 120 }}>
+                                <InputLabel>Năm</InputLabel>
+                                <Select
+                                    value={selectedYear}
+                                    label="Năm"
+                                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                >
+                                    {Array.from({ length: 5 }, (_, i) => {
+                                        const year = new Date().getFullYear() - i;
+                                        return (
+                                            <MenuItem key={year} value={year}>
+                                                {year}
+                                            </MenuItem>
+                                        );
+                                    })}
+                                </Select>
+                            </FormControl>
+                        )}
                         <Button
                             variant="outlined"
                             startIcon={<IconDownload aria-label="download icon" />}
