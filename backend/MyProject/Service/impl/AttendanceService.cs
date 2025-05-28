@@ -226,7 +226,7 @@ namespace MyProject.Service.impl
                 TotalPresentDays = presentDays,
                 TotalLateDays = lateDays,
                 TotalLeaveDays = leaveDays,
-                TotalAbsentDays = absentDays - leaveDays,
+                TotalAbsentDays = absentDays,
                 TotalOvertimeHours = Math.Round(totalOvertime, 2),
                 TotalWorkingDays = totalWorkingDays,
             };
@@ -284,7 +284,7 @@ namespace MyProject.Service.impl
 
             foreach (var day in allDaysInMonth)
             {
-                // Có ít nhất 1 người check-in và check-out → là ngày làm việc
+                // Ngày làm việc nếu có bất kỳ ai có chấm công hợp lệ (check-in và check-out)
                 bool isWorkingDay = attendances.Any(a =>
                     a.Workday.Date == day && a.CheckIn != null && a.CheckOut != null);
 
@@ -292,9 +292,9 @@ namespace MyProject.Service.impl
                 {
                     totalWorkingDays++;
 
-                    // Nếu user không check-in trong ngày làm việc đó → vắng mặt
-                    bool userCheckedIn = userAttendances.Any(a => a.Workday.Date == day && a.CheckIn != null);
-                    if (!userCheckedIn)
+                    var userAttendanceOfDay = userAttendances.FirstOrDefault(a => a.Workday.Date == day);
+
+                    if (userAttendanceOfDay == null || userAttendanceOfDay.Status == StatusAttendance.Absent)
                     {
                         absentDays++;
                     }
@@ -306,11 +306,12 @@ namespace MyProject.Service.impl
                 TotalPresentDays = presentDays,
                 TotalLateDays = lateDays,
                 TotalLeaveDays = leaveDays,
-                TotalAbsentDays = absentDays - leaveDays,
+                TotalAbsentDays = absentDays,
                 TotalOvertimeHours = Math.Round(totalOvertime, 2),
                 TotalWorkingDays = totalWorkingDays
             };
         }
+
 
 
         public async Task<List<(int WeekNumber, AttendanceSummaryDto Summary)>> GetUserWeeklySummaryInMonthAsync(int userId, int month, int year)
@@ -367,7 +368,7 @@ namespace MyProject.Service.impl
                     TotalPresentDays = presentDays,
                     TotalLateDays = lateDays,
                     TotalLeaveDays = leaveDays,
-                    TotalAbsentDays = absentDays - leaveDays,
+                    TotalAbsentDays = absentDays,
                     TotalOvertimeHours = Math.Round(totalOvertime, 2),
                     TotalWorkingDays = totalWorkingDays
                 };

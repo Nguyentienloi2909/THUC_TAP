@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
 using MyProject.Service.impl;
 using MyProject.Service.interfac;
@@ -25,6 +26,11 @@ namespace MyProject.Controllers
             await _emailService.SendEmailAsync(request);
             return Ok("Email sent.");
         }
+
+
+        
+
+        
     }
 
     

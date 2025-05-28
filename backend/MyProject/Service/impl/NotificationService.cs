@@ -50,7 +50,7 @@ namespace MyProject.Service.impl
         public async Task<List<NotificationDto>> GetAllNotificationsAsync()
         {
             var notifications = await _dbContext.Notifications
-                .Where(n => n.Display)
+                .Where(n => n.Display == true)
                 .Include(n => n.Sender)
                 .OrderByDescending(n => n.SentAt)
                 .Select(n => new NotificationDto
@@ -68,7 +68,7 @@ namespace MyProject.Service.impl
         public async Task<List<NotificationDto>> GetAllNotificationsByUserIdAsync(int userId)
         {
             var notifications = await _dbContext.Notifications
-                .Where(n => n.Display)
+                .Where(n => n.Display == true)
                 .Include(n => n.Sender)
                 .Include(n => n.Recipients) // đảm bảo Notification có ICollection<StatusNotification> Recipients
                 .OrderByDescending(n => n.SentAt)

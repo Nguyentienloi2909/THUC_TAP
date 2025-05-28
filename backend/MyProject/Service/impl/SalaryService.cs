@@ -120,7 +120,9 @@ namespace MyProject.Service.impl
                 decimal rawSalary = salary.MonthSalary.Value / totalWorkingDaysInMonth *
                                     validWorkDays ;
                 decimal penalty = CalculatePenalty(lateCount, absentCount, tienPhat);
-                decimal finalSalary = rawSalary - penalty;
+                decimal overTimeSalary = CalculateOverTime(overTime, totalWorkingDaysInMonth, salary.MonthSalary.Value);
+
+                decimal finalSalary = rawSalary - penalty + overTimeSalary;
 
                 if (finalSalary < 0) finalSalary = 0;
                 salary.NumberOfWorkingDays = validWorkDays;
@@ -173,10 +175,51 @@ namespace MyProject.Service.impl
             return salaryDtos;
         }
 
+
+        public async Task<SalaryStatisticsDto?> GetSalaryStatistics(int year, int? month = null)
+        {
+            IQueryable<Salary> query = _dbContext.Salaries
+                .Where(s => s.Year == year && s.Display == true);
+
+            if (month.HasValue)
+            {
+                query = query.Where(s => s.Month == month.Value);
+            }
+
+            var salaries = await query
+                .Where(s => s.TotalSalary > 0)
+                .Select(s => s.TotalSalary)
+                .ToListAsync();
+
+            if (!salaries.Any())
+            {
+                return null;
+            }
+
+            return new SalaryStatisticsDto
+            {
+                Year = year,
+                Month = month,
+                TotalSalary = salaries.Sum() ?? 0,
+                AverageSalary = Math.Round(salaries.Average() ?? 0, 2) ,
+                MaxSalary = salaries.Max() ?? 0,
+                MinSalary = salaries.Min() ?? 0,
+            };
+        }
+
+
         // Phương thức tính phạt
         private decimal CalculatePenalty(int lateCount, int absentCount, decimal tienPhat)
         {
             decimal penalty = (lateCount + absentCount ) * tienPhat;
+            return penalty;
+        }
+
+
+        // Phương thức tính tăng ca
+        private decimal CalculateOverTime(double? overTime, int totalWorkingDaysInMonth, decimal totalSalary)
+        {
+            decimal penalty = (totalSalary/totalWorkingDaysInMonth/9) * (decimal)overTime * (decimal)1.5;
             return penalty;
         }
 

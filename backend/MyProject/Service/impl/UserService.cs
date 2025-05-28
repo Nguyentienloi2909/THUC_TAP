@@ -42,6 +42,19 @@ namespace MyProject.Service.impl
                 .Include(u => u.Group)
                 .ToListAsync();
 
+            foreach (var user in users)
+            {
+                if (user.Role != null && !user.Role.Display)
+                {
+                    user.Role = null;
+                }
+
+                if (user.Group != null && !user.Group.Display)
+                {
+                    user.Group = null;
+                }
+            }
+
             return users.Select(u => u.ToDto()).ToList();
         }
         public async Task<UserDto?> GetUserById(int id)
@@ -50,6 +63,15 @@ namespace MyProject.Service.impl
                 .Include(u => u.Role)
                 .Include(u => u.Group)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return null;
+
+            if (user.Role != null && !user.Role.Display)
+                user.Role = null;
+
+            if (user.Group != null && !user.Group.Display)
+                user.Group = null;
 
             return user?.ToDto();
         }
@@ -222,7 +244,7 @@ namespace MyProject.Service.impl
             user.FullName = dto.FullName ?? user.FullName;
             user.PhoneNumber = dto.PhoneNumber ?? user.PhoneNumber;
             user.Address = dto.Address ?? user.Address;
-            user.Gender = dto.Gender ?? false;
+            user.Gender = dto.Gender ?? user.Gender;
             user.Birthdate = dto.BirthDate ?? user.Birthdate;
             user.BankNumber = dto.BankNumber ?? user.BankNumber;
             user.BankName = dto.BankName ?? user.BankName;
@@ -270,8 +292,8 @@ namespace MyProject.Service.impl
 
                 user.Avatar = uploadResult.SecureUrl.ToString();
             }
-            
-            _dbContext.Users.Update(user);
+
+                _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
 
             var resultDto = Mappers.MapperToDto.ToDto(user);
@@ -305,6 +327,35 @@ namespace MyProject.Service.impl
             userDto.ReceivedMessages = user.ReceivedMessages.Select(m => m.ToDto()).ToList();
             return userDto;
         }
+
+        public async Task<UserStatisticsDto> GetEmployeeStatisticsAsync()
+        {
+            var employees = await _dbContext.Users.ToListAsync();
+
+            int total = employees.Count;
+            int resigned = employees.Count(e => e.Status == Entity.Enum.StatusUser.Inactive);
+            int male = employees.Count(e => e.Gender == true);
+            int female = employees.Count(e => e.Gender == false);
+
+            double resignationRate = total == 0 ? 0 : (double)resigned / total * 100;
+            double maleRate = total == 0 ? 0 : (double)male / total * 100;
+            double femaleRate = total == 0 ? 0 : (double)female / total * 100;
+
+            // Giả sử có trường DateJoin
+            double avgSeniorityYears = total == 0 ? 0 : employees
+                .Where(e => e.Status == Entity.Enum.StatusUser.Active && e.StartDate != null)
+                .Average(e => (DateTime.Now - e.StartDate.Value).TotalDays / 365);
+
+            return new UserStatisticsDto
+            {
+                TotalEmployees = total,
+                ResignationRate = Math.Round(resignationRate, 2),
+                AverageSeniorityYears = Math.Round(avgSeniorityYears, 2),
+                MaleRate = Math.Round(maleRate, 2),
+                FemaleRate = Math.Round(femaleRate, 2)
+            };
+        }
+
         public static string GenerateRandomPassword(int length = 10)
         {
             const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

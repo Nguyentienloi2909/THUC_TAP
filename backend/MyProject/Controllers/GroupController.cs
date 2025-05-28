@@ -84,7 +84,6 @@ namespace MyProject.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "ADMIN")]
-
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -99,6 +98,28 @@ namespace MyProject.Controllers
             {
                 return Problem(detail: ex.Message, title: "Error deleting group", statusCode: 500);
             }
+        }
+
+        [HttpPost("{groupId}/add-user/{userId}")]
+        [Authorize(Roles = "ADMIN, LEADER")]
+        public async Task<IActionResult> AddUserToGroup(int groupId, int userId)
+        {
+            var success = await _groupService.AddUserToGroup(groupId, userId);
+            if (!success)
+                return NotFound(new { message = "Group or User not found." });
+
+            return Ok(new { message = "User added to group successfully." });
+        }
+
+        [HttpDelete("{groupId}/remove-user/{userId}")]
+        [Authorize(Roles = "ADMIN, LEADER")]
+        public async Task<IActionResult> RemoveUserFromGroup(int groupId, int userId)
+        {
+            var success = await _groupService.RemoveUserFromGroup(groupId, userId);
+            if (!success)
+                return NotFound(new { message = "Group or User not found." });
+
+            return Ok(new { message = "User removed from group successfully." });
         }
     }
 

@@ -96,7 +96,7 @@ namespace MyProject.Controllers
 
         // Check-out
         [HttpPost("checkout")]
-        public async Task<IActionResult> CheckOut(int userId)
+        public async Task<IActionResult> CheckOut()
         {
             try
             {
@@ -224,35 +224,28 @@ namespace MyProject.Controllers
             }
         }
 
-        [HttpGet("summary/monthly")]
-        public async Task<IActionResult> GetUserMonthlySummary([FromQuery] int month, [FromQuery] int year)
+        [HttpGet("summary/monthly/{userId}")]
+        public async Task<IActionResult> GetUserMonthlySummary(int userId ,[FromQuery] int month, [FromQuery] int year)
         {
             try
             {
-                var email = GetUsernameFromToken();
-                if (string.IsNullOrEmpty(email))
-                    return Unauthorized(new { message = "Username claim not found in token" });
-                var user = await _userService.GetMyInfo(email);
-                var summary = await _attendanceService.GetUserMonthlySummaryAsync(user.Id ?? 0, month, year);
+                
+                var summary = await _attendanceService.GetUserMonthlySummaryAsync(userId, month, year);
                 return Ok(summary);
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần: _logger.LogError(ex, "Lỗi khi lấy thống kê tháng cho user");
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy thống kê tháng", detail = ex.Message });
             }
         }
 
-        [HttpGet("summary/weekly")]
-        public async Task<IActionResult> GetUserWeeklySummary(int month, int year)
+        [HttpGet("summary/weekly/{userId}")]
+        public async Task<IActionResult> GetUserWeeklySummary(int userId, [FromQuery] int month, [FromQuery] int year)
         {
             try
             {
-                var email = GetUsernameFromToken();
-                if (string.IsNullOrEmpty(email))
-                    return Unauthorized(new { message = "Username claim not found in token" });
-                var user = await _userService.GetMyInfo(email);
-                var summaries = await _attendanceService.GetUserWeeklySummaryInMonthAsync(user.Id ?? 0, month, year);
+                
+                var summaries = await _attendanceService.GetUserWeeklySummaryInMonthAsync(userId, month, year);
 
                 var result = summaries.Select(s => new
                 {

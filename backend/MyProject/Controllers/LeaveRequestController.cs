@@ -9,6 +9,8 @@ namespace MyProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class LeaveRequestController : ControllerBase
     {
         private readonly ILeaveRequestService _leaveRequestService;
@@ -20,9 +22,21 @@ namespace MyProject.Controllers
             _userService = userService;
         }
 
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<List<LeaveRequestDto>>> GetAllLeaveRequestsByUserId(int userId)
+        {
+            var leaveRequests = await _leaveRequestService.GetAllLeaveRequestByUserIdAsync(userId);
+            return Ok(leaveRequests);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<LeaveRequestDto>>> GetAllLeaveRequests()
+        {
+            var leaveRequests = await _leaveRequestService.GetAllLeaveRequest();
+            return Ok(leaveRequests);
+        }
 
         [HttpPost("create")]
-        [Authorize]
         public async Task<IActionResult> CreateLeaveRequest([FromBody] LeaveRequestDto dto)
         {
             var email = GetUsernameFromToken();

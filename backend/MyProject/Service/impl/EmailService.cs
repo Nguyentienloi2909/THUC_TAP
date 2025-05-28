@@ -7,6 +7,7 @@ using MyProject.Dto;
 using MyProject.Entity;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Mappers;
+using MyProject.Entity.Enum;
 
 namespace MyProject.Service.impl
 {
@@ -99,6 +100,117 @@ namespace MyProject.Service.impl
             };
             await SendEmailAsync(request);
         }
+
+
+        public async Task SendSalaryEmailToUserAsync(UserDto user, SalaryDto dto, AttendanceSummaryDto attendance)
+        {
+           
+            var request = new EmailRequest
+            {
+                To = user.Email,
+                Subject = $"📝 TIỀN LƯƠNG THÁNG {dto.Month}/{dto.Year}",
+                Description = $@"
+                    <strong>Người nhận:</strong> {dto.UserFullName}<br/>
+                    <strong>Tổng số ngày làm việc đúng giờ:</strong> {attendance.TotalPresentDays}<br/>
+                    <strong>Tổng số ngày làm việc đi trễ:</strong> {attendance.TotalLateDays}<br/>
+                    <strong>Tổng số ngày nghỉ phép:</strong> {attendance.TotalLeaveDays}<br/>
+                    <strong>Tổng số ngày vắng:</strong> {attendance.TotalAbsentDays}<br/>
+                    <strong>Tổng số giờ tăng ca:</strong> {attendance.TotalOvertimeHours}h<br/>
+                    <strong>Lương cơ bản:</strong> {dto.MonthSalary?.ToString("N0")} VND<br/>
+                    <strong>Khấu trừ:</strong> {((attendance.TotalLateDays + attendance.TotalAbsentDays) * 100000).ToString("N0")} VND<br/>
+                    <strong>Tăng ca:</strong> {((decimal)attendance.TotalOvertimeHours * 1.5m * (dto.MonthSalary / attendance.TotalWorkingDays / 9m))?.ToString("N2")} VND<br/>
+                    <strong>TỔNG TIỀN NHẬN ĐƯỢC:</strong> {dto.TotalSalary?.ToString("N0")} VND<br/>
+                "
+            };
+            await SendEmailAsync(request);
+        }
+
+        public async Task SendSalaryToAllUsersAsync(int month, int year)
+        {
+            var salaries = await _dbContext.Salaries
+                .Include(s => s.User)
+                .Where(s => s.Month == month && s.Year == year && s.User.Status == StatusUser.Active)
+                .ToListAsync();
+
+            var emailTasks = salaries.Select(async salary =>
+            {
+                var userDto = salary.User.ToDto();
+                var salaryDto = new SalaryDto
+                {
+                    UserFullName = salary.User.FullName,
+                    MonthSalary = salary.MonthSalary,
+                    TotalSalary = salary.TotalSalary,
+                    Month = month,
+                    Year = year
+                };
+
+                var attendance = await GetUserMonthlySummaryAsync(salary.User.Id, month, year);
+
+                await SendSalaryEmailToUserAsync(userDto, salaryDto, attendance);
+            });
+
+            await Task.WhenAll(emailTasks);
+        }
+
+        private async Task<AttendanceSummaryDto> GetUserMonthlySummaryAsync(int userId, int month, int year)
+        {
+            var start = new DateTime(year, month, 1);
+            var end = start.AddMonths(1).AddDays(-1);
+
+            var attendances = await _dbContext.Attendances
+                .Where(a => a.Workday >= start && a.Workday <= end)
+                .ToListAsync();
+
+            var userAttendances = attendances
+                .Where(a => a.UserId == userId)
+                .ToList();
+
+            var totalDays = (end - start).Days + 1;
+            var allDaysInMonth = Enumerable.Range(0, totalDays)
+                .Select(i => start.AddDays(i).Date)
+                .ToList();
+
+            int presentDays = userAttendances.Count(a => a.Status == StatusAttendance.Present);
+            int lateDays = userAttendances.Count(a => a.Status == StatusAttendance.Late);
+            int leaveDays = userAttendances.Count(a => a.Status == StatusAttendance.Leave);
+            double totalOvertime = userAttendances.Sum(a => a.Overtime ?? 0);
+
+            int absentDays = 0;
+            int totalWorkingDays = 0;
+
+            foreach (var day in allDaysInMonth)
+            {
+                // Ngày làm việc nếu có bất kỳ ai có chấm công hợp lệ (check-in và check-out)
+                bool isWorkingDay = attendances.Any(a =>
+                    a.Workday.Date == day && a.CheckIn != null && a.CheckOut != null);
+
+                if (isWorkingDay)
+                {
+                    totalWorkingDays++;
+
+                    var userAttendanceOfDay = userAttendances.FirstOrDefault(a => a.Workday.Date == day);
+
+                    if (userAttendanceOfDay == null || userAttendanceOfDay.Status == StatusAttendance.Absent)
+                    {
+                        absentDays++;
+                    }
+                }
+            }
+
+            return new AttendanceSummaryDto
+            {
+                TotalPresentDays = presentDays,
+                TotalLateDays = lateDays,
+                TotalLeaveDays = leaveDays,
+                TotalAbsentDays = absentDays,
+                TotalOvertimeHours = Math.Round(totalOvertime, 2),
+                TotalWorkingDays = totalWorkingDays
+            };
+        }
+
+
+
+
         private string BuildHtmlEmail(string title, string content)
         {
             return $@"

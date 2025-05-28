@@ -9,6 +9,8 @@ namespace MyProject.Service.interfac
         Task<TaskItemDto?> GetTaskById(int id);
         Task<List<TaskItemDto>> GetAllTasks();
         Task<bool> DeleteTask(int id);
+        Task<bool> UpdateStatus(int id);
         Task<List<TaskItemDto>> GetTasksByUserId(int userId);
+        Task<List<TaskItemDto>> GetAssignedTasksByUserId(int userId);
     }
 }

@@ -9,5 +9,7 @@ namespace MyProject.Service.interfac
         Task SendNotificationToAllUsersAsync(int notificationId);
         Task SendNotificationToUserAsync(UserDto user, Notification notification);
         Task SendTaskAssignmentEmailAsync(UserDto user, TaskItemDto task);
+        Task SendSalaryEmailToUserAsync(UserDto user, SalaryDto dto, AttendanceSummaryDto attendance);
+        Task SendSalaryToAllUsersAsync(int month, int year);
     }
 }

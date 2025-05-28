@@ -9,5 +9,6 @@ namespace MyProject.Service.interfac
         Task<List<SalaryDto>> CalculateAllUserSalaries(int month, int year, decimal tienPhat = 100000);
         Task<List<SalaryDto>> CalculateSalariesByQuarter(int year, int quarter);
         Task<List<SalaryDto>> CalculateSalariesByYear(int year);
+        Task<SalaryStatisticsDto?> GetSalaryStatistics(int year, int? month = null);
     }
 }
