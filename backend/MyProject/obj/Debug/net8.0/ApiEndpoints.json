@@ -86,13 +86,7 @@
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "userId",
-        "Type": "System.Int32",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -145,11 +139,16 @@
   {
     "ContainingType": "MyProject.Controllers.AttendanceController",
     "Method": "GetUserMonthlySummary",
-    "RelativePath": "api/Attendance/summary/monthly",
+    "RelativePath": "api/Attendance/summary/monthly/{userId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
       {
         "Name": "month",
         "Type": "System.Int32",
@@ -197,11 +196,16 @@
   {
     "ContainingType": "MyProject.Controllers.AttendanceController",
     "Method": "GetUserWeeklySummary",
-    "RelativePath": "api/Attendance/summary/weekly",
+    "RelativePath": "api/Attendance/summary/weekly/{userId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
       {
         "Name": "month",
         "Type": "System.Int32",
@@ -543,6 +547,48 @@
   },
   {
     "ContainingType": "MyProject.Controllers.GroupController",
+    "Method": "AddUserToGroup",
+    "RelativePath": "api/Group/{groupId}/add-user/{userId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupController",
+    "Method": "RemoveUserFromGroup",
+    "RelativePath": "api/Group/{groupId}/remove-user/{userId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "groupId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.GroupController",
     "Method": "GetById",
     "RelativePath": "api/Group/{id}",
     "HttpMethod": "GET",
@@ -694,6 +740,100 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.LeaveRequestController",
+    "Method": "GetAllLeaveRequests",
+    "RelativePath": "api/LeaveRequest",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[MyProject.Dto.LeaveRequestDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "MyProject.Controllers.LeaveRequestController",
+    "Method": "GetAllLeaveRequestsByUserId",
+    "RelativePath": "api/LeaveRequest/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[MyProject.Dto.LeaveRequestDto, MyProject, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "MyProject.Controllers.LeaveRequestController",
+    "Method": "ApproveLeaveRequest",
+    "RelativePath": "api/LeaveRequest/approve/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.LeaveRequestController",
+    "Method": "CancelLeaveRequest",
+    "RelativePath": "api/LeaveRequest/cancel/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.LeaveRequestController",
+    "Method": "CreateLeaveRequest",
+    "RelativePath": "api/LeaveRequest/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "MyProject.Dto.LeaveRequestDto",
         "IsRequired": true
       }
     ],
@@ -1026,6 +1166,74 @@
   },
   {
     "ContainingType": "MyProject.Controllers.SalaryController",
+    "Method": "SendSalaryEmailToUser",
+    "RelativePath": "api/Salary/send-salary-email/{userId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.SalaryController",
+    "Method": "SendSalaryEmails",
+    "RelativePath": "api/Salary/send-salary-emails",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "month",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.SalaryController",
+    "Method": "GetSalaryStatistics",
+    "RelativePath": "api/Salary/statistics",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "month",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.SalaryController",
     "Method": "GetSalariesByYear",
     "RelativePath": "api/Salary/year/{year}",
     "HttpMethod": "GET",
@@ -1261,6 +1469,38 @@
   },
   {
     "ContainingType": "MyProject.Controllers.TaskController",
+    "Method": "GetAssignedTasksByUserId",
+    "RelativePath": "api/Task/AssignedTask/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.TaskController",
+    "Method": "UpdateStatus",
+    "RelativePath": "api/Task/updateStatus/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.TaskController",
     "Method": "GetTasksByUserId",
     "RelativePath": "api/Task/user/{userId}",
     "HttpMethod": "GET",
@@ -1473,6 +1713,16 @@
     "ContainingType": "MyProject.Controllers.UserController",
     "Method": "GetLoggedInUserProfile",
     "RelativePath": "api/User/getProfile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "MyProject.Controllers.UserController",
+    "Method": "GetStatistics",
+    "RelativePath": "api/User/statistics",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

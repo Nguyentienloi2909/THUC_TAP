@@ -82,7 +82,11 @@ namespace MyProject.Service.impl
         }
         public async Task<(bool IsSuccess, string? ErrorMessage, TaskItemDto? response)> UpdateTask(int id, TaskItemDto request)
         {
-            var taskItem = await _dbContext.TaskItems.FindAsync(id);
+            var taskItem = await _dbContext.TaskItems
+            .Include(t => t.Sender)
+            .Include(t => t.AssignedTo)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
             if (taskItem == null)
                 return (false, "Task not found", null);
 
@@ -154,6 +158,7 @@ namespace MyProject.Service.impl
             var tasks = await _dbContext.TaskItems
                 .Where(d => d.Display == true)
                 .Include(t => t.AssignedTo)
+                .Include(t => t.Sender)
                 .ToListAsync();
 
             return tasks.Select(u => u.ToDto()).ToList(); ;
@@ -162,6 +167,7 @@ namespace MyProject.Service.impl
         {
             var task = await _dbContext.TaskItems
                 .Include(t => t.AssignedTo)
+                .Include(t => t.Sender)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             return task?.ToDto();
@@ -170,6 +176,7 @@ namespace MyProject.Service.impl
         {
             var tasks = await _dbContext.TaskItems
                 .Include(t => t.AssignedTo)
+                .Include(t => t.Sender)
                 .Where(t => t.AssignedToId == userId && t.Display == true)
                 .ToListAsync();
 
@@ -191,6 +198,36 @@ namespace MyProject.Service.impl
             {
                 return null;
             }
+        }
+
+        public async Task<List<TaskItemDto>> GetAssignedTasksByUserId(int userId)
+        {
+            var tasks = await _dbContext.TaskItems
+                .Include(t => t.Sender)
+                .Include(t => t.AssignedTo)
+                .Where(t => t.SenderId == userId && t.Display == true)
+                .ToListAsync();
+
+            return tasks.Select(t => t.ToDto()).ToList();
+        }
+
+        public async Task<bool> UpdateStatus(int id)
+        {
+            var taskItem = await _dbContext.TaskItems.FindAsync(id);
+            if(taskItem == null) return false;
+
+
+            if (taskItem.Status == StatusTask.Pending)
+            {
+                taskItem.Status = StatusTask.InProgress;
+            }else if(taskItem.Status == StatusTask.InProgress)
+            {
+                taskItem.Status = StatusTask.Completed;
+            }
+
+            _dbContext.TaskItems.Update(taskItem);
+            await _dbContext.SaveChangesAsync();
+            return true;
         }
     }
 }

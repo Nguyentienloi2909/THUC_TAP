@@ -120,6 +120,37 @@ namespace MyProject.Controllers
             }
         }
 
+        [HttpGet("AssignedTask/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> GetAssignedTasksByUserId(int userId)
+        {
+            try
+            {
+                var tasks = await _taskService.GetAssignedTasksByUserId(userId);
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving tasks for user: {ex.Message}");
+            }
+        }
+
+        [HttpPut("updateStatus/{id}")]
+        [Authorize(Roles = "USER")]
+        public async Task<IActionResult> UpdateStatus(int id)
+        {
+            try
+            {
+                var success = await _taskService.UpdateStatus(id);
+                if (!success) return NotFound("Task not found or could not be deleted");
+                return Ok("Task update successfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error deleting task: {ex.Message}");
+            }
+        }
+
         private string? GetUsernameFromToken()
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();

@@ -1,6 +1,9 @@
 ﻿using CloudinaryDotNet;
+using Hangfire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyProject.Dto;
 using MyProject.Service.interfac;
 
@@ -8,12 +11,19 @@ namespace MyProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SalaryController : ControllerBase
     {
         private readonly ISalaryService _salaryService;
-        public SalaryController(ISalaryService salaryService)
+        private readonly IAttendanceService _attendanceService;
+        private readonly IUserService _userService;
+
+        public SalaryController(ISalaryService salaryService, IAttendanceService attendanceService, IUserService userService)
         {
             _salaryService = salaryService;
+            _attendanceService = attendanceService;
+            _userService = userService;
+
         }
 
         [HttpGet("getSalarById")]
@@ -93,5 +103,57 @@ namespace MyProject.Controllers
                 return StatusCode(500, $"Có lỗi khi tính lương: {ex.Message}");
             }
         }
+
+        // thống kê
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetSalaryStatistics([FromQuery] int year, [FromQuery] int? month = null)
+        {
+            var result = await _salaryService.GetSalaryStatistics(year, month);
+            if (result == null)
+            {
+                return NotFound(new { message = "Không có dữ liệu lương cho thời gian yêu cầu." });
+            }
+
+            return Ok(result);
+        }
+
+
+        // Gửi email thông báo lương cho tất cả nhân viên trong tháng/năm chỉ định.
+        [HttpPost("send-salary-emails")]
+        public async Task<IActionResult> SendSalaryEmails([FromQuery] int month, [FromQuery] int year)
+        {
+            BackgroundJob.Enqueue<IEmailService>(job => job.SendSalaryToAllUsersAsync(month, year));
+            return Ok(new { message = $"Đã gửi email lương tháng {month}/{year} đến toàn bộ nhân viên." });
+        }
+
+
+        // Gửi email lương cho một nhân viên cụ thể theo userId.
+        [HttpPost("send-salary-email/{userId}")]
+        public async Task<IActionResult> SendSalaryEmailToUser(int userId, [FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+                var salaryDto = await _salaryService.CalculateSalaryByUserId(userId, month, year);
+                if (salaryDto == null)
+                    return NotFound("Không tìm thấy dữ liệu lương cho nhân viên này.");
+
+                var attendance = await _attendanceService.GetUserMonthlySummaryAsync(userId, month, year);
+                if (attendance == null)
+                    return NotFound("Không tìm thấy dữ liệu chấm công.");
+
+                var user = await _userService.GetUserById(userId);
+
+                if (user == null)
+                    return NotFound("Không tìm thấy thông tin nhân viên.");
+
+                BackgroundJob.Enqueue<IEmailService>(job => job.SendSalaryEmailToUserAsync(user, salaryDto, attendance));
+                return Ok(new { message = $"Đã gửi email lương cho {user.FullName}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi khi gửi email lương: {ex.Message}");
+            }
+        }
+
     }
 }

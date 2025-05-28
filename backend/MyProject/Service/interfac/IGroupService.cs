@@ -9,5 +9,7 @@ namespace MyProject.Service.interfac
         Task<GroupDto> CreateGroup(GroupDto dto);
         Task<GroupDto> UpdateGroupById(int id, GroupDto dto);
         Task<bool> DeleteGroupById(int id);
+        Task<bool> AddUserToGroup(int groupId, int userId);
+        Task<bool> RemoveUserFromGroup(int groupId, int userId);
     }
 }

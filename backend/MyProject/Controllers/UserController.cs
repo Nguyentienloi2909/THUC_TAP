@@ -54,9 +54,6 @@ namespace MyProject.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateUserById(int id, [FromForm] UserDto dto)
         {
-            if (dto == null || id != dto.Id)
-                return BadRequest(new { message = "User ID mismatch or invalid data" });
-
             try
             {
                 var (isSuccess, errorMessage, updatedUser) = await _userService.UpdateUserById(id, dto);
@@ -133,6 +130,13 @@ namespace MyProject.Controllers
             {
                 return StatusCode(500, new { message = "An error occurred while changing password", error = ex.Message });
             }
+        }
+
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetStatistics()
+        {
+            var stats = await _userService.GetEmployeeStatisticsAsync();
+            return Ok(stats);
         }
         private string? GetUsernameFromToken()
         {

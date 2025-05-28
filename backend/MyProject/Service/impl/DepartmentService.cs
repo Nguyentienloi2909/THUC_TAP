@@ -18,7 +18,7 @@ namespace MyProject.Service.impl
         {
             var departments = await _dbContext.Departments
                 .Where(d => d.Display == true)
-                .Include(d => d.Groups)
+                .Include(d => d.Groups.Where(g => g.Display == true)) // lọc Group
                 .ThenInclude(g => g.Users)
                 .ToListAsync();
 
@@ -26,7 +26,9 @@ namespace MyProject.Service.impl
             {
                 Id = d.Id,
                 DepartmentName = d.DepartmentName,
-                Groups = d.Groups.Select(g => new GroupDto
+                Groups = d.Groups
+                .Where(g => g.Display == true)
+                .Select(g => new GroupDto
                 {
                     Id = g.Id,
                     GroupName = g.GroupName,
@@ -41,7 +43,7 @@ namespace MyProject.Service.impl
         public async Task<DepartmentDto?> GetDepartmentById(int id)
         {
             var department = await _dbContext.Departments
-                .Include(d => d.Groups)
+                .Include(d => d.Groups.Where(g => g.Display == true))
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (department == null) return null;
@@ -50,7 +52,9 @@ namespace MyProject.Service.impl
             {
                 Id = department.Id,
                 DepartmentName = department.DepartmentName,
-                Groups = department.Groups.Select(g => new GroupDto
+                Groups = department.Groups
+                .Where(g => g.Display == true)
+                .Select(g => new GroupDto
                 {
                     Id = g.Id,
                     GroupName = g.GroupName

@@ -98,6 +98,38 @@ namespace MyProject.Service.impl
             await _dbContext.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> AddUserToGroup(int groupId, int userId)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.Id == groupId && g.Display == true);
+
+            if (group == null || user == null) return false;
+
+            // Nếu user đã thuộc group này rồi thì bỏ qua
+            if (user.GroupId == groupId)
+                return true;
+
+            // Gán lại GroupId
+            user.GroupId = groupId;
+
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+
+        public async Task<bool> RemoveUserFromGroup(int groupId, int userId)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.GroupId == groupId);
+            if (user == null) return false;
+
+            user.GroupId = null;
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+
+
     }
 
 }

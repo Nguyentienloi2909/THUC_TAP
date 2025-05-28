@@ -11,7 +11,7 @@ namespace MyProject.Service.interfac
         Task<List<UserDto>> GetAllUser();
         Task<UserDto> GetMyInfo(string email);
         Task<UserDto?> GetUserById(int id);
-
+        Task<UserStatisticsDto> GetEmployeeStatisticsAsync();
         Task<(bool IsSuccess, string? ErrorMessage, UserDto? UpdatedUser)> UpdateUserById(int id, UserDto dto);
         Task<bool> DeleteUserById(int id);
         Task<(bool IsSuccess, string? ErrorMessage)> ChangePassword(string email, string oldPassword, string newPassword, string againNewPassword);
