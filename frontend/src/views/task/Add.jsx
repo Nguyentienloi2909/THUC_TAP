@@ -16,8 +16,11 @@ import PageContainer from 'src/components/container/PageContainer';
 import ApiService from '../../service/ApiService';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { useUser } from 'src/contexts/UserContext';
 
 const AddTaskPage = ({ open = false, onClose, onAdd }) => {
+    const { user } = useUser(); // Lấy thông tin người gửi (LEADER)
+
     const getCurrentDateTime = () => {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -72,6 +75,13 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
                 alert('File không được vượt quá 5MB');
                 return;
             }
+            // Kiểm tra định dạng file (chỉ cho phép .doc hoặc .docx)
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension !== 'doc' && fileExtension !== 'docx') {
+                alert('Chỉ cho phép upload file Word (.doc hoặc .docx)');
+                e.target.value = null; // Xóa file khỏi input
+                return;
+            }
             setNewTask(prev => ({ ...prev, file }));
             setFileInfo({
                 name: file.name,
@@ -108,17 +118,22 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
             return;
         }
 
-        setIsSubmitting(true); // Bật trạng thái loading
+        setIsSubmitting(true);
         try {
-            await onAdd(newTask); // Giả định onAdd là async
+            // Bổ sung senderId, senderName vào newTask
+            await onAdd({
+                ...newTask,
+                senderId: user.userId,
+                senderName: user.fullName,
+            });
             setNewTask(initialTaskState);
             setFileInfo({ name: '', size: '' });
-            onClose(); // Đóng dialog sau khi thêm thành công
+            onClose();
         } catch (error) {
             console.error('Error adding task:', error);
             alert('Không thể thêm nhiệm vụ');
         } finally {
-            setIsSubmitting(false); // Tắt trạng thái loading
+            setIsSubmitting(false);
         }
     };
 

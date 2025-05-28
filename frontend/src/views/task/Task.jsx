@@ -1,69 +1,49 @@
 // src/views/task/task.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-    Grid, Card, Typography, Box, Chip, Tabs, Tab,
+    Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, Paper, Tooltip, IconButton, CircularProgress,
-    Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    TableRow, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    IconButton, Tooltip, // Thêm Tooltip vào đây
 } from '@mui/material';
 import {
-    IconPlus, IconEdit, IconTrash, IconDownload,
-    IconCheck, IconClockHour4, IconClock, IconAlertCircle,
+    IconPlus, IconEdit, IconTrash, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
+    IconDownload, // Thêm IconDownload vì đã sử dụng trong cột Tài liệu
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useNavigate } from 'react-router-dom';
 import AddTaskPage from './Add';
 import ApiService from '../../service/ApiService';
 import TaskActions from './TaskActions';
-import { useUser } from 'src/contexts/UserContext'; // Thêm useUser
+import { useUser } from 'src/contexts/UserContext';
 
-// Hàm ánh xạ trạng thái từ API sang cấu hình hiển thị
+const defaultStatusConfig = {
+    pending: { label: 'Chờ xử lý', color: 'warning', icon: <IconClock size={16} /> },
+    inprogress: { label: 'Đang thực hiện', color: 'primary', icon: <IconClockHour4 size={16} /> },
+    late: { label: 'Muộn', color: 'error', icon: <IconAlertCircle size={16} /> },
+    completed: { label: 'Hoàn thành', color: 'success', icon: <IconCheck size={16} /> },
+    cancelled: { label: 'Đã hủy', color: 'default', icon: <IconAlertCircle size={16} /> },
+};
+
 const createStatusConfig = (statusList) => {
-    const defaultConfig = {
-        pending: {
-            label: 'Chờ xử lý',
-            color: 'warning',
-            icon: <IconClock size={16} />,
-        },
-        inprogress: {
-            label: 'Đang thực hiện',
-            color: 'primary',
-            icon: <IconClockHour4 size={16} />,
-        },
-        late: {
-            label: 'Muộn',
-            color: 'error',
-            icon: <IconAlertCircle size={16} />,
-        },
-        completed: {
-            label: 'Hoàn thành',
-            color: 'success',
-            icon: <IconCheck size={16} />,
-        },
-        cancelled: {
-            label: 'Đã hủy',
-            color: 'default',
-            icon: <IconAlertCircle size={16} />,
-        },
-    };
-
-    const config = {};
+    const config = { ...defaultStatusConfig };
     statusList.forEach(status => {
-        const normalizedStatus = status.name.toLowerCase().replace(/\s+/g, '');
-        config[normalizedStatus] = {
-            ...defaultConfig[normalizedStatus],
-            label: defaultConfig[normalizedStatus]?.label || status.name,
-            color: defaultConfig[normalizedStatus]?.color || 'default',
-            icon: defaultConfig[normalizedStatus]?.icon || <IconClock size={16} />,
-        };
+        const key = status.name?.toLowerCase().replace(/\s+/g, '');
+        if (key) {
+            config[key] = {
+                ...defaultStatusConfig[key],
+                label: defaultStatusConfig[key]?.label || status.name,
+                color: defaultStatusConfig[key]?.color || 'default',
+                icon: defaultStatusConfig[key]?.icon || <IconClock size={16} />,
+            };
+        }
     });
-
     return config;
 };
 
-// Component hiển thị trạng thái
-const TaskStatusChip = ({ status }) => {
-    const config = status && statusConfig[status.toLowerCase().replace(/\s+/g, '')] || {
+const TaskStatusChip = React.memo(({ status, statusConfig }) => {
+    const key = status?.toLowerCase().replace(/\s+/g, '');
+    const config = (statusConfig && statusConfig[key]) || defaultStatusConfig[key] || {
         label: 'Không xác định',
         color: 'default',
         icon: <IconClock size={16} />,
@@ -77,13 +57,11 @@ const TaskStatusChip = ({ status }) => {
             sx={{ minWidth: 120 }}
         />
     );
-};
-
-let statusConfig = {};
+});
 
 const Task = () => {
     const navigate = useNavigate();
-    const { user } = useUser(); // Lấy user từ UserContext
+    const { user } = useUser();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState(0);
@@ -92,97 +70,118 @@ const Task = () => {
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
     const [statusList, setStatusList] = useState([]);
 
-    const fetchStatusList = async () => {
+    // Memo hóa statusConfig
+    const statusConfig = useMemo(() => createStatusConfig(statusList), [statusList]);
+
+    const fetchStatusList = useCallback(async () => {
         try {
             const statuses = await ApiService.getStatusTask();
+            console.log('Status List:', statuses);
             setStatusList(statuses);
-            statusConfig = createStatusConfig(statuses);
         } catch (err) {
-            console.error('Error fetching status list:', err);
             setError('Không thể tải danh sách trạng thái.');
         }
-    };
+    }, []);
 
-    const fetchUserTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         if (!user.isAuthenticated || !user.userId) return;
         try {
             setLoading(true);
             setError(null);
-            const userTasks = await ApiService.getTasksByUser(user.userId);
-            setTasks(userTasks);
-        } catch (err) {
-            console.error('Error fetching tasks:', err);
-            if (err.response && err.response.status === 403) {
-                setError('Access denied. Please check your permissions.');
+            const role = sessionStorage.getItem('role') || user.role;
+            let userTasks = [];
+            if (role === 'LEADER') {
+                userTasks = await ApiService.getTasksByLeader(user.userId);
             } else {
-                setError('Failed to load tasks. Please try again later.');
+                userTasks = await ApiService.getTasksByUser(user.userId);
             }
+            console.log('Fetched tasks:', userTasks);
+            setTasks(userTasks || []);
+        } catch (err) {
+            setError('Không thể tải danh sách nhiệm vụ.');
         } finally {
             setLoading(false);
         }
-    };
+    }, [user.isAuthenticated, user.userId, user.role]);
 
     useEffect(() => {
         if (user.isAuthenticated && user.userId) {
-            fetchUserTasks();
+            fetchTasks();
             fetchStatusList();
         }
-    }, [user.isAuthenticated, user.userId]);
+    }, [user.isAuthenticated, user.userId, fetchTasks, fetchStatusList]);
 
-    const tabs = [
+    const tabs = useMemo(() => [
         { label: "Tất cả", value: "all" },
         ...statusList.map(status => ({
-            label: statusConfig[status.name.toLowerCase().replace(/\s+/g, '')]?.label || status.name,
-            value: status.name.toLowerCase().replace(/\s+/g, ''),
+            label: statusConfig[status.name?.toLowerCase().replace(/\s+/g, '')]?.label || status.name,
+            value: status.name?.toLowerCase().replace(/\s+/g, ''),
         })),
-    ];
+    ], [statusList, statusConfig]);
 
-    const getFilteredTasksByStatus = () => {
-        const currentStatus = tabs[selectedTab].value;
-        const filtered = currentStatus === 'all'
-            ? tasks
-            : tasks.filter(task => task.status.toLowerCase().replace(/\s+/g, '') === currentStatus);
+    const filteredTasks = useMemo(() => {
+        const currentStatus = tabs[selectedTab]?.value;
+        if (!currentStatus || currentStatus === 'all') return tasks;
+        const filtered = tasks.filter(task => task.status?.toLowerCase().replace(/\s+/g, '') === currentStatus);
+        console.log('Filtered tasks:', filtered);
         return filtered;
-    };
+    }, [tasks, tabs, selectedTab]);
 
-    const filteredTasks = getFilteredTasksByStatus();
-
-    const viewTaskDetails = (taskId) => {
+    const viewTaskDetails = useCallback((taskId) => {
+        console.log('View task details:', taskId);
         navigate(`/manage/task/${taskId}`);
-    };
+    }, [navigate]);
 
-    const handleDelete = async (taskId, event) => {
+    const handleDelete = useCallback((taskId, event) => {
         event.stopPropagation();
         setConfirmDialog({ open: true, action: 'delete', taskId });
-    };
+    }, []);
 
-    const handleEdit = (taskId, event) => {
+    const handleEdit = useCallback((taskId, event) => {
         event.stopPropagation();
-        setConfirmDialog({ open: true, action: 'edit', taskId });
-    };
+        navigate(`/manage/task/update/${taskId}`);
+    }, [navigate]);
 
-    const confirmAction = async () => {
+    // Hàm cập nhật trạng thái nhiệm vụ cho USER
+    const handleUpdateStatus = useCallback(async (task) => {
+        if (!task?.id) return;
+        try {
+            await ApiService.updateTaskStatus(task.id);
+            // Sau khi cập nhật trạng thái, reload lại danh sách nhiệm vụ
+            fetchTasks();
+            alert('Cập nhật trạng thái thành công!');
+        } catch (error) {
+            alert('Cập nhật trạng thái thất bại!');
+            console.error('Update status error:', error);
+        }
+    }, [fetchTasks]);
+
+    const confirmAction = useCallback(async () => {
         const { action, taskId } = confirmDialog;
         if (action === 'delete') {
             try {
                 await ApiService.deleteTask(taskId);
-                setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-            } catch (err) {
-                console.error('Error deleting task:', err);
-                alert('Failed to delete task. Please try again.');
+                setTasks(prevTasks => {
+                    const updated = prevTasks.filter(task => task.id !== taskId);
+                    console.log('Tasks after delete:', updated);
+                    return updated;
+                });
+            } catch {
+                alert('Không thể xóa nhiệm vụ. Vui lòng thử lại.');
             }
-        } else if (action === 'edit') {
-            navigate(`/manage/task/update/${taskId}`);
         }
         setConfirmDialog({ open: false, action: null, taskId: null });
-    };
+    }, [confirmDialog]);
 
-    const handleAddTask = async (newTask) => {
+    const handleAddTask = useCallback(async (newTask) => {
         try {
             if (!newTask.title || !newTask.description || !newTask.startTime || !newTask.endTime || !newTask.assignedToId) {
-                alert('Please fill in all required fields.');
+                alert('Vui lòng điền đầy đủ thông tin.');
                 return;
             }
+            // Lấy senderId và senderName từ sessionStorage hoặc context
+            const senderId = sessionStorage.getItem('userId') || user.userId;
+            const senderName = sessionStorage.getItem('fullName') || user.fullName;
 
             const formData = new FormData();
             formData.append('Title', newTask.title);
@@ -191,23 +190,22 @@ const Task = () => {
             formData.append('StartTime', newTask.startTime);
             formData.append('EndTime', newTask.endTime);
             formData.append('AssignedToId', newTask.assignedToId);
+            formData.append('AssignedToName', newTask.assignedToName || '');
+            formData.append('SenderId', senderId);
+            formData.append('SenderName', senderName);
 
             const createdTask = await ApiService.createTask(formData);
-            setTasks([...tasks, createdTask]);
+            setTasks(prev => {
+                const updated = [...prev, createdTask];
+                console.log('Tasks after add:', updated);
+                return updated;
+            });
             setOpenAddTaskDialog(false);
-            alert('Task added successfully!');
-        } catch (err) {
-            console.error('Error adding task:', err);
-            alert('Failed to add task. Please try again.');
+            alert('Thêm nhiệm vụ thành công!');
+        } catch {
+            alert('Không thể thêm nhiệm vụ. Vui lòng thử lại.');
         }
-    };
-
-    // Hàm cắt ngắn description
-    const truncateDescription = (description, maxLength = 50) => {
-        if (!description) return "Không có mô tả";
-        if (description.length <= maxLength) return description;
-        return description.substring(0, maxLength) + "...";
-    };
+    }, [user]);
 
     return (
         <PageContainer title="Nhiệm vụ của tôi" description="Danh sách nhiệm vụ được giao">
@@ -216,7 +214,7 @@ const Task = () => {
                     <Typography variant="h5" fontWeight="bold">
                         Quản lý nhiệm vụ
                     </Typography>
-                    {user.role === 'LEADER' && (
+                    {((sessionStorage.getItem('role') || user.role) === 'LEADER') && (
                         <Button
                             variant="contained"
                             startIcon={<IconPlus />}
@@ -226,7 +224,9 @@ const Task = () => {
                         </Button>
                     )}
                 </Box>
-
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                    {filteredTasks.length} nhiệm vụ được tìm thấy
+                </Typography>
                 <Tabs
                     value={selectedTab}
                     onChange={(e, newValue) => setSelectedTab(newValue)}
@@ -270,6 +270,7 @@ const Task = () => {
                                 <TableRow>
                                     <TableCell>Tiêu đề</TableCell>
                                     <TableCell>Người thực hiện</TableCell>
+                                    <TableCell align="center">Tài liệu</TableCell>
                                     <TableCell align="center">Trạng thái</TableCell>
                                     <TableCell>Ngày bắt đầu</TableCell>
                                     <TableCell>Ngày kết thúc</TableCell>
@@ -279,7 +280,7 @@ const Task = () => {
                             <TableBody>
                                 {filteredTasks.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center">
+                                        <TableCell colSpan={7} align="center">
                                             Không có nhiệm vụ nào
                                         </TableCell>
                                     </TableRow>
@@ -293,15 +294,27 @@ const Task = () => {
                                         >
                                             <TableCell>
                                                 <Typography variant="subtitle2">{task.title}</Typography>
-                                                <Tooltip title={task.description || "Không có mô tả"} placement="top">
-                                                    <Typography variant="caption" color="textSecondary">
-                                                        {truncateDescription(task.description, 50)}
-                                                    </Typography>
-                                                </Tooltip>
                                             </TableCell>
                                             <TableCell>{task.assignedToName}</TableCell>
                                             <TableCell align="center">
-                                                <TaskStatusChip status={task.status} />
+                                                {task.urlFile ? (
+                                                    <Tooltip title="Tải tài liệu">
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(task.urlFile, '_blank');
+                                                            }}
+                                                        >
+                                                            <IconDownload size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                ) : (
+                                                    'Không có'
+                                                )}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                                <TaskStatusChip status={task.status} statusConfig={statusConfig} />
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(task.startTime).toLocaleDateString('vi-VN')}
@@ -314,7 +327,8 @@ const Task = () => {
                                                     task={task}
                                                     onEdit={handleEdit}
                                                     onDelete={handleDelete}
-                                                    role={user.role} // Sử dụng user.role
+                                                    onUpdateStatus={handleUpdateStatus}
+                                                    role={user.role}
                                                 />
                                             </TableCell>
                                         </TableRow>
@@ -332,7 +346,7 @@ const Task = () => {
             >
                 <DialogTitle>Xác nhận</DialogTitle>
                 <DialogContent>
-                    Bạn có chắc chắn muốn {confirmDialog.action === 'delete' ? 'xóa' : 'chỉnh sửa'} nhiệm vụ này?
+                    Bạn có chắc chắn muốn xóa nhiệm vụ này?
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmDialog({ open: false, action: null, taskId: null })} color="primary">

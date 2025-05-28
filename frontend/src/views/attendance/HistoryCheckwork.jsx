@@ -40,29 +40,39 @@ const HistoryCheckwork = () => {
             const month = format(currentDate, 'M');
             const year = format(currentDate, 'yyyy');
             const response = await ApiService.getAttendance(month, year);
-            console.log('User role from localStorage:', localStorage.getItem('role'));
+            console.log('User role from sessionStorage:', sessionStorage.getItem('role'));
 
             if (!Array.isArray(response)) {
                 throw new Error('Invalid response format');
             }
 
-            const formattedData = response.map((item, index) => {
-                const workday = new Date(item.workday);
-                return {
-                    id: item.id || index,
-                    date: isNaN(workday.getTime()) ? '--/--/----' : format(workday, 'dd/MM/yyyy'),
-                    checkIn: item.checkIn ? format(new Date(item.checkIn), 'HH:mm') : '--:--',
-                    checkOut: item.checkOut ? format(new Date(item.checkOut), 'HH:mm') : '--:--',
-                    status: transformStatus(item.status),
-                    note: item.note || '--',
-                    workHours: calculateWorkHours(item.checkIn, item.checkOut)
-                };
-            });
+            const today = new Date();
+            const formattedData = response
+                .map((item, index) => {
+                    const workday = new Date(item.workday);
+                    return {
+                        id: item.id || index,
+                        date: isNaN(workday.getTime()) ? '--/--/----' : format(workday, 'dd/MM/yyyy'),
+                        checkIn: item.checkIn ? format(new Date(item.checkIn), 'HH:mm') : '--:--',
+                        checkOut: item.checkOut ? format(new Date(item.checkOut), 'HH:mm') : '--:--',
+                        status: transformStatus(item.status),
+                        note: item.note || '--',
+                        workHours: calculateWorkHours(item.checkIn, item.checkOut),
+                        workdayObj: workday // giữ lại object ngày để lọc
+                    };
+                })
+                // Lọc chỉ lấy các ngày <= hôm nay
+                .filter(item => {
+                    if (isNaN(item.workdayObj.getTime())) return false;
+                    // So sánh chỉ theo ngày, bỏ qua giờ phút
+                    return item.workdayObj <= new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+                });
 
             setAttendanceData(formattedData);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Không thể tải dữ liệu chấm công');
+            // Chỉ hiển thị thông báo mặc định, không dùng err.message để tránh hiển thị chi tiết lỗi
+            // setError('Không thể tải dữ liệu chấm công');
             setAttendanceData([]);
         } finally {
             setLoading(false);
@@ -115,7 +125,7 @@ const HistoryCheckwork = () => {
             fetchAttendanceData();
         } catch (error) {
             setSnackbarMessage('Check-in thất bại!');
-            console.error('Check-in error:', error);
+            // Xóa console.error để không hiển thị chi tiết lỗi trong console
         } finally {
             setCheckInLoading(false);
             setSnackbarOpen(true);
@@ -235,8 +245,8 @@ const HistoryCheckwork = () => {
                         <>
                             {attendanceData.length === 0 && (
                                 <Box sx={{ mb: 2 }}>
-                                    <Alert severity="info" sx={{ width: '100%', boxShadow: 1 }}>
-                                        {error || `Không tìm thấy chấm công cho user: admin trong tháng ${format(currentDate, 'MM/yyyy', { locale: vi })}`}
+                                    <Alert severity="error" sx={{ width: '100%', boxShadow: 1 }}>
+                                        {error || `Không tìm thấy dữ liệu chấm công trong tháng ${format(currentDate, 'MM/yyyy', { locale: vi })}`}
                                     </Alert>
                                 </Box>
                             )}

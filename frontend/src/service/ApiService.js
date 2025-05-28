@@ -161,19 +161,39 @@ export default class ApiService {
         return this.handleRequest('get', `/Attendance/attendanceAll?month=${month}&year=${year}`);
     }
 
+    // static getTKAttendanceToMonthByUser(month, year) {
+    //     if (!month || !year || month < 1 || month > 12 || year < 2000) {
+    //         throw new Error('Tháng hoặc năm không hợp lệ');
+    //     }
+    //     return this.handleRequest('get', `/Attendance/summary/monthly?month=${month}&year=${year}`);
+    // }
 
-    static getTKAttendanceToWeekByUser(month, year) {
-        if (!month || !year || month < 1 || month > 12 || year < 2000) {
-            throw new Error('Tháng hoặc năm không hợp lệ');
+    // static getTKAttendanceToWeekByUser(month, year) {
+    //     if (!month || !year || month < 1 || month > 12 || year < 2000) {
+    //         throw new Error('Tháng hoặc năm không hợp lệ');
+    //     }
+    //     return this.handleRequest('get', `/Attendance/summary/weekly?month=${month}&year=${year}`);
+    // }
+
+    static getTKAttendanceToWeekByUserId(userId, month, year) {
+        if (!userId || !month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('ID, tháng hoặc năm không hợp lệ');
         }
-        return this.handleRequest('get', `/Attendance/summary/weekly?month=${month}&year=${year}`);
+        return this.handleRequest('get', `/Attendance/summary/weekly/${userId}?month=${month}&year=${year}`);
     }
 
-    static getTKAttendanceToMonthByUser(month, year) {
-        if (!month || !year || month < 1 || month > 12 || year < 2000) {
-            throw new Error('Tháng hoặc năm không hợp lệ');
+    /**
+     * Lấy thống kê chấm công theo tháng của 1 user
+     * @param {number} userId
+     * @param {number} month 
+     * @param {number} year 
+     * @returns {Promise<any>}
+     */
+    static getAttendanceSummaryMonthly(userId, month, year) {
+        if (!userId || !month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('ID, tháng hoặc năm không hợp lệ');
         }
-        return this.handleRequest('get', `/Attendance/summary/monthly?month=${month}&year=${year}`);
+        return this.handleRequest('get', `/Attendance/summary/monthly/${userId}?month=${month}&year=${year}`);
     }
 
     static getTKAttendanceToYear(year) {
@@ -182,7 +202,7 @@ export default class ApiService {
         }
         return this.handleRequest('get', `/Attendance/summary/year?year=${year}`);
     }
-
+    //     Hàm này lấy thống kê chấm công theo tháng của tất cả người dùng
     static getTKAttendanceToMonth(month, year) {
         if (!month || !year || month < 1 || month > 12 || year < 2000) {
             throw new Error('Tháng hoặc năm không hợp lệ');
@@ -205,6 +225,14 @@ export default class ApiService {
         }
         return this.handleRequest('put', `/Task/${taskId}`, taskData);
     }
+
+    static updateTaskStatus(taskId) {
+        if (!taskId) {
+            throw new Error('ID công việc không được để trống');
+        }
+        return this.handleRequest('put', `/Task/updateStatus/${taskId}`);
+    }
+
 
     static getTask(taskId) {
         if (!taskId) {
@@ -229,6 +257,13 @@ export default class ApiService {
             throw new Error('ID người dùng không được để trống');
         }
         return this.handleRequest('get', `/Task/user/${userId}`);
+    }
+
+    static getTasksByLeader(userId) {
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        return this.handleRequest('get', `/Task/AssignedTask/${userId}`);
     }
 
     /** ROLE MANAGEMENT */
@@ -289,6 +324,21 @@ export default class ApiService {
             throw new Error('ID nhóm không được để trống');
         }
         return this.handleRequest('delete', `/Group/${groupId}`);
+    }
+
+    /** GROUP MEMBER MANAGEMENT */
+    static addUserToGroup(groupId, userId) {
+        if (!groupId || !userId) {
+            throw new Error('ID nhóm hoặc ID người dùng không được để trống');
+        }
+        return this.handleRequest('post', `/Group/${groupId}/add-user/${userId}`);
+    }
+
+    static removeUserFromGroup(groupId, userId) {
+        if (!groupId || !userId) {
+            throw new Error('ID nhóm hoặc ID người dùng không được để trống');
+        }
+        return this.handleRequest('delete', `/Group/${groupId}/remove-user/${userId}`);
     }
 
     /** BANK MANAGEMENT */
@@ -460,5 +510,49 @@ export default class ApiService {
             throw new Error('ID nhóm chat hoặc ID người dùng không được để trống');
         }
         return this.handleRequest('delete', `/GroupChat/${groupId}/remove-user/${userId}`);
+    }
+
+    /** LEAVE REQUEST MANAGEMENT */
+    static createLeaveRequest(leaveData) {
+        // leaveData: { userId, startDate, endDate, reason, ... }
+        return this.handleRequest('post', '/LeaveRequest/create', leaveData);
+    }
+
+    static approveLeaveRequest(requestId) {
+        if (!requestId) {
+            throw new Error('ID đơn nghỉ phép không được để trống');
+        }
+        return this.handleRequest('put', `/LeaveRequest/approve/${requestId}`);
+    }
+
+    static cancelLeaveRequest(requestId) {
+        if (!requestId) {
+            throw new Error('ID đơn nghỉ phép không được để trống');
+        }
+        return this.handleRequest('put', `/LeaveRequest/cancel/${requestId}`);
+    }
+
+    static getLeaveRequestsByUser(userId) {
+        if (!userId) {
+            throw new Error('ID người dùng không được để trống');
+        }
+        // API: http://192.168.1.126:7247/{userID}
+        return this.handleRequest('get', `/LeaveRequest/${userId}`);
+    }
+
+    static getAllLeaveRequests() {
+        // API: http://192.168.1.126:7247/api/LeaveRequest
+        return this.handleRequest('get', '/LeaveRequest');
+    }
+
+    static getStatisticSalary(month, year) {
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Salary/statistics?year=${year}&month=${month}`);
+    }
+
+    static getStatisticEmployee() {
+        return this.handleRequest('get', '/User/statistics');
     }
 }

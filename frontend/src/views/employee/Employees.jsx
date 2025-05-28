@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Grid,
@@ -9,7 +9,10 @@ import {
     TableHead,
     TableRow,
     Paper,
-    TablePagination
+    TablePagination,
+    CircularProgress,
+    Typography,
+    Box
 } from '@mui/material';
 import ApiService from '../../service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
@@ -50,69 +53,71 @@ const tableHeaders = [
     { id: 'email', label: 'Email', align: 'center' }
 ];
 
+const getGenderDisplay = (gender) => {
+    if (gender === true) return 'Nam';
+    if (gender === false) return 'Nữ';
+    return 'N/A';
+};
+
 const Employees = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage] = useState(10);
     const [allEmployees, setAllEmployees] = useState([]);
-    const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({ name: '', role: '', department: '' });
     const navigate = useNavigate();
 
     useEffect(() => {
+        let isMounted = true;
         const fetchEmployees = async () => {
             try {
                 setLoading(true);
                 const response = await ApiService.getAllUsers();
-                setAllEmployees(response);
-                setError(null);
+                if (isMounted) {
+                    setAllEmployees(response);
+                    setError(null);
+                }
             } catch (error) {
-                setError(error.response?.data?.message || error.message || 'Failed to load employees');
+                if (isMounted) {
+                    setError(error.response?.data?.message || error.message || 'Failed to load employees');
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
         fetchEmployees();
+        return () => { isMounted = false; };
     }, []);
 
-    useEffect(() => {
-        // Lọc employees trên client khi filters thay đổi
-        const filteredEmployees = allEmployees.filter(employee =>
-            (filters.name === '' || employee.fullName.toLowerCase().includes(filters.name.toLowerCase())) &&
-            (filters.role === '' || employee.roleName.toLowerCase() === filters.role.toLowerCase()) &&
-            (filters.department === '' || employee.groupId?.toString() === filters.department)
+    // useMemo để lọc employees hiệu quả
+    const filteredEmployees = useMemo(() => {
+        return allEmployees.filter(employee =>
+            (filters.name === '' || (employee.fullName || '').toLowerCase().includes(filters.name.toLowerCase())) &&
+            (filters.role === '' || (employee.roleName || '').toLowerCase() === filters.role.toLowerCase()) &&
+            (filters.department === '' || String(employee.groupId || '') === filters.department)
         );
-        setEmployees(filteredEmployees);
-        setPage(0); // Reset page về 0 khi filter thay đổi
     }, [filters, allEmployees]);
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
 
     // Reset page về 0 khi filter thay đổi
     useEffect(() => {
         setPage(0);
     }, [filters]);
 
-    const handleEmployeeClick = (employeeId) => {
+    const handleChangePage = useCallback((event, newPage) => {
+        setPage(newPage);
+    }, []);
+
+    const handleEmployeeClick = useCallback((employeeId) => {
         navigate(`/manage/employee/info/${employeeId}`);
-    };
+    }, [navigate]);
 
-    const getGenderDisplay = (gender) => {
-        if (gender === true) return 'Nam';
-        if (gender === false) return 'Nữ';
-        return 'N/A';
-    };
-
-    // Log filters mỗi khi thay đổi
-    useEffect(() => {
-        console.log("Current filters:", filters);
-    }, [filters]);
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (loading) return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
+            <CircularProgress />
+        </Box>
+    );
+    if (error) return <Typography color="error" align="center" mt={4}>{error}</Typography>;
 
     return (
         <PageContainer title="Danh sách nhân viên" description="Quản lý danh sách nhân viên">
@@ -120,6 +125,9 @@ const Employees = () => {
                 <Grid item xs={12}>
                     <DashboardCard title="Quản lý nhân viên">
                         <EmployeeFilterToolbar onFilterChange={setFilters} />
+                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            {filteredEmployees.length} nhân viên được tìm thấy
+                        </Typography>
                         <TableContainer component={Paper}>
                             <Table sx={tableStyles} aria-label="employee table">
                                 <TableHead>
@@ -132,38 +140,35 @@ const Employees = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {employees.length === 0 ? (
+                                    {filteredEmployees.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center">
+                                            <TableCell colSpan={tableHeaders.length} align="center">
                                                 Không có bản ghi nào
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        employees
+                                        filteredEmployees
                                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                            .map((employee) => {
-                                                console.log("Render employee row:", employee);
-                                                return (
-                                                    <TableRow
-                                                        key={employee.id}
-                                                        onClick={() => handleEmployeeClick(employee.id)}
-                                                    >
-                                                        <TableCell align="center">{employee.id}</TableCell>
-                                                        <TableCell>{employee.fullName || '-----'}</TableCell>
-                                                        <TableCell align="center">{getGenderDisplay(employee.gender) || '-----'}</TableCell>
-                                                        <TableCell align="center">{employee.roleName || '-----'}</TableCell>
-                                                        <TableCell align="center">{employee.groupName || '-----'}</TableCell>
-                                                        <TableCell align="center">{employee.phoneNumber || '-----'}</TableCell>
-                                                        <TableCell align="center">{employee.email || '-----'}</TableCell>
-                                                    </TableRow>
-                                                );
-                                            })
+                                            .map((employee) => (
+                                                <TableRow
+                                                    key={employee.id}
+                                                    onClick={() => handleEmployeeClick(employee.id)}
+                                                >
+                                                    <TableCell align="center">{employee.id}</TableCell>
+                                                    <TableCell>{employee.fullName || '-----'}</TableCell>
+                                                    <TableCell align="center">{getGenderDisplay(employee.gender) || '-----'}</TableCell>
+                                                    <TableCell align="center">{employee.roleName || '-----'}</TableCell>
+                                                    <TableCell align="center">{employee.groupName || '-----'}</TableCell>
+                                                    <TableCell align="center">{employee.phoneNumber || '-----'}</TableCell>
+                                                    <TableCell align="center">{employee.email || '-----'}</TableCell>
+                                                </TableRow>
+                                            ))
                                     )}
                                 </TableBody>
                             </Table>
                             <TablePagination
                                 component="div"
-                                count={employees.length}
+                                count={filteredEmployees.length}
                                 page={page}
                                 onPageChange={handleChangePage}
                                 rowsPerPage={rowsPerPage}

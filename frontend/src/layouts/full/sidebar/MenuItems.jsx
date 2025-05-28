@@ -137,12 +137,6 @@ const getMenuItems = (userRole) => {
         },
         {
             id: uniqueId(),
-            title: 'Cài đặt hệ thống',
-            icon: IconSettings,
-            href: '/settings',
-        },
-        {
-            id: uniqueId(),
             title: 'Thông tin',
             icon: IconInfoCircle,
             href: '/about',

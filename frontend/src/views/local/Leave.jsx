@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     TextField,
@@ -9,41 +9,81 @@ import {
     FormControlLabel,
     Checkbox,
     Paper,
-    Divider,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft } from '@tabler/icons-react';
+import ApiService from '../../service/ApiService';
 
 const Leave = () => {
     const navigate = useNavigate();
+
+    // Lấy dữ liệu userProfile từ sessionStorage (do UserContext đã lưu userProfile)
+    const sessionUser = JSON.parse(sessionStorage.getItem('userProfile')) || {};
     const [formData, setFormData] = useState({
-        fullName: '',
-        department: '',
+        fullName: sessionUser.fullName || '',
+        group: sessionUser.groupName || '',
         startDate: '',
         endDate: '',
         reason: '',
-        commitment: false,
-        type: 'personal'
+        commitment: false
     });
 
-    const leaveTypes = [
-        { value: 'personal', label: 'Nghỉ phép cá nhân' },
-        { value: 'sick', label: 'Nghỉ ốm' },
-        { value: 'annual', label: 'Nghỉ phép năm' },
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            fullName: sessionUser.fullName || '',
+            group: sessionUser.groupName || ''
+        }));
+    }, [sessionUser.fullName, sessionUser.groupName]);
+
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    const groups = [
+        'Nhóm đào tạo',
+        'Nhóm phát triển',
+        'Nhóm kinh doanh',
+        'Nhóm tài chính'
     ];
 
-    const departments = [
-        'Phòng Kỹ thuật',
-        'Phòng Nhân sự',
-        'Phòng Kinh doanh',
-        'Phòng Tài chính'
-    ];
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData);
+        setLoading(true);
+        setError('');
+        try {
+            // Gửi đúng 3 trường theo yêu cầu API
+            const payload = {
+                startDate: formData.startDate,
+                endDate: formData.endDate,
+                reason: formData.reason
+            };
+            await ApiService.createLeaveRequest(payload);
+            setSuccess(true);
+            setTimeout(() => {
+                navigate('/nleave');
+            }, 1200); // Chờ 1.2s để hiển thị snackbar rồi chuyển trang
+            setFormData({
+                fullName: sessionUser.fullName || '',
+                group: sessionUser.groupName || '',
+                startDate: '',
+                endDate: '',
+                reason: '',
+                commitment: false
+            });
+        } catch (err) {
+            setError(
+                err?.response?.data?.message ||
+                err?.message ||
+                'Gửi đơn nghỉ phép thất bại!'
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -58,7 +98,6 @@ const Leave = () => {
                         >
                             Trở về
                         </Button>
-
                     </Box>
                     <Box sx={{ textAlign: 'center', alignItems: 'center', mb: 4 }}>
                         <Typography variant="h5">
@@ -72,45 +111,17 @@ const Leave = () => {
                                     fullWidth
                                     label="Họ và tên"
                                     value={formData.fullName}
-                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                    required
+                                    disabled
                                 />
                             </Grid>
-
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
-                                    select
-                                    label="Phòng ban"
-                                    value={formData.department}
-                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                    required
-                                >
-                                    {departments.map((dept) => (
-                                        <MenuItem key={dept} value={dept}>
-                                            {dept}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
+                                    label="Nhóm"
+                                    value={formData.group}
+                                    disabled
+                                />
                             </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    select
-                                    label="Loại nghỉ phép"
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    required
-                                >
-                                    {leaveTypes.map((type) => (
-                                        <MenuItem key={type.value} value={type.value}>
-                                            {type.label}
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-                            </Grid>
-
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
@@ -122,7 +133,6 @@ const Leave = () => {
                                     required
                                 />
                             </Grid>
-
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
@@ -134,7 +144,6 @@ const Leave = () => {
                                     required
                                 />
                             </Grid>
-
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
@@ -146,7 +155,6 @@ const Leave = () => {
                                     required
                                 />
                             </Grid>
-
                             <Grid item xs={12}>
                                 <FormControlLabel
                                     control={
@@ -159,20 +167,18 @@ const Leave = () => {
                                     label="Tôi cam kết những thông tin trên là đúng sự thật"
                                 />
                             </Grid>
-
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                                     <Button
                                         variant="outlined"
                                         color="secondary"
                                         onClick={() => setFormData({
-                                            fullName: '',
-                                            department: '',
+                                            fullName: sessionUser.fullName || '',
+                                            group: sessionUser.groupName || '',
                                             startDate: '',
                                             endDate: '',
                                             reason: '',
-                                            commitment: false,
-                                            type: 'personal'
+                                            commitment: false
                                         })}
                                     >
                                         Làm mới
@@ -181,14 +187,34 @@ const Leave = () => {
                                         variant="contained"
                                         color="primary"
                                         type="submit"
-                                        disabled={!formData.commitment}
+                                        disabled={!formData.commitment || loading}
                                     >
-                                        Gửi đơn
+                                        {loading ? 'Đang gửi...' : 'Gửi đơn'}
                                     </Button>
                                 </Box>
                             </Grid>
                         </Grid>
                     </form>
+                    <Snackbar
+                        open={!!success}
+                        autoHideDuration={3000}
+                        onClose={() => setSuccess(false)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert severity="success" sx={{ width: '100%' }}>
+                            Gửi đơn nghỉ phép thành công!
+                        </Alert>
+                    </Snackbar>
+                    <Snackbar
+                        open={!!error}
+                        autoHideDuration={4000}
+                        onClose={() => setError('')}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert severity="error" sx={{ width: '100%' }}>
+                            {error}
+                        </Alert>
+                    </Snackbar>
                 </Paper>
             </DashboardCard>
         </PageContainer>

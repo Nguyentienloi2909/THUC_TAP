@@ -1,11 +1,11 @@
 import React from 'react';
-import { Box, Tooltip, IconButton } from '@mui/material';
+import { Box, Tooltip, IconButton, Button } from '@mui/material';
 import { IconDownload, IconEdit, IconTrash } from '@tabler/icons-react';
 
-const TaskActions = ({ task, onEdit, onDelete, role }) => {
+const TaskActions = ({ task, onEdit, onDelete, role, onUpdateStatus }) => {
     return (
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-            {task.urlFile && (
+            {/* {task.urlFile && (
                 <Tooltip title="Tải tài liệu">
                     <IconButton
                         size="small"
@@ -17,10 +17,9 @@ const TaskActions = ({ task, onEdit, onDelete, role }) => {
                         <IconDownload size={18} />
                     </IconButton>
                 </Tooltip>
-            )}
+            )} */}
             {role === 'LEADER' && (
                 <>
-                    {/* This looks correct - it's passing task.id to the onEdit function */}
                     <Tooltip title="Chỉnh sửa">
                         <IconButton
                             size="small"
@@ -40,6 +39,20 @@ const TaskActions = ({ task, onEdit, onDelete, role }) => {
                         </IconButton>
                     </Tooltip>
                 </>
+            )}
+            {role === 'USER' && (
+                <Button
+                    size="small"
+                    color="success"
+                    variant="contained"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (onUpdateStatus) onUpdateStatus(task);
+                    }}
+                    disabled={task.status?.toLowerCase() === 'completed' || task.status?.toLowerCase() === 'cancelled'}
+                >
+                    Cập nhật
+                </Button>
             )}
         </Box>
     );

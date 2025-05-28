@@ -21,14 +21,16 @@ import { IconUpload } from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ApiService from '../../service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
+import { useUser } from 'src/contexts/UserContext'; // Thêm dòng này
 
 const UpdateTaskPage = () => {
     const params = useParams();
     const navigate = useNavigate();
-    
+    const { user } = useUser(); // Lấy thông tin user hiện tại
+
     // Log all params to see what's available
     console.log('All params:', params);
-    
+
     // Try to get the task ID from different possible parameter names
     const taskId = params.taskId || params.id;
     console.log('Using taskId:', taskId);
@@ -42,6 +44,8 @@ const UpdateTaskPage = () => {
         status: '',
         assignedToId: '',
         assignedToName: '',
+        senderId: '', // Thêm người cập nhật/giao nhiệm vụ (LEADER)
+        senderName: '', // Thêm tên người cập nhật/giao nhiệm vụ (LEADER)
     });
     const [fileInfo, setFileInfo] = useState({ name: '', size: '' });
     const [employees, setEmployees] = useState([]);
@@ -169,6 +173,18 @@ const UpdateTaskPage = () => {
 
         setIsSubmitting(true);
         try {
+            // Lấy senderId và senderName từ sessionStorage hoặc context, fallback rỗng nếu không có
+            const senderId = sessionStorage.getItem('userId') || user.userId || '';
+            let senderName = sessionStorage.getItem('fullName');
+            if (!senderName || senderName === 'undefined') senderName = user.fullName || '';
+
+            // Lấy assignedToName từ danh sách employees nếu chưa có
+            let assignedToName = task.assignedToName;
+            if (!assignedToName) {
+                const selected = employees.find(emp => emp.id === task.assignedToId);
+                assignedToName = selected ? selected.fullName : '';
+            }
+
             const formData = new FormData();
             formData.append('Title', task.title);
             formData.append('Description', task.description || '');
@@ -179,6 +195,15 @@ const UpdateTaskPage = () => {
             formData.append('EndTime', task.endTime);
             formData.append('Status', task.status);
             formData.append('AssignedToId', task.assignedToId);
+            formData.append('AssignedToName', assignedToName);
+            formData.append('SenderId', senderId);
+            formData.append('SenderName', senderName);
+
+            // Log dữ liệu gửi đi để kiểm tra
+            console.log('Update Task - FormData:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ':', pair[1]);
+            }
 
             await ApiService.updateTask(taskId, formData);
             setOpen(false);

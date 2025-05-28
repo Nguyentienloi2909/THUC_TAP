@@ -12,7 +12,6 @@ const CommentsSection = ({ taskId }) => {
     const fetchComments = async () => {
         try {
             const fetchedComments = await ApiService.getComment(taskId);
-            console.log("Fetched comments structure:", JSON.stringify(fetchedComments, null, 2));
             // Sắp xếp phản hồi theo thời gian (mới nhất trước)
             const sortReplies = (comment) => ({
                 ...comment,
@@ -20,11 +19,15 @@ const CommentsSection = ({ taskId }) => {
                     ? [...comment.replies].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                     : []
             });
-            const sortedComments = fetchedComments.map(sortReplies);
-            setComments(Array.isArray(sortedComments) ? sortedComments : []);
+            const sortedComments = Array.isArray(fetchedComments) ? fetchedComments.map(sortReplies) : [];
+            setComments(sortedComments);
         } catch (err) {
-            console.error("Fetch error:", err);
-            setError('Không thể tải bình luận. Vui lòng thử lại.');
+            // Nếu là 404 thì coi như không có comment, không phải lỗi nghiêm trọng
+            if (err?.response?.status === 404) {
+                setComments([]);
+            } else {
+                setError('Không thể tải bình luận. Vui lòng thử lại.');
+            }
         }
     };
 
@@ -51,12 +54,10 @@ const CommentsSection = ({ taskId }) => {
                 userId,
             };
 
-            console.log('Submitting comment:', commentData);
             await ApiService.handleRequest('post', '/Comment', commentData);
             setNewContent('');
             await fetchComments();
         } catch (error) {
-            console.error('Error submitting comment:', error);
             const message =
                 error?.response?.data?.message ||
                 error?.message ||
@@ -96,18 +97,24 @@ const CommentsSection = ({ taskId }) => {
             </form>
 
             <Box sx={{ mt: 3 }}>
-                {comments.map((comment, index) => (
-                    <Comment
-                        key={comment.id || index}
-                        taskId={taskId}
-                        comment={comment}
-                        onReply={fetchComments}
-                        onUpdate={fetchComments}
-                        onDelete={fetchComments}
-                        depth={0}
-                        parentCommentId={null}
-                    />
-                ))}
+                {comments.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', color: 'text.secondary', py: 2 }}>
+                        Chưa có tin nhắn
+                    </Box>
+                ) : (
+                    comments.map((comment, index) => (
+                        <Comment
+                            key={comment.id || index}
+                            taskId={taskId}
+                            comment={comment}
+                            onReply={fetchComments}
+                            onUpdate={fetchComments}
+                            onDelete={fetchComments}
+                            depth={0}
+                            parentCommentId={null}
+                        />
+                    ))
+                )}
             </Box>
 
             <Snackbar open={!!error} autoHideDuration={5000} onClose={handleCloseSnackbar}>

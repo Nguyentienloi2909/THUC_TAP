@@ -19,7 +19,6 @@ import ApiService from 'src/service/ApiService';
 
 const AddMemberModal = ({ open, onClose, groupId, onAdd }) => {
     const [users, setUsers] = useState([]);
-    const [groupUsers, setGroupUsers] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -30,25 +29,19 @@ const AddMemberModal = ({ open, onClose, groupId, onAdd }) => {
         setLoading(true);
         setError(null);
 
-        const [allUsersResult, groupResult] = await Promise.allSettled([
-            ApiService.getAllUsers(),
-            ApiService.getGroup(groupId)
-        ]);
-
-        const allUsers = allUsersResult.status === 'fulfilled' ? allUsersResult.value : [];
-        const group = groupResult.status === 'fulfilled' ? groupResult.value : { users: [] };
-
-        if (allUsersResult.status === 'rejected' || groupResult.status === 'rejected') {
+        try {
+            const [allUsers, group] = await Promise.all([
+                ApiService.getAllUsers(),
+                ApiService.getGroup(groupId)
+            ]);
+            const existingIds = (group.users || []).map(u => u.id);
+            const availableUsers = allUsers.filter(u => !existingIds.includes(u.id));
+            setUsers(availableUsers);
+        } catch {
             setError('Không thể tải danh sách người dùng hoặc thông tin nhóm');
+        } finally {
             setLoading(false);
-            return;
         }
-
-        const existingIds = (group.users || []).map(u => u.id);
-        const availableUsers = allUsers.filter(u => !existingIds.includes(u.id));
-        setGroupUsers(group.users || []);
-        setUsers(availableUsers);
-        setLoading(false);
     }, [open, groupId]);
 
     useEffect(() => {
@@ -63,18 +56,25 @@ const AddMemberModal = ({ open, onClose, groupId, onAdd }) => {
         setLoading(true);
         setError(null);
         try {
-            const newUserIds = [...groupUsers.map(u => u.id), selectedUserId];
-            const response = await ApiService.updateGroup(groupId, { users: newUserIds });
-            onAdd(response);
+            // Gọi API thêm thành viên vào nhóm
+            await ApiService.addUserToGroup(groupId, selectedUserId);
+
+            // Lấy lại thông tin nhóm mới nhất
+            const updatedGroup = await ApiService.getGroup(groupId);
+            onAdd(updatedGroup);
             setSuccess(true);
             setSelectedUserId('');
             onClose();
         } catch (err) {
-            setError(err.message || 'Không thể thêm thành viên vào nhóm');
+            setError(
+                err?.response?.data?.message ||
+                err?.message ||
+                'Không thể thêm thành viên vào nhóm. Bạn có thể không đủ quyền hoặc có lỗi hệ thống.'
+            );
         } finally {
             setLoading(false);
         }
-    }, [selectedUserId, groupUsers, groupId, onAdd, onClose]);
+    }, [selectedUserId, groupId, onAdd, onClose]);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="add-member-dialog">

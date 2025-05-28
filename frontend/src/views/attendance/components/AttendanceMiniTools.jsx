@@ -39,6 +39,17 @@ const AttendanceMiniTools = ({ onSuccess }) => {
                     </Button>
                 </Tooltip>
             ))}
+            <Tooltip title="Duyệt đơn nghỉ phép">
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<IconCalendarStats />}
+                    sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+                    onClick={() => navigate('/manage/attendance/hrleave')}
+                >
+                    Duyệt đơn nghỉ phép
+                </Button>
+            </Tooltip>
         </Stack>
     );
 };

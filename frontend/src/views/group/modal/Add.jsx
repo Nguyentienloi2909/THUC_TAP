@@ -14,26 +14,26 @@ const AddMemberModal = ({ open, onClose, groupId, onAdd }) => {
                 ApiService.getAllUsers(),
                 ApiService.getGroup(groupId)
             ])
-            .then(([allUsers, group]) => {
-                setGroupUsers(group.users || []);
-                // Lọc user chưa thuộc nhóm
-                const groupUserIds = (group.users || []).map(u => u.id);
-                const availableUsers = allUsers.filter(u => !groupUserIds.includes(u.id));
-                setUsers(availableUsers);
-            })
-            .catch(() => setUsers([]));
+                .then(([allUsers, group]) => {
+                    setGroupUsers(group.users || []);
+                    // Lọc user chưa thuộc nhóm
+                    const groupUserIds = (group.users || []).map(u => u.id);
+                    const availableUsers = allUsers.filter(u => !groupUserIds.includes(u.id));
+                    setUsers(availableUsers);
+                })
+                .catch(() => setUsers([]));
         }
     }, [open, groupId]);
 
     const handleAdd = async () => {
         if (selectedUserId) {
             try {
-                // Gửi lại danh sách userId mới cho nhóm
-                const newUserIds = [...groupUsers.map(u => u.id), selectedUserId];
-                const response = await ApiService.updateGroup(groupId, {
-                    users: newUserIds
-                });
-                onAdd(response);
+                // Gọi API thêm thành viên vào nhóm
+                await ApiService.addUserToGroup(groupId, selectedUserId);
+
+                // Lấy lại thông tin nhóm mới nhất
+                const updatedGroup = await ApiService.getGroup(groupId);
+                onAdd(updatedGroup);
                 setSelectedUserId('');
             } catch (error) {
                 console.error('Failed to add member:', error);

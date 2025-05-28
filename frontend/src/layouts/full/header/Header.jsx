@@ -1,5 +1,5 @@
 // src/layouts/header/Header.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { Box, AppBar, Toolbar, styled, Stack, IconButton, Badge } from '@mui/material';
 import PropTypes from 'prop-types';
 import { IconBellRinging, IconMenu, IconMessage } from '@tabler/icons-react';
@@ -9,6 +9,7 @@ import ListNotification from './ListNotification';
 import { NotificationContext } from '../../../contexts/NotificationContext';
 import { useSignalR } from 'src/contexts/SignalRContext';
 import { useUser } from 'src/contexts/UserContext';
+import { useMessageBadge } from 'src/contexts/MessageBadgeContext';
 
 const AppBarStyled = styled(AppBar)(({ theme }) => ({
   boxShadow: 'none',
@@ -46,37 +47,14 @@ const HeaderStack = styled(Stack)(({ theme }) => ({
 const Header = ({ toggleMobileSidebar }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationEl, setNotificationEl] = useState(null);
-  const [hasNewMessage, setHasNewMessage] = useState(false);
   const { notifications } = useContext(NotificationContext);
-  const { chatConnection, connectionState } = useSignalR();
   const { user } = useUser();
+  const { unreadCount } = useMessageBadge();
 
   const unreadNotificationCount = notifications.filter((n) => !n.isRead).length;
 
-  // Cập nhật trạng thái hasNewMessage khi nhận tin nhắn mới từ SignalR
-  useEffect(() => {
-    if (!chatConnection || connectionState !== 'Connected') return;
-
-    const handleReceiveGroupMessage = (messageDto) => {
-      setHasNewMessage(true);
-    };
-
-    const handleReceiveMessage = (messageDto) => {
-      setHasNewMessage(true);
-    };
-
-    chatConnection.on('ReceiveGroupMessage', handleReceiveGroupMessage);
-    chatConnection.on('ReceiveMessage', handleReceiveMessage);
-
-    return () => {
-      chatConnection.off('ReceiveGroupMessage', handleReceiveGroupMessage);
-      chatConnection.off('ReceiveMessage', handleReceiveMessage);
-    };
-  }, [chatConnection, connectionState]);
-
   const handleMessageClick = (event) => {
     setAnchorEl(event.currentTarget);
-    setHasNewMessage(false);
   };
 
   const handleMessageClose = () => {
@@ -118,7 +96,7 @@ const Header = ({ toggleMobileSidebar }) => {
             <Badge
               variant="dot"
               color="error"
-              invisible={!hasNewMessage}
+              invisible={unreadCount === 0}
             >
               <IconMessage size="30" stroke="1.5" />
             </Badge>

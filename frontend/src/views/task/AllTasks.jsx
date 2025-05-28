@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Typography, Box, TextField, Chip, Stack, FormControl, InputLabel, Select, MenuItem,
     CircularProgress, Tooltip, IconButton
@@ -17,7 +17,7 @@ const Tasks = () => {
     const [searchText, setSearchText] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
             const data = await ApiService.getAllTasks();
@@ -27,46 +27,45 @@ const Tasks = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchTasks();
-    }, []);
+    }, [fetchTasks]);
 
-    const handleEdit = (taskId) => {
+    const handleEdit = useCallback((taskId) => {
         navigate(`/manage/task/update/${taskId}`);
-    };
+    }, [navigate]);
 
-    const handleDelete = async (taskId) => {
+    const handleDelete = useCallback(async (taskId) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?')) {
             try {
                 await ApiService.deleteTask(taskId);
                 await fetchTasks();
             } catch (error) {
-                console.error('Failed to delete task:', error);
                 alert('Không thể xóa nhiệm vụ. Vui lòng thử lại.');
             }
         }
-    };
+    }, [fetchTasks]);
 
     const getStatusColor = (status) => {
         switch (status.toLowerCase()) {
             case 'completed': return 'success';
-            case 'in progress': return 'info';
+            case 'in progress': return 'success';
             case 'pending': return 'warning';
             case 'late': return 'error';
             default: return 'default';
         }
     };
 
-    const filteredTasks = tasks
+    const filteredTasks = useMemo(() => tasks
         .filter(task =>
             task.title.toLowerCase().includes(searchText.toLowerCase()) ||
             task.description.toLowerCase().includes(searchText.toLowerCase())
         )
         .filter(task =>
             statusFilter === 'all' || task.status.toLowerCase() === statusFilter.toLowerCase()
-        );
+        ), [tasks, searchText, statusFilter]);
 
     const columns = [
         {
@@ -80,42 +79,44 @@ const Tasks = () => {
                 </Typography>
             )
         },
-        {
-            field: 'description',
-            headerName: 'Mô tả',
-            flex: 1,
-            minWidth: 200,
-            renderCell: (params) => (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {params.value}
-                </Typography>
-            )
-        },
-        {
-            field: 'urlFile',
-            headerName: 'Tài liệu',
-            width: 100,
-            align: 'center',
-            headerAlign: 'center',
-            renderCell: (params) => (
-                params.value ? (
-                    <Tooltip title="Tải xuống tài liệu">
-                        <IconButton
-                            size="small"
-                            color="primary"
-                            component="a"
-                            href={params.value}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <IconDownload />
-                        </IconButton>
-                    </Tooltip>
-                ) : (
-                    <Typography variant="caption" color="text.secondary">N/A</Typography>
-                )
-            )
-        },
+        // Ẩn cột Mô tả
+        // {
+        //     field: 'description',
+        //     headerName: 'Mô tả',
+        //     flex: 1,
+        //     minWidth: 200,
+        //     renderCell: (params) => (
+        //         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        //             {params.value}
+        //         </Typography>
+        //     )
+        // },
+        // Ẩn cột Tài liệu
+        // {
+        //     field: 'urlFile',
+        //     headerName: 'Tài liệu',
+        //     width: 100,
+        //     align: 'center',
+        //     headerAlign: 'center',
+        //     renderCell: (params) => (
+        //         params.value ? (
+        //             <Tooltip title="Tải xuống tài liệu">
+        //                 <IconButton
+        //                     size="small"
+        //                     color="primary"
+        //                     component="a"
+        //                     href={params.value}
+        //                     target="_blank"
+        //                     rel="noopener noreferrer"
+        //                 >
+        //                     <IconDownload />
+        //                 </IconButton>
+        //             </Tooltip>
+        //         ) : (
+        //             <Typography variant="caption" color="text.secondary">N/A</Typography>
+        //         )
+        //     )
+        // },
         {
             field: 'status',
             headerName: 'Trạng thái',
@@ -182,31 +183,32 @@ const Tasks = () => {
             headerAlign: 'center',
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Chỉnh sửa">
-                        <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(params.row.id);
-                            }}
-                        >
-                            <IconEdit />
-                        </IconButton>
-
-                    </Tooltip>
+                    {/* Ẩn nút edit nếu là ADMIN */}
+                    {!ApiService.isAdmin() && (
+                        <Tooltip title="Chỉnh sửa">
+                            <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(params.row.id);
+                                }}
+                            >
+                                <IconEdit />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                     <Tooltip title="Xóa">
                         <IconButton
                             size="small"
                             color="error"
                             onClick={(e) => {
-                                e.stopPropagation(); // Ngăn sự kiện lan tới hàng
+                                e.stopPropagation();
                                 handleDelete(params.row.id);
                             }}
                         >
                             <IconTrash />
                         </IconButton>
-
                     </Tooltip>
                 </Box>
             )
@@ -219,6 +221,9 @@ const Tasks = () => {
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
                         Danh sách công việc
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                        {filteredTasks.length} nhiệm vụ được tìm thấy
                     </Typography>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center">
                         <Stack direction="row" spacing={2} sx={{ flexGrow: 1 }}>

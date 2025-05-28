@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Paper,
     Grid,
@@ -16,9 +16,10 @@ import {
     Button,
     Stack,
     useTheme,
-    CircularProgress
+    CircularProgress,
+    Tooltip,
 } from '@mui/material';
-import { IconPrinter, IconDownload, IconArrowBack } from '@tabler/icons-react';
+import { IconPrinter, IconDownload, IconArrowBack, IconAward, IconMail } from '@tabler/icons-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
@@ -32,47 +33,12 @@ const PayrollDetail = () => {
     const [employee, setEmployee] = useState(null);
     const [noteData, setNoteData] = useState({ lateDays: 0, absentDays: 0, deductions: [] });
     const [departments, setDepartments] = useState([]);
+    const [attendanceSummary, setAttendanceSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                // Validate params
-                if (!userId || !month || !year || isNaN(month) || isNaN(year)) {
-                    throw new Error('Thông tin đầu vào không hợp lệ');
-                }
-
-                const payrollData = await ApiService.getSalaryById(userId, month, year);
-                const employeeData = await ApiService.getUser(userId);
-                const departmentData = await ApiService.getAllDepartments();
-
-                console.log('Fetched payroll:', payrollData);
-                console.log('Fetched employee:', employeeData);
-                console.log('Fetched departments:', departmentData);
-
-                setPayroll(payrollData);
-                setEmployee(employeeData);
-                setDepartments(departmentData);
-
-                const parsedNote = parseNote(payrollData.note);
-                setNoteData(parsedNote);
-            } catch (err) {
-                setError(err.message || 'Không thể tải dữ liệu lương. Vui lòng thử lại sau.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [userId, month, year]);
-
-    const getDepartmentName = (departmentId) => {
-        const department = departments.find(dep => dep.id === departmentId);
-        return department ? department.departmentName : 'N/A';
-    };
-
-    const parseNote = (note) => {
+    // Parse note string to extract late/absent/deductions
+    const parseNote = useCallback((note) => {
         if (!note) return { lateDays: 0, absentDays: 0, deductions: [] };
         const regex = /(Trễ): (\d+), (Vắng): (\d+), (Số tiền trừ): ([\d,]+)/;
         const match = note.match(regex);
@@ -87,11 +53,67 @@ const PayrollDetail = () => {
             };
         }
         return { lateDays: 0, absentDays: 0, deductions: [] };
-    };
+    }, []);
 
-    const formatCurrency = (value) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-    };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                if (!userId || !month || !year || isNaN(month) || isNaN(year)) {
+                    throw new Error('Thông tin đầu vào không hợp lệ');
+                }
+
+                const [payrollData, employeeData, departmentData, attendanceData] = await Promise.all([
+                    ApiService.getSalaryById(userId, month, year),
+                    ApiService.getUser(userId),
+                    ApiService.getAllDepartments(),
+                    ApiService.getAttendanceSummaryMonthly(userId, month, year)
+                ]);
+                console.log('payrollData:', payrollData);
+                console.log('employeeData:', employeeData);
+                console.log('departmentData:', departmentData);
+                console.log('attendanceData:', attendanceData);
+
+                setPayroll(payrollData);
+                setEmployee(employeeData);
+                setDepartments(departmentData);
+                setAttendanceSummary(attendanceData);
+                setNoteData(parseNote(payrollData.note));
+            } catch (err) {
+                setError(err.message || 'Không thể tải dữ liệu lương. Vui lòng thử lại sau.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [userId, month, year, parseNote]);
+
+    const formatCurrency = (value) =>
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+    // Lấy dữ liệu tổng kết chấm công
+    const workingDays = attendanceSummary?.totalWorkingDays ?? 0;
+    const presentDays = attendanceSummary?.totalPresentDays ?? 0;
+    const lateDays = attendanceSummary?.totalLateDays ?? 0;
+    const absentDays = attendanceSummary?.totalAbsentDays ?? 0;
+    const overtimeHours = attendanceSummary?.totalOvertimeHours ?? 0;
+    const leaveDays = attendanceSummary?.totalLeaveDays ?? 0;
+    const monthSalary = payroll?.monthSalary ?? 0;
+
+    // Lương 1 ngày
+    const salaryPerDay = monthSalary && workingDays ? monthSalary / workingDays : 0;
+
+    // Lương theo số công thực tế (chỉ tính ngày có mặt và ngày trễ)
+    const salaryByAttendance = salaryPerDay * (presentDays + lateDays);
+    // Tiền tăng ca 1 giờ = (lương/ngày)/9 * 150%
+    const overtimePerHour = salaryPerDay / 9 * 1.5;
+    const overtimeAmount = overtimeHours * overtimePerHour;
+    // Tổng các khoản cộng
+    const grossTotal = salaryByAttendance + overtimeAmount;
+    // Tổng các khoản trừ (chỉ trừ ngày vắng và ngày trễ, KHÔNG trừ ngày nghỉ phép)
+    const deductions = (absentDays * 100000) + (lateDays * 100000);
+    // Lương thực lãnh
+    const netTotal = grossTotal - deductions;
 
     const calculateGrossTotal = () => payroll?.monthSalary || 0;
     const calculateDeductionsTotal = () => noteData.deductions.reduce((sum, item) => sum + item.amount, 0);
@@ -99,10 +121,8 @@ const PayrollDetail = () => {
 
     const getDepartmentNameByGroupId = (groupId) => {
         for (const department of departments) {
-            const group = department.groups.find(group => group.id === groupId);
-            if (group) {
-                return department.departmentName;
-            }
+            const group = department.groups?.find(group => group.id === groupId);
+            if (group) return department.departmentName;
         }
         return 'Không có thông tin';
     };
@@ -135,8 +155,47 @@ const PayrollDetail = () => {
                         Phiếu lương tháng {payroll.month}/{payroll.year}
                     </Typography>
                     <Stack direction="row" spacing={2}>
-                        <Button variant="outlined" startIcon={<IconPrinter />}>In phiếu lương</Button>
-                        <Button variant="outlined" startIcon={<IconDownload />}>Tải xuống</Button>
+                        <Tooltip title="Chức năng đang được phát triển" arrow>
+                            <span>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<IconDownload />}
+                                    disabled={false}
+                                // onClick={() => alert('Chức năng đang được phát triển')}
+                                >
+                                    Tải xuống
+                                </Button>
+                            </span>
+                        </Tooltip>
+                        <Button
+                            variant="contained"
+                            startIcon={<IconMail />}
+                            disabled={loading}
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    await ApiService.sendSalaryNotification(userId, month, year);
+                                    alert('Gửi thông báo lương qua email thành công!');
+                                } catch (err) {
+                                    alert('Gửi thông báo thất bại. Vui lòng thử lại.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            sx={{
+                                backgroundColor: '#1976d2',
+                                color: '#fff',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                },
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                padding: '8px 16px',
+                                borderRadius: 4,
+                            }}
+                        >
+                            Gửi Email
+                        </Button>
                         <Button
                             variant="contained"
                             startIcon={<IconArrowBack />}
@@ -158,7 +217,7 @@ const PayrollDetail = () => {
                                     <Typography variant="body2">Điện thoại: (028) 1234 5678</Typography>
                                 </Box>
                                 <Box sx={{ textAlign: 'right' }}>
-                                    <Typography variant="h6" fontWeight="bold" color="primary">PHIẾU LƯƠNG</Typography>
+                                    <Typography variant="h6" fontWeight="bold" color="primary">PHIẾU LƯONG</Typography>
                                     <Typography variant="body2">Kỳ lương: Tháng {payroll.month}/{payroll.year}</Typography>
                                     <Typography variant="body2">Mã phiếu: PL{payroll.month.toString().padStart(2, '0')}{payroll.year}-{employee.id}</Typography>
                                 </Box>
@@ -261,62 +320,63 @@ const PayrollDetail = () => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {/* Income section */}
+                                        {/* I. CÁC KHOẢN CỘNG */}
                                         <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
                                             <TableCell colSpan={3}>
-                                                <Typography fontWeight="bold">I. TỔNG THU NHẬP</Typography>
+                                                <Typography fontWeight="bold">I. CÁC KHOẢN CỘNG</Typography>
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>
                                             <TableCell>1. Lương cơ bản</TableCell>
-                                            <TableCell align="right">{formatCurrency(payroll.monthSalary)}</TableCell>
-                                            <TableCell align="right"></TableCell>
+                                            <TableCell align="right">{formatCurrency(monthSalary)}</TableCell>
+                                            <TableCell align="right">Theo hợp đồng</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell>2. Lương theo số công thực tế</TableCell>
+                                            <TableCell align="right">{formatCurrency(salaryByAttendance)}</TableCell>
+                                            <TableCell align="right">{presentDays + lateDays} ngày</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell>3. Tiền tăng ca</TableCell>
+                                            <TableCell align="right">{formatCurrency(overtimeAmount)}</TableCell>
+                                            <TableCell align="right">{overtimeHours} giờ</TableCell>
                                         </TableRow>
                                         <TableRow sx={{ backgroundColor: theme.palette.success.light + '20' }}>
-                                            <TableCell><Typography fontWeight="bold">TỔNG THU NHẬP (GROSS)</Typography></TableCell>
-                                            <TableCell align="right">
-                                                <Typography fontWeight="bold">{formatCurrency(calculateGrossTotal())}</Typography>
-                                            </TableCell>
+                                            <TableCell><b>TỔNG CỘNG</b></TableCell>
+                                            <TableCell align="right"><b>{formatCurrency(grossTotal)}</b></TableCell>
                                             <TableCell align="right"></TableCell>
                                         </TableRow>
 
-                                        {/* Deductions section */}
+                                        {/* II. CÁC KHOẢN TRỪ */}
                                         <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
                                             <TableCell colSpan={3}>
-                                                <Typography fontWeight="bold">II. CÁC KHOẢN KHẤU TRỪ</Typography>
+                                                <Typography fontWeight="bold">II. CÁC KHOẢN TRỪ</Typography>
                                             </TableCell>
                                         </TableRow>
-                                        {noteData.deductions.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell>Không có khấu trừ</TableCell>
-                                                <TableCell align="right">0</TableCell>
-                                                <TableCell align="right"></TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            noteData.deductions.map((item, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>{index + 1}. {item.title}</TableCell>
-                                                    <TableCell align="right">- {formatCurrency(item.amount)}</TableCell>
-                                                    <TableCell align="right">Trễ: {noteData.lateDays}, Vắng: {noteData.absentDays}</TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
+                                        <TableRow>
+                                            <TableCell>1. Trừ ngày vắng</TableCell>
+                                            <TableCell align="right">-{formatCurrency(absentDays * 100000)}</TableCell>
+                                            <TableCell align="right">{absentDays} ngày</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell>2. Trừ ngày trễ</TableCell>
+                                            <TableCell align="right">-{formatCurrency(lateDays * 100000)}</TableCell>
+                                            <TableCell align="right">{lateDays} ngày</TableCell>
+                                        </TableRow>
                                         <TableRow sx={{ backgroundColor: theme.palette.error.light + '20' }}>
-                                            <TableCell><Typography fontWeight="bold">TỔNG KHẤU TRỪ</Typography></TableCell>
-                                            <TableCell align="right">
-                                                <Typography fontWeight="bold">- {formatCurrency(calculateDeductionsTotal())}</Typography>
-                                            </TableCell>
+                                            <TableCell><b>TỔNG TRỪ</b></TableCell>
+                                            <TableCell align="right"><b>-{formatCurrency(deductions)}</b></TableCell>
                                             <TableCell align="right"></TableCell>
                                         </TableRow>
 
-                                        {/* Net Salary */}
+                                        {/* III. LƯƠNG THỰC LÃNH */}
                                         <TableRow sx={{ backgroundColor: theme.palette.primary.light + '30' }}>
                                             <TableCell>
-                                                <Typography variant="h6" fontWeight="bold">LƯƠNG THỰC LÃNH (NET)</Typography>
+                                                <Typography variant="h6" fontWeight="bold">III. LƯƠNG THỰC LÃNH</Typography>
                                             </TableCell>
                                             <TableCell align="right">
                                                 <Typography variant="h6" fontWeight="bold" color="primary.main">
-                                                    {formatCurrency(calculateNetTotal())}
+                                                    {formatCurrency(netTotal)}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell align="right"></TableCell>
@@ -325,7 +385,37 @@ const PayrollDetail = () => {
                                 </Table>
                             </TableContainer>
                         </Grid>
+
+
                     </Grid>
+                    {/* Confirm Total Salary Box */}
+                    <Box mt={4} mb={2} display="flex" justifyContent="center">
+                        <Paper
+                            elevation={4}
+                            sx={{
+                                p: 3,
+                                borderRadius: 2,
+                                maxWidth: 400,
+                                width: "100%",
+                                textAlign: "center",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                        >
+                            <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" width="100%">
+                                <IconAward size={32} color={theme.palette.success.main} />
+                                <Box width="100%">
+                                    <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ mb: 1 }}>
+                                        XÁC NHẬN: TỔNG TIỀN THỰC LÃNH
+                                    </Typography>
+                                    <Typography variant="h4" fontWeight="bold" color="primary">
+                                        {formatCurrency(calculateNetTotal())}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        </Paper>
+                    </Box>
                 </Paper>
             </DashboardCard>
         </PageContainer>
