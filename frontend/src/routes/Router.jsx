@@ -73,7 +73,7 @@ const Role = Loadable(lazy(() => import('../views/role/Role')));
 
 // Statistics Pages
 const Statistics = Loadable(lazy(() => import('../views/statistics/Statistics')));
-const StatisticAttendance = Loadable(lazy(() => import('../views/statistics/statisticattendance')));
+const StatisticAttendance = Loadable(lazy(() => import('../views/statistics/StatisticAttendance')));
 const StatisticEmployee = Loadable(lazy(() => import('../views/statistics/statisticemployee')));
 const StatisticPayroll = Loadable(lazy(() => import('../views/statistics/StatisticPayroll')));
 

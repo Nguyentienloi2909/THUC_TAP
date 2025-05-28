@@ -1,20 +1,138 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-    List,
-    ListItem,
-    ListItemAvatar,
-    Avatar,
-    ListItemText,
-    Typography,
-    useTheme,
-    Badge,
-    Box,
-    Tabs,
-    Tab,
-    Paper,
+    List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography,
+    useTheme, Badge, Box, Tabs, Tab, Paper
 } from '@mui/material';
 import { IconUser, IconUsers } from '@tabler/icons-react';
 import ApiService from 'src/service/ApiService';
+import SearchBox from './SearchBox';
+import { useMessageBadge } from 'src/contexts/MessageBadgeContext';
+
+// Tối ưu: Tách item thành component con, dùng React.memo
+const UserListItem = React.memo(({ user, selected, onClick, unread }) => {
+    const theme = useTheme();
+    return (
+        <ListItem
+            key={user.id}
+            button
+            selected={selected}
+            onClick={() => onClick(user)}
+            sx={{
+                '&:hover': { bgcolor: theme.palette.action.hover },
+                '&.Mui-selected': { bgcolor: theme.palette.action.selected },
+            }}
+            secondaryAction={unread && <Badge color="error" variant="dot" />}
+        >
+            <ListItemAvatar>
+                <Badge
+                    variant={unread ? 'dot' : undefined}
+                    color="error"
+                    overlap="circular"
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    <Avatar
+                        alt={user.name}
+                        src={user.avatar || 'path/to/default/avatar.jpg'}
+                    />
+                </Badge>
+            </ListItemAvatar>
+            <ListItemText
+                primaryTypographyProps={{
+                    component: 'div',
+                    variant: 'subtitle1',
+                    sx: { fontWeight: 600 },
+                }}
+                primary={user.fullName}
+                secondaryTypographyProps={{ component: 'div' }}
+                secondary={
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                        }}
+                    >
+                        <Box
+                            component="span"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: theme.palette.text.secondary,
+                            }}
+                        >
+                            {user.lastMessage}
+                        </Box>
+                    </Box>
+                }
+            />
+        </ListItem>
+    );
+});
+
+const GroupListItem = React.memo(({ group, selected, onClick, unread }) => {
+    const theme = useTheme();
+    return (
+        <ListItem
+            key={group.id}
+            button
+            selected={selected}
+            onClick={() => onClick(group)}
+            sx={{
+                '&:hover': { bgcolor: theme.palette.action.hover },
+                '&.Mui-selected': { bgcolor: theme.palette.action.selected },
+            }}
+            secondaryAction={unread && <Badge color="error" variant="dot" />}
+        >
+            <ListItemAvatar>
+                <Badge
+                    variant={unread ? 'dot' : undefined}
+                    color="error"
+                    overlap="circular"
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    <Avatar alt={group.name} src={group.icon} />
+                </Badge>
+            </ListItemAvatar>
+            <ListItemText
+                primaryTypographyProps={{
+                    component: 'div',
+                    variant: 'subtitle1',
+                    sx: { fontWeight: 600 },
+                }}
+                primary={group.name}
+                secondaryTypographyProps={{ component: 'div' }}
+                secondary={
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                        }}
+                    >
+                        <Box
+                            component="span"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: theme.palette.text.secondary,
+                            }}
+                        >
+                            {group.lastMessage}
+                        </Box>
+                        <Box
+                            component="span"
+                            sx={{ color: theme.palette.text.secondary, ml: 1, fontSize: 12 }}
+                        >
+                            ({group.members.length} members)
+                        </Box>
+                    </Box>
+                }
+            />
+        </ListItem>
+    );
+});
 
 const UserList = ({
     users = [],
@@ -24,20 +142,19 @@ const UserList = ({
     onSelectGroup = () => { },
 }) => {
     const theme = useTheme();
+    const { unread } = useMessageBadge();
     const [tabValue, setTabValue] = useState(0);
     const [groups, setGroups] = useState([]);
     const [userList, setUserList] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
             try {
                 const userProfile = await ApiService.getUserProfile();
-                console.log('User Profile:', userProfile);
                 const loggedInUserId = userProfile.id;
                 const allUsers = await ApiService.getAllUsers();
-                console.log('All Users:', allUsers);
                 const filteredUsers = allUsers.filter(user => user.id !== loggedInUserId);
-                console.log('Filtered Users:', filteredUsers);
                 setUserList(filteredUsers);
             } catch (error) {
                 console.error('Failed to fetch users:', error);
@@ -47,7 +164,6 @@ const UserList = ({
         const fetchGroups = async () => {
             try {
                 const data = await ApiService.getChatGroups();
-                console.log('Fetched groups:', data);
                 setGroups(data || []);
             } catch (error) {
                 console.error('Failed to fetch user groups:', error);
@@ -58,13 +174,30 @@ const UserList = ({
         fetchGroups();
     }, []);
 
+    // Tối ưu: chỉ dùng userList và groups
+    const filteredItems = useMemo(() => {
+        const query = searchQuery.toLowerCase();
+        if (tabValue === 0) {
+            return userList.filter((user) =>
+                (user.fullName || user.name || '').toLowerCase().includes(query)
+            );
+        } else {
+            return groups.filter((group) =>
+                (group.name || '').toLowerCase().includes(query)
+            );
+        }
+    }, [tabValue, userList, groups, searchQuery]);
+
     return (
         <Paper elevation={2} sx={{ width: '100%', bgcolor: theme.palette.background.paper }}>
+            <Box sx={{ p: 1.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <SearchBox onSearch={setSearchQuery} />
+            </Box>
             <Tabs
                 value={tabValue}
                 onChange={(_, newValue) => {
-                    console.log('Tab changed to:', newValue);
                     setTabValue(newValue);
+                    setSearchQuery('');
                 }}
                 centered
                 sx={{ mb: 2 }}
@@ -74,157 +207,27 @@ const UserList = ({
             </Tabs>
             {tabValue === 0 && (
                 <List sx={{ p: 0 }}>
-                    {userList.map((user) => (
-                        <ListItem
+                    {filteredItems.map((user) => (
+                        <UserListItem
                             key={user.id}
-                            button
+                            user={user}
                             selected={selectedUser?.id === user.id}
-                            onClick={() => {
-                                console.log('User selected:', user);
-                                onSelectUser(user);
-                            }}
-                            sx={{
-                                '&:hover': { bgcolor: theme.palette.action.hover },
-                                '&.Mui-selected': { bgcolor: theme.palette.action.selected },
-                            }}
-                        >
-                            <ListItemAvatar>
-                                <Badge
-                                    overlap="circular"
-                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                    variant="dot"
-                                    color={user.status === 'Online' ? 'success' : 'error'}
-                                >
-                                    <Avatar
-                                        alt={user.name}
-                                        src={user.avatar || 'path/to/default/avatar.jpg'}
-                                    />
-                                </Badge>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primaryTypographyProps={{
-                                    component: 'div',
-                                    variant: 'subtitle1',
-                                    sx: { fontWeight: 600 },
-                                }}
-                                primary={user.fullName}
-                                secondaryTypographyProps={{ component: 'div' }}
-                                secondary={
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 0.5,
-                                        }}
-                                    >
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                color: theme.palette.text.secondary,
-                                            }}
-                                        >
-                                            {user.lastMessage}
-                                        </Box>
-                                        {user.unreadCount > 0 && (
-                                            <Box
-                                                sx={{
-                                                    bgcolor: theme.palette.primary.main,
-                                                    color: theme.palette.primary.contrastText,
-                                                    borderRadius: '50%',
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '0.75rem',
-                                                }}
-                                            >
-                                                {user.unreadCount}
-                                            </Box>
-                                        )}
-                                    </Box>
-                                }
-                            />
-                        </ListItem>
+                            onClick={onSelectUser}
+                            unread={!!unread[`user_${user.id}`]}
+                        />
                     ))}
                 </List>
             )}
             {tabValue === 1 && (
                 <List sx={{ p: 0 }}>
-                    {groups.map((group) => (
-                        <ListItem
+                    {filteredItems.map((group) => (
+                        <GroupListItem
                             key={group.id}
-                            button
+                            group={group}
                             selected={selectedGroup?.id === group.id}
-                            onClick={() => {
-                                console.log('Group selected:', group);
-                                onSelectGroup(group);
-                            }}
-                            sx={{
-                                '&:hover': { bgcolor: theme.palette.action.hover },
-                                '&.Mui-selected': { bgcolor: theme.palette.action.selected },
-                            }}
-                        >
-                            <ListItemAvatar>
-                                <Avatar alt={group.name} src={group.icon} />
-                            </ListItemAvatar>
-                            <ListItemText
-                                primaryTypographyProps={{
-                                    component: 'div',
-                                    variant: 'subtitle1',
-                                    sx: { fontWeight: 600 },
-                                }}
-                                primary={group.name}
-                                secondaryTypographyProps={{ component: 'div' }}
-                                secondary={
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 0.5,
-                                        }}
-                                    >
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                color: theme.palette.text.secondary,
-                                            }}
-                                        >
-                                            {group.lastMessage}
-                                        </Box>
-                                        {group.unreadCount > 0 && (
-                                            <Box
-                                                sx={{
-                                                    bgcolor: theme.palette.primary.main,
-                                                    color: theme.palette.primary.contrastText,
-                                                    borderRadius: '50%',
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '0.75rem',
-                                                }}
-                                            >
-                                                {group.unreadCount}
-                                            </Box>
-                                        )}
-                                        <Box
-                                            component="span"
-                                            sx={{ color: theme.palette.text.secondary, ml: 1, fontSize: 12 }}
-                                        >
-                                            ({group.members.length} members)
-                                        </Box>
-                                    </Box>
-                                }
-                            />
-                        </ListItem>
+                            onClick={onSelectGroup}
+                            unread={!!unread[`group_${group.id}`]}
+                        />
                     ))}
                 </List>
             )}

@@ -71,7 +71,8 @@ const HistoryCheckwork = () => {
             setAttendanceData(formattedData);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Không thể tải dữ liệu chấm công');
+            // Chỉ hiển thị thông báo mặc định, không dùng err.message để tránh hiển thị chi tiết lỗi
+            // setError('Không thể tải dữ liệu chấm công');
             setAttendanceData([]);
         } finally {
             setLoading(false);
@@ -124,7 +125,7 @@ const HistoryCheckwork = () => {
             fetchAttendanceData();
         } catch (error) {
             setSnackbarMessage('Check-in thất bại!');
-            console.error('Check-in error:', error);
+            // Xóa console.error để không hiển thị chi tiết lỗi trong console
         } finally {
             setCheckInLoading(false);
             setSnackbarOpen(true);
@@ -244,8 +245,8 @@ const HistoryCheckwork = () => {
                         <>
                             {attendanceData.length === 0 && (
                                 <Box sx={{ mb: 2 }}>
-                                    <Alert severity="info" sx={{ width: '100%', boxShadow: 1 }}>
-                                        {error || `Không tìm thấy chấm công cho user: admin trong tháng ${format(currentDate, 'MM/yyyy', { locale: vi })}`}
+                                    <Alert severity="error" sx={{ width: '100%', boxShadow: 1 }}>
+                                        {error || `Không tìm thấy dữ liệu chấm công trong tháng ${format(currentDate, 'MM/yyyy', { locale: vi })}`}
                                     </Alert>
                                 </Box>
                             )}

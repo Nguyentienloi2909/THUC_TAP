@@ -5,7 +5,7 @@ import { IconDownload, IconEdit, IconTrash } from '@tabler/icons-react';
 const TaskActions = ({ task, onEdit, onDelete, role, onUpdateStatus }) => {
     return (
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-            {task.urlFile && (
+            {/* {task.urlFile && (
                 <Tooltip title="Tải tài liệu">
                     <IconButton
                         size="small"
@@ -17,7 +17,7 @@ const TaskActions = ({ task, onEdit, onDelete, role, onUpdateStatus }) => {
                         <IconDownload size={18} />
                     </IconButton>
                 </Tooltip>
-            )}
+            )} */}
             {role === 'LEADER' && (
                 <>
                     <Tooltip title="Chỉnh sửa">
@@ -49,6 +49,7 @@ const TaskActions = ({ task, onEdit, onDelete, role, onUpdateStatus }) => {
                         e.stopPropagation();
                         if (onUpdateStatus) onUpdateStatus(task);
                     }}
+                    disabled={task.status?.toLowerCase() === 'completed' || task.status?.toLowerCase() === 'cancelled'}
                 >
                     Cập nhật
                 </Button>

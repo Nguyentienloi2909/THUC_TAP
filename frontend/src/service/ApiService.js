@@ -544,4 +544,15 @@ export default class ApiService {
         // API: http://192.168.1.126:7247/api/LeaveRequest
         return this.handleRequest('get', '/LeaveRequest');
     }
+
+    static getStatisticSalary(month, year) {
+        if (!month || !year || month < 1 || month > 12 || year < 2000) {
+            throw new Error('Tháng hoặc năm không hợp lệ');
+        }
+        return this.handleRequest('get', `/Salary/statistics?year=${year}&month=${month}`);
+    }
+
+    static getStatisticEmployee() {
+        return this.handleRequest('get', '/User/statistics');
+    }
 }

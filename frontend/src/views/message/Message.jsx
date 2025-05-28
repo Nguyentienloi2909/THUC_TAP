@@ -1,15 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Paper, Box, useTheme } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-import SearchBox from './components/SearchBox';
 import UserList from './components/UserList';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/messagelist';
 import MessageInput from './components/MessageInput';
 import ApiService from 'src/service/ApiService';
 import { useSignalR } from 'src/contexts/SignalRContext';
+import { useMessageBadge } from 'src/contexts/MessageBadgeContext';
 
 const Message = () => {
+    const { markUnread, markRead } = useMessageBadge();
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
@@ -47,8 +48,21 @@ const Message = () => {
         if (!chatConnection || connectionState !== 'Connected' || !loggedInUserId) return;
 
         const handleReceiveMessage = (messageDto) => {
-            if (!messageDto || typeof messageDto !== 'object') return;
             const userId = messageDto.senderId === loggedInUserId ? messageDto.receiverId : messageDto.senderId;
+            // Nếu user này không phải đang được chọn thì markUnread
+            if (!selectedUser || selectedUser.id !== userId) {
+                markUnread('user', userId);
+            }
+
+            // Thêm chấm đỏ cho user có tin mới
+            setUsers((prev) =>
+                prev.map((u) =>
+                    u.id === userId && userId !== selectedUser?.id
+                        ? { ...u, hasNewMessage: true }
+                        : u
+                )
+            );
+
             setUserMessages((prev) => {
                 const userMsgList = prev[userId] || [];
                 if (!userMsgList.some((msg) => msg.id === messageDto.id)) {
@@ -62,8 +76,20 @@ const Message = () => {
         };
 
         const handleReceiveGroupMessage = (messageDto) => {
-            if (!messageDto || typeof messageDto !== 'object') return;
             const groupId = messageDto.groupChatId;
+            if (!selectedGroup || selectedGroup.id !== groupId) {
+                markUnread('group', groupId);
+            }
+
+            // Thêm chấm đỏ cho group có tin mới
+            setGroups((prev) =>
+                prev.map((g) =>
+                    g.id === groupId && groupId !== selectedGroup?.id
+                        ? { ...g, hasNewMessage: true }
+                        : g
+                )
+            );
+
             setGroupMessages((prev) => {
                 const groupMsgList = prev[groupId] || [];
                 if (!groupMsgList.some((msg) => msg.id === messageDto.id)) {
@@ -83,7 +109,7 @@ const Message = () => {
             chatConnection.off('ReceiveMessage', handleReceiveMessage);
             chatConnection.off('ReceiveGroupMessage', handleReceiveGroupMessage);
         };
-    }, [chatConnection, connectionState, loggedInUserId]);
+    }, [chatConnection, connectionState, loggedInUserId, selectedUser, selectedGroup, markUnread]);
 
     // Chỉ fetch messages khi chưa có
     useEffect(() => {
@@ -136,12 +162,15 @@ const Message = () => {
     const handleSelectUser = (user) => {
         setSelectedUser(user);
         setSelectedGroup(null);
+        markRead('user', user.id);
     };
 
     const handleSelectGroup = (group) => {
         setSelectedGroup(group);
         setSelectedUser(null);
+        markRead('group', group.id);
     };
+
 
     return (
         <PageContainer title="Tin nhắn" description="Trò chuyện">
@@ -164,17 +193,6 @@ const Message = () => {
                         flexDirection: 'column',
                     }}
                 >
-                    <Box
-                        sx={{
-                            p: 2,
-                            borderBottom: `1px solid ${theme.palette.divider}`,
-                            height: '72px',
-                            display: 'flex',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <SearchBox onSearch={setSearchQuery} />
-                    </Box>
                     <Box
                         sx={{
                             flex: 1,

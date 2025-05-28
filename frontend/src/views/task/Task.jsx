@@ -4,9 +4,11 @@ import {
     Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    IconButton, Tooltip, // Thêm Tooltip vào đây
 } from '@mui/material';
 import {
     IconPlus, IconEdit, IconTrash, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
+    IconDownload, // Thêm IconDownload vì đã sử dụng trong cột Tài liệu
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useNavigate } from 'react-router-dom';
@@ -268,6 +270,7 @@ const Task = () => {
                                 <TableRow>
                                     <TableCell>Tiêu đề</TableCell>
                                     <TableCell>Người thực hiện</TableCell>
+                                    <TableCell align="center">Tài liệu</TableCell>
                                     <TableCell align="center">Trạng thái</TableCell>
                                     <TableCell>Ngày bắt đầu</TableCell>
                                     <TableCell>Ngày kết thúc</TableCell>
@@ -277,7 +280,7 @@ const Task = () => {
                             <TableBody>
                                 {filteredTasks.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center">
+                                        <TableCell colSpan={7} align="center">
                                             Không có nhiệm vụ nào
                                         </TableCell>
                                     </TableRow>
@@ -293,6 +296,23 @@ const Task = () => {
                                                 <Typography variant="subtitle2">{task.title}</Typography>
                                             </TableCell>
                                             <TableCell>{task.assignedToName}</TableCell>
+                                            <TableCell align="center">
+                                                {task.urlFile ? (
+                                                    <Tooltip title="Tải tài liệu">
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(task.urlFile, '_blank');
+                                                            }}
+                                                        >
+                                                            <IconDownload size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                ) : (
+                                                    'Không có'
+                                                )}
+                                            </TableCell>
                                             <TableCell align="center">
                                                 <TaskStatusChip status={task.status} statusConfig={statusConfig} />
                                             </TableCell>

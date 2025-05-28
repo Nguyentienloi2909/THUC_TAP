@@ -205,17 +205,29 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                     },
                 }}
             >
-                <MenuItem onClick={handleCreateGroup}>Thêm mới nhóm</MenuItem>
-                <MenuItem onClick={handleAddMember} disabled={!selectedGroup}>
-                    Thêm thành viên nhóm
-                </MenuItem>
-                <MenuItem onClick={handleRemoveMember} disabled={!selectedGroup}>
-                    Xóa thành viên khỏi nhóm
-                </MenuItem>
-                <MenuItem onClick={handleShowUsers} disabled={!selectedGroup}>
-                    Xem danh sách thành viên
-                </MenuItem>
+                {/* Chỉ hiển thị nếu KHÔNG chọn nhóm (tức là đang chọn user hoặc chưa chọn gì) */}
+                {!selectedGroup && (
+                    <MenuItem onClick={handleCreateGroup}>
+                        Thêm mới nhóm
+                    </MenuItem>
+                )}
+
+                {/* Chỉ hiển thị nếu đang chọn nhóm */}
+                {selectedGroup && (
+                    <>
+                        <MenuItem onClick={handleAddMember}>
+                            Thêm thành viên nhóm
+                        </MenuItem>
+                        <MenuItem onClick={handleRemoveMember}>
+                            Xóa thành viên khỏi nhóm
+                        </MenuItem>
+                        <MenuItem onClick={handleShowUsers}>
+                            Xem danh sách thành viên
+                        </MenuItem>
+                    </>
+                )}
             </Menu>
+
 
             {loggedInUserId && (
                 <>

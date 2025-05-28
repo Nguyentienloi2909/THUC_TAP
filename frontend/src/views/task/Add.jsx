@@ -75,6 +75,13 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
                 alert('File không được vượt quá 5MB');
                 return;
             }
+            // Kiểm tra định dạng file (chỉ cho phép .doc hoặc .docx)
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension !== 'doc' && fileExtension !== 'docx') {
+                alert('Chỉ cho phép upload file Word (.doc hoặc .docx)');
+                e.target.value = null; // Xóa file khỏi input
+                return;
+            }
             setNewTask(prev => ({ ...prev, file }));
             setFileInfo({
                 name: file.name,

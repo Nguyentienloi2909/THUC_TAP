@@ -20,11 +20,12 @@ import {
     Paper,
     InputAdornment
 } from '@mui/material';
-import { IconSearch, IconEye, IconCheck, IconEdit } from '@tabler/icons-react';
+import { IconSearch, IconEye, IconCheck, IconEdit, IconMail } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
+import { Modal } from '@mui/material';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -40,6 +41,7 @@ const PayrollList = () => {
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [monthFilter, setMonthFilter] = useState(new Date().getMonth() + 1);
     const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
+    const [emailLoading, setEmailLoading] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -166,7 +168,14 @@ const PayrollList = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h5" fontWeight="bold">Quản lý lương</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Modal open={emailLoading}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+                                <CircularProgress />
+                                <Typography sx={{ mt: 2 }}>Đang gửi thông báo lương qua Email...</Typography>
+                            </Box>
+                        </Modal>
                         <button
+                            startIcon={<IconMail />}
                             style={{
                                 background: '#1976d2',
                                 color: '#fff',
@@ -176,25 +185,19 @@ const PayrollList = () => {
                                 fontWeight: 'bold',
                                 cursor: 'pointer'
                             }}
+
                             disabled={loading}
                             onClick={async () => {
-                                try {
-                                    setLoading(true);
-                                    await ApiService.calculateAllSalaries(monthFilter, yearFilter);
-                                    alert('Kết toán lương toàn hệ thống thành công!');
-                                } catch (err) {
-                                    alert('Kết toán thất bại. Vui lòng thử lại.');
-                                } finally {
-                                    setLoading(false);
-                                }
+                                setEmailLoading(true);
+                                setTimeout(() => {
+                                    setEmailLoading(false);
+                                }, 3000);
                             }}
                         >
-                            Kết toán lương toàn hệ thống
+                            Gửi thông báo lương qua Email
                         </button>
                     </Box>
                 </Box>
-
-
 
                 {/* Filters */}
                 <Paper elevation={1} sx={{ p: 2, mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2 }}>

@@ -70,10 +70,17 @@ const GroupById = () => {
             setLoading(true);
             setError('');
             const userProfile = await ApiService.getUserProfile();
-            if (!userProfile?.groupId) throw new Error('Không tìm thấy ID nhóm trong thông tin người dùng');
+            if (!userProfile?.groupId) throw new Error('Bạn chưa gia nhập vào nhóm nào');
             setGroupId(userProfile.groupId);
         } catch (err) {
-            setError(err.message || 'Không thể lấy thông tin người dùng');
+            // Nếu là lỗi 404 hoặc lỗi khác, hiển thị thông báo tiếng Việt
+            if (err?.response?.status === 404) {
+                setError('Bạn chưa gia nhập vào nhóm nào');
+            } else {
+                setError(err?.message === 'Không tìm thấy ID nhóm trong thông tin người dùng'
+                    ? 'Bạn chưa gia nhập vào nhóm nào'
+                    : (err?.message || 'Không thể lấy thông tin người dùng'));
+            }
             setLoading(false);
         }
     }, []);
@@ -88,7 +95,14 @@ const GroupById = () => {
             if (!data?.id) throw new Error('Dữ liệu nhóm không hợp lệ');
             setGroupData(data);
         } catch (err) {
-            setError(err.message || 'Không thể tải thông tin nhóm');
+            // Nếu là lỗi 404 hoặc lỗi khác, hiển thị thông báo tiếng Việt
+            if (err?.response?.status === 404) {
+                setError('Bạn chưa gia nhập vào nhóm nào');
+            } else {
+                setError(err?.message === 'Dữ liệu nhóm không hợp lệ'
+                    ? 'Bạn chưa gia nhập vào nhóm nào'
+                    : (err?.message || 'Không thể tải thông tin nhóm'));
+            }
         } finally {
             setLoading(false);
         }

@@ -19,7 +19,7 @@ import {
     CircularProgress,
     Tooltip,
 } from '@mui/material';
-import { IconPrinter, IconDownload, IconArrowBack, IconAward } from '@tabler/icons-react';
+import { IconPrinter, IconDownload, IconArrowBack, IconAward, IconMail } from '@tabler/icons-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
@@ -159,18 +159,6 @@ const PayrollDetail = () => {
                             <span>
                                 <Button
                                     variant="outlined"
-                                    startIcon={<IconPrinter />}
-                                    disabled={false}
-                                // onClick={() => alert('Chức năng đang được phát triển')}
-                                >
-                                    In phiếu lương
-                                </Button>
-                            </span>
-                        </Tooltip>
-                        <Tooltip title="Chức năng đang được phát triển" arrow>
-                            <span>
-                                <Button
-                                    variant="outlined"
                                     startIcon={<IconDownload />}
                                     disabled={false}
                                 // onClick={() => alert('Chức năng đang được phát triển')}
@@ -179,6 +167,35 @@ const PayrollDetail = () => {
                                 </Button>
                             </span>
                         </Tooltip>
+                        <Button
+                            variant="contained"
+                            startIcon={<IconMail />}
+                            disabled={loading}
+                            onClick={async () => {
+                                try {
+                                    setLoading(true);
+                                    await ApiService.sendSalaryNotification(userId, month, year);
+                                    alert('Gửi thông báo lương qua email thành công!');
+                                } catch (err) {
+                                    alert('Gửi thông báo thất bại. Vui lòng thử lại.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            sx={{
+                                backgroundColor: '#1976d2',
+                                color: '#fff',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                },
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                padding: '8px 16px',
+                                borderRadius: 4,
+                            }}
+                        >
+                            Gửi Email
+                        </Button>
                         <Button
                             variant="contained"
                             startIcon={<IconArrowBack />}
@@ -287,23 +304,6 @@ const PayrollDetail = () => {
                                 </CardContent>
                             </Card>
                         </Grid>
-
-                        {/* Attendance Summary
-                        {attendanceSummary && (
-                            <Grid item xs={12}>
-                                <Box mt={2}>
-                                    <Typography variant="subtitle1" fontWeight="bold">
-                                        Tổng hợp chấm công tháng {month}/{year}:
-                                    </Typography>
-                                    <Typography variant="body2">Tổng số ngày làm: {attendanceSummary.totalWorkingDays}</Typography>
-                                    <Typography variant="body2">Tổng số ngày nghỉ phép: {attendanceSummary.totalLeaveDays}</Typography>
-                                    <Typography variant="body2">Tổng số ngày trễ: {attendanceSummary.totalLateDays}</Typography>
-                                    <Typography variant="body2">Tổng số ngày vắng: {attendanceSummary.totalAbsentDays}</Typography>
-                                    <Typography variant="body2">Tổng số ngày có mặt: {attendanceSummary.totalPresentDays}</Typography>
-                                    <Typography variant="body2">Tổng số giờ tăng ca: {attendanceSummary.totalOvertimeHours}</Typography>
-                                </Box>
-                            </Grid>
-                        )} */}
 
                         {/* Salary Details */}
                         <Grid item xs={12}>
