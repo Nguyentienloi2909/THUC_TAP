@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Box, Typography, Avatar, Paper, useTheme } from '@mui/material';
 import ApiService from '../../../service/ApiService';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg'; // Avatar mặc định
@@ -10,8 +10,8 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
     const [userAvatars, setUserAvatars] = useState({}); // Lưu trữ avatar theo senderId
     const messagesEndRef = useRef(null);
 
-    // Hàm xử lý avatar
-    const getAvatarSrc = (avatar) => {
+    // Hàm xử lý avatar (dùng useCallback để tránh tạo lại)
+    const getAvatarSrc = useCallback((avatar) => {
         if (avatar && typeof avatar === 'string' && avatar.trim()) {
             const trimmedAvatar = avatar.trim();
             return trimmedAvatar.startsWith('http')
@@ -19,35 +19,30 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
                 : `/Uploads/avatars/${trimmedAvatar}`;
         }
         return ProfileImg;
-    };
+    }, []);
 
-    // Lấy userId và avatar của người gửi đối diện
+    // Chỉ fetch avatar cho senderId chưa có trong cache
     useEffect(() => {
+        let isMounted = true;
         const fetchUserIdAndAvatars = async () => {
             try {
                 const userProfile = await ApiService.getUserProfile();
-                setLoggedInUserId(userProfile.id);
-                console.log('Logged in user ID:', userProfile.id);
+                if (isMounted) setLoggedInUserId(userProfile.id);
 
-                // Chỉ lấy senderId của người gửi đối diện (khác loggedInUserId)
+                // Lấy các senderId chưa có avatar
                 const senderIds = [...new Set(messages
                     .filter(msg => msg.senderId && msg.senderId !== userProfile.id)
                     .map(msg => msg.senderId)
-                )];
-                console.log('Sender IDs to fetch avatars:', senderIds);
+                )].filter(id => !userAvatars[id]);
 
                 if (senderIds.length > 0) {
-                    const allUsers = await ApiService.getAllUsers(); // Thay thế getUserById
-                    console.log('All users data:', allUsers);
-
+                    const allUsers = await ApiService.getAllUsers();
                     const avatars = {};
                     senderIds.forEach((senderId) => {
                         const user = allUsers.find(u => u.id === senderId);
                         avatars[senderId] = user ? user.avatar || null : null;
-                        console.log(`Avatar for senderId ${senderId}:`, avatars[senderId]);
                     });
-
-                    setUserAvatars(avatars);
+                    if (isMounted) setUserAvatars(prev => ({ ...prev, ...avatars }));
                 }
             } catch (error) {
                 console.error('Failed to retrieve user profile or avatars:', error);
@@ -57,10 +52,12 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
         if (messages.length > 0) {
             fetchUserIdAndAvatars();
         }
-    }, [messages]);
+        return () => { isMounted = false; };
+    }, [messages, userAvatars]);
 
     const isGroupChat = !!selectedGroup;
 
+    // Gom nhóm tin nhắn theo ngày và người gửi
     const groupedMessages = useMemo(() => {
         const grouped = [];
         let currentGroup = [];
@@ -99,14 +96,15 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
         return grouped;
     }, [messages]);
 
+    // Tự động scroll xuống cuối khi có tin nhắn mới
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages]);
 
-    // Lấy avatar cho trạng thái "seen" (tách biệt với người gửi)
-    const getSeenAvatar = () => {
+    // Lấy avatar cho trạng thái "seen"
+    const getSeenAvatar = useCallback(() => {
         if (selectedUser) {
             return getAvatarSrc(selectedUser.avatar || userAvatars[selectedUser.id] || null);
         } else if (selectedGroup && selectedGroup.members?.length > 0) {
@@ -114,7 +112,7 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
             return getAvatarSrc(otherMember?.avatar || userAvatars[otherMember?.id] || null);
         }
         return getAvatarSrc(userAvatars[loggedInUserId] || null);
-    };
+    }, [selectedUser, selectedGroup, loggedInUserId, userAvatars, getAvatarSrc]);
 
     return (
         <Box
@@ -221,7 +219,6 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
                                             alt={msg.senderName || 'Unknown'}
                                             sx={{ width: 32, height: 32, mr: 1, alignSelf: 'flex-end' }}
                                             onError={(e) => {
-                                                console.error(`Lỗi tải avatar cho user ${msg.senderId}: ${userAvatars[msg.senderId]}`);
                                                 e.target.src = ProfileImg;
                                             }}
                                         />
@@ -278,7 +275,6 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
                                         alt="Seen"
                                         sx={{ width: 16, height: 16 }}
                                         onError={(e) => {
-                                            console.error(`Lỗi tải avatar "seen": ${getSeenAvatar()}`);
                                             e.target.src = ProfileImg;
                                         }}
                                     />

@@ -174,7 +174,7 @@ const PayrollDetail = () => {
                             onClick={async () => {
                                 try {
                                     setLoading(true);
-                                    await ApiService.sendSalaryNotification(userId, month, year);
+                                    await ApiService.sendGmailSalaryByUser(userId, month, year);
                                     alert('Gửi thông báo lương qua email thành công!');
                                 } catch (err) {
                                     alert('Gửi thông báo thất bại. Vui lòng thử lại.');

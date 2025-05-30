@@ -555,4 +555,29 @@ export default class ApiService {
     static getStatisticEmployee() {
         return this.handleRequest('get', '/User/statistics');
     }
+
+    /**
+     * Gửi email lương cho tất cả nhân viên
+     * @param {number} month 
+     * @param {number} year 
+     */
+    static sendGmailSalaryAll(month, year) {
+        if (!month || !year) {
+            throw new Error('Tháng và năm không được để trống');
+        }
+        return this.handleRequest('post', `/Salary/send-salary-emails?month=${month}&year=${year}`);
+    }
+
+    /**
+     * Gửi email lương cho một nhân viên
+     * @param {number} userId 
+     * @param {number} month 
+     * @param {number} year 
+     */
+    static sendGmailSalaryByUser(userId, month, year) {
+        if (!userId || !month || !year) {
+            throw new Error('ID, tháng và năm không được để trống');
+        }
+        return this.handleRequest('post', `/Salary/send-salary-email/${userId}?month=${month}&year=${year}`);
+    }
 }

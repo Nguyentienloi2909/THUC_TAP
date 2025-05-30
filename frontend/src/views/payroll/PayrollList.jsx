@@ -175,7 +175,6 @@ const PayrollList = () => {
                             </Box>
                         </Modal>
                         <button
-                            startIcon={<IconMail />}
                             style={{
                                 background: '#1976d2',
                                 color: '#fff',
@@ -185,15 +184,20 @@ const PayrollList = () => {
                                 fontWeight: 'bold',
                                 cursor: 'pointer'
                             }}
-
                             disabled={loading}
                             onClick={async () => {
                                 setEmailLoading(true);
-                                setTimeout(() => {
+                                try {
+                                    await ApiService.sendGmailSalaryAll(monthFilter, yearFilter);
+                                    alert('Đã gửi thông báo lương qua email cho tất cả nhân viên!');
+                                } catch (err) {
+                                    alert('Gửi email thất bại. Vui lòng thử lại.');
+                                } finally {
                                     setEmailLoading(false);
-                                }, 3000);
+                                }
                             }}
                         >
+                            <IconMail style={{ verticalAlign: 'middle', marginRight: 8 }} />
                             Gửi thông báo lương qua Email
                         </button>
                     </Box>

@@ -149,6 +149,12 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
         setGroups((prev) => prev.map(g => g.id === group.id ? { ...g, hasNewMessage: false } : g));
     };
 
+    // Xử lý khi nhấp vào user
+    const handleUserClick = (user) => {
+        navigate('/messages', { state: { selectedUser: user } });
+        onClose();
+    };
+
     // Style dùng lại nhiều lần
     const nameStyle = {
         whiteSpace: 'nowrap',
@@ -193,10 +199,10 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                     <Typography color="text.secondary">Không có nhóm hoặc tin nhắn nào.</Typography>
                 </Box>
             ) : (
-                <>
-                    {sortedGroups.map((group) => (
+                [
+                    ...sortedGroups.map((group) => (
                         <MenuItem
-                            key={group.id}
+                            key={`group-${group.id}`}
                             onClick={() => handleGroupClick(group)}
                             sx={{ py: 1.5, position: 'relative' }}
                         >
@@ -254,19 +260,20 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                 />
                             )}
                         </MenuItem>
-                    ))}
-                    {users.length > 0 && (
-                        <>
-                            <Typography variant="subtitle2" sx={{ px: 2, pt: 1, pb: 0.5, color: 'text.secondary' }}>
+                    )),
+                    ...(users.length > 0
+                        ? [
+                            <Typography
+                                key="private-title"
+                                variant="subtitle2"
+                                sx={{ px: 2, pt: 1, pb: 0.5, color: 'text.secondary' }}
+                            >
                                 Tin nhắn riêng
-                            </Typography>
-                            {users.slice(0, 3).map((u) => (
+                            </Typography>,
+                            ...users.slice(0, 3).map((u) => (
                                 <MenuItem
-                                    key={u.id}
-                                    onClick={() => {
-                                        navigate('/messages', { state: { selectedUser: u } });
-                                        onClose();
-                                    }}
+                                    key={`user-${u.id}`}
+                                    onClick={() => handleUserClick(u)}
                                     sx={{ py: 1.5, position: 'relative' }}
                                 >
                                     <ListItemAvatar>
@@ -298,11 +305,11 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                         />
                                     )}
                                 </MenuItem>
-                            ))}
-                            <Divider sx={{ my: 1 }} />
-                        </>
-                    )}
-                </>
+                            )),
+                            <Divider key="private-divider" sx={{ my: 1 }} />,
+                        ]
+                        : [])
+                ]
             )}
             <Box mt={1} py={1} px={2}>
                 <Button

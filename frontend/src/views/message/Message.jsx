@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Paper, Box, useTheme } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import UserList from './components/UserList';
@@ -19,6 +19,8 @@ const Message = () => {
     const [groupMessages, setGroupMessages] = useState({});
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const [users, setUsers] = useState([]);
+    const [isSending, setIsSending] = useState(false);
+    const messagesEndRef = useRef(null);
     const { chatConnection, connectionState } = useSignalR();
 
     // Lấy danh sách users thực tế từ API
@@ -37,10 +39,17 @@ const Message = () => {
         fetchUsers();
     }, []);
 
+    const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
     const filteredUsers = useMemo(() =>
         users.filter((user) =>
-            (user.fullName || user.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-        ), [users, searchQuery]
+            (user.fullName || user.name || '').toLowerCase().includes(debouncedQuery.toLowerCase())
+        ), [users, debouncedQuery]
     );
 
     // Lắng nghe tin nhắn mới qua SignalR
@@ -54,7 +63,6 @@ const Message = () => {
                 markUnread('user', userId);
             }
 
-            // Thêm chấm đỏ cho user có tin mới
             setUsers((prev) =>
                 prev.map((u) =>
                     u.id === userId && userId !== selectedUser?.id
@@ -65,10 +73,14 @@ const Message = () => {
 
             setUserMessages((prev) => {
                 const userMsgList = prev[userId] || [];
-                if (!userMsgList.some((msg) => msg.id === messageDto.id)) {
+                // Loại bỏ tin nhắn tạm nếu nội dung và thời gian gần giống
+                const filtered = userMsgList.filter(
+                    (msg) => !(msg.isTemp && msg.content === messageDto.content && Math.abs(new Date(msg.sentAt) - new Date(messageDto.sentAt)) < 5000)
+                );
+                if (!filtered.some((msg) => msg.id === messageDto.id)) {
                     return {
                         ...prev,
-                        [userId]: [...userMsgList, messageDto],
+                        [userId]: [...filtered, messageDto],
                     };
                 }
                 return prev;
@@ -80,22 +92,16 @@ const Message = () => {
             if (!selectedGroup || selectedGroup.id !== groupId) {
                 markUnread('group', groupId);
             }
-
-            // Thêm chấm đỏ cho group có tin mới
-            setGroups((prev) =>
-                prev.map((g) =>
-                    g.id === groupId && groupId !== selectedGroup?.id
-                        ? { ...g, hasNewMessage: true }
-                        : g
-                )
-            );
-
             setGroupMessages((prev) => {
                 const groupMsgList = prev[groupId] || [];
-                if (!groupMsgList.some((msg) => msg.id === messageDto.id)) {
+                // Chỉ loại bỏ tin nhắn tạm nếu là tin nhắn của chính mình
+                const filtered = groupMsgList.filter(
+                    (msg) => !(msg.isTemp && msg.content === messageDto.content && msg.senderId === messageDto.senderId && msg.senderId === loggedInUserId)
+                );
+                if (!filtered.some((msg) => msg.id === messageDto.id)) {
                     return {
                         ...prev,
-                        [groupId]: [...groupMsgList, messageDto],
+                        [groupId]: [...filtered, messageDto],
                     };
                 }
                 return prev;
@@ -137,10 +143,10 @@ const Message = () => {
 
     // Gửi tin nhắn
     const handleSendMessage = async (content) => {
-        if (!loggedInUserId || connectionState !== 'Connected') {
-            console.error('Cannot send message: Not connected or user not logged in');
+        if (!loggedInUserId || connectionState !== 'Connected' || isSending) {
             return;
         }
+        setIsSending(true);
         try {
             if (selectedUser?.id) {
                 await chatConnection.invoke('SendPrivateMessage', loggedInUserId, selectedUser.id, content);
@@ -149,6 +155,8 @@ const Message = () => {
             }
         } catch (error) {
             console.error('Gửi tin nhắn thất bại:', error);
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -158,6 +166,13 @@ const Message = () => {
         if (selectedGroup?.id) return groupMessages[selectedGroup.id] || [];
         return [];
     }, [selectedUser, selectedGroup, userMessages, groupMessages]);
+
+    // Tự động scroll xuống cuối khi có tin nhắn mới
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [displayedMessages]);
 
     const handleSelectUser = (user) => {
         setSelectedUser(user);
@@ -258,6 +273,7 @@ const Message = () => {
                             selectedUser={selectedUser}
                             selectedGroup={selectedGroup}
                         />
+                        <div ref={messagesEndRef} />
                     </Box>
                     <Box
                         sx={{
@@ -271,7 +287,7 @@ const Message = () => {
                     >
                         <MessageInput
                             onSendMessage={handleSendMessage}
-                            disabled={!selectedUser && !selectedGroup}
+                            disabled={!selectedUser && !selectedGroup || isSending || connectionState !== 'Connected'}
                             sx={{ width: '100%' }}
                         />
                     </Box>

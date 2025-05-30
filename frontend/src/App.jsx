@@ -6,7 +6,7 @@ import { ThemeProvider as CustomThemeProvider } from './contexts/ThemeContext';
 import { SignalRProvider } from './contexts/SignalRContext';
 import { UserProvider } from './contexts/UserContext';
 import { MessageBadgeProvider } from './contexts/MessageBadgeContext';
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 
 function App() {
   const routing = useRoutes(Router);
