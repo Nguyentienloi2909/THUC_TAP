@@ -1,5 +1,5 @@
 // src/layouts/header/Header.jsx
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { Box, AppBar, Toolbar, styled, Stack, IconButton, Badge } from '@mui/material';
 import PropTypes from 'prop-types';
 import { IconBellRinging, IconMenu, IconMessage } from '@tabler/icons-react';
@@ -7,7 +7,6 @@ import ListMessage from './ListMessage';
 import Profile from './Profile';
 import ListNotification from './ListNotification';
 import { NotificationContext } from '../../../contexts/NotificationContext';
-import { useSignalR } from 'src/contexts/SignalRContext';
 import { useUser } from 'src/contexts/UserContext';
 import { useMessageBadge } from 'src/contexts/MessageBadgeContext';
 
@@ -87,7 +86,7 @@ const Header = ({ toggleMobileSidebar }) => {
           <StyledIconButton
             size="large"
             aria-label="show messages"
-            aria-controls={Boolean(anchorEl) ? 'message-menu' : undefined}
+            aria-controls={anchorEl ? 'message-menu' : undefined}
             aria-haspopup="true"
             color="inherit"
             isActive={Boolean(anchorEl)}
@@ -113,7 +112,7 @@ const Header = ({ toggleMobileSidebar }) => {
         <StyledIconButton
           size="large"
           aria-label="show notifications"
-          aria-controls={Boolean(notificationEl) ? 'notification-menu' : undefined}
+          aria-controls={notificationEl ? 'notification-menu' : undefined}
           aria-haspopup="true"
           color="inherit"
           isActive={Boolean(notificationEl)}

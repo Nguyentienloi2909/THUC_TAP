@@ -1,54 +1,91 @@
 // src/contexts/SignalRContext.jsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { chatConnection } from 'src/service/SignalR';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { chatConnection as createChatConnection } from 'src/service/SignalR';
 import { useUser } from './UserContext';
+import PropTypes from 'prop-types';
 
 const SignalRContext = createContext();
 
 export const SignalRProvider = ({ children }) => {
-    const { user } = useUser(); // Lấy thông tin người dùng
-    const [connectionState, setConnectionState] = useState(chatConnection.state);
+    const { user } = useUser();
+    const [connection, setConnection] = useState(null);
+    const [connectionState, setConnectionState] = useState('Disconnected');
 
     useEffect(() => {
+        if (!user.isAuthenticated) {
+            setConnection(null);
+            setConnectionState('Disconnected');
+            return;
+        }
+
+        const newConnection = createChatConnection(); // Tạo instance mới
+        setConnection(newConnection);
+
+        return () => {
+            if (newConnection && newConnection.state === 'Connected') {
+                newConnection.stop();
+            }
+        };
+    }, [user.isAuthenticated]);
+
+    useEffect(() => {
+        if (!connection || !user.isAuthenticated) return;
+
+        let isMounted = true;
+
         const startConnection = async () => {
             try {
-                if (chatConnection.state === 'Disconnected' && user.isAuthenticated) {
-                    chatConnection.accessTokenFactory = () => user.token; // Sử dụng token từ UserContext
-                    await chatConnection.start();
-                    setConnectionState('Connected');
-                    console.log('Fetching notifications...');
+                if (connection.state === 'Disconnected') {
+                    connection.accessTokenFactory = () => user.token || sessionStorage.getItem('authToken');
+                    await connection.start();
+                    if (isMounted) {
+                        setConnectionState('Connected');
+                        console.log('SignalR chat connection started');
+                    }
                 }
             } catch (error) {
-                setConnectionState('Disconnected');
-                console.error('SignalR Connection Error:', error);
+                if (isMounted) {
+                    setConnectionState('Disconnected');
+                    console.error('SignalR chat connection error:', error);
+                }
             }
         };
 
         startConnection();
 
         const handleStateChange = () => {
-            setConnectionState(chatConnection.state);
-            if (chatConnection.state === 'Connected') {
-                console.log('Fetching notifications...');
+            if (isMounted) {
+                setConnectionState(connection.state);
+                if (connection.state === 'Connected') {
+                    console.log('SignalR chat connection re-established');
+                }
             }
         };
 
-        chatConnection.onreconnecting(() => setConnectionState('Reconnecting'));
-        chatConnection.onreconnected(() => setConnectionState('Connected'));
-        chatConnection.onclose(() => setConnectionState('Disconnected'));
+        connection.onreconnecting(() => setConnectionState('Reconnecting'));
+        connection.onreconnected(() => setConnectionState('Connected'));
+        connection.onclose(() => setConnectionState('Disconnected'));
 
         return () => {
-            chatConnection.off('reconnecting', handleStateChange);
-            chatConnection.off('reconnected', handleStateChange);
-            chatConnection.off('close', handleStateChange);
+            isMounted = false;
+            connection.off('reconnecting', handleStateChange);
+            connection.off('reconnected', handleStateChange);
+            connection.off('close', handleStateChange);
+            if (connection.state === 'Connected') {
+                connection.stop();
+            }
         };
-    }, [user.isAuthenticated, user.token]); // Chạy lại khi trạng thái đăng nhập hoặc token thay đổi
+    }, [connection, user.isAuthenticated, user.token]);
 
     return (
-        <SignalRContext.Provider value={{ chatConnection, connectionState }}>
+        <SignalRContext.Provider value={{ chatConnection: connection, connectionState }}>
             {children}
         </SignalRContext.Provider>
     );
+};
+
+SignalRProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 };
 
 export const useSignalR = () => useContext(SignalRContext);

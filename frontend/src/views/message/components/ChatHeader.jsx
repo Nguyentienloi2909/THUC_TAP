@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, Avatar, useTheme, Badge, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
-import { IconCircleFilled, IconMenu2, IconUsers } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { IconCircleFilled, IconMenu2 } from '@tabler/icons-react';
 import ApiService from 'src/service/ApiService';
 import CreateGroupChat from './creategroupchat';
 import AddUserToGroup from './addusertogroup';
@@ -11,7 +10,6 @@ import UsersToGroup from './UsersToGroup'; // import modal hiển thị user gro
 
 const ChatHeader = ({ selectedUser, selectedGroup }) => {
     const theme = useTheme();
-    const navigate = useNavigate();
     const [openCreateGroupModal, setOpenCreateGroupModal] = useState(false);
     const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
     const [openRemoveMemberModal, setOpenRemoveMemberModal] = useState(false);
@@ -81,7 +79,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
     // Determine the display name and status based on the selection
     const displayName = selectedUser?.fullName || selectedGroup?.name || 'Chọn user hoặc nhóm';
     const displayStatus = selectedUser ? selectedUser.status || 'Offline' : selectedGroup ? 'Nhóm' : 'Offline';
-    const avatarSrc = selectedUser?.avatar || selectedGroup?.avatar || 'https://www.bootdey.com/img/Content/avatar/avatar1.png';
+    const avatarSrc = selectedUser?.avatar || selectedGroup?.avatar || 'https://as1.ftcdn.net/jpg/02/15/15/40/1000_F_215154008_oWtNLNPoeWjsrsPYhRPRxp4w0h0TOVg2.jpg';
 
     return (
         <Box
@@ -267,6 +265,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
 ChatHeader.propTypes = {
     selectedUser: PropTypes.shape({
         name: PropTypes.string,
+        fullName: PropTypes.string,
         status: PropTypes.string,
         avatar: PropTypes.string,
     }),

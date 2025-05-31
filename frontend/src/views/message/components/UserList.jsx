@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import {
-    List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography,
+    List, ListItem, ListItemAvatar, Avatar, ListItemText,
     useTheme, Badge, Box, Tabs, Tab, Paper
 } from '@mui/material';
 import { IconUser, IconUsers } from '@tabler/icons-react';
@@ -70,6 +71,21 @@ const UserListItem = React.memo(({ user, selected, onClick, unread }) => {
     );
 });
 
+UserListItem.displayName = 'UserListItem';
+
+UserListItem.propTypes = {
+    user: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string,
+        avatar: PropTypes.string,
+        fullName: PropTypes.string,
+        lastMessage: PropTypes.string,
+    }).isRequired,
+    selected: PropTypes.bool,
+    onClick: PropTypes.func.isRequired,
+    unread: PropTypes.bool,
+};
+
 const GroupListItem = React.memo(({ group, selected, onClick, unread }) => {
     const theme = useTheme();
     return (
@@ -91,7 +107,14 @@ const GroupListItem = React.memo(({ group, selected, onClick, unread }) => {
                     overlap="circular"
                     anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                    <Avatar alt={group.name} src={group.icon} />
+                    <Avatar
+                        alt={group.name}
+                        src={
+                            group.icon && typeof group.icon === 'string' && group.icon.trim()
+                                ? group.icon
+                                : 'https://as1.ftcdn.net/jpg/02/15/15/40/1000_F_215154008_oWtNLNPoeWjsrsPYhRPRxp4w0h0TOVg2.jpg'
+                        }
+                    />
                 </Badge>
             </ListItemAvatar>
             <ListItemText
@@ -134,8 +157,22 @@ const GroupListItem = React.memo(({ group, selected, onClick, unread }) => {
     );
 });
 
+GroupListItem.displayName = 'GroupListItem';
+
+GroupListItem.propTypes = {
+    group: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        name: PropTypes.string, // Added name prop validation
+        icon: PropTypes.string,
+        lastMessage: PropTypes.string,
+        members: PropTypes.array,
+    }).isRequired,
+    selected: PropTypes.bool,
+    onClick: PropTypes.func.isRequired,
+    unread: PropTypes.bool,
+};
+
 const UserList = ({
-    users = [],
     selectedUser,
     selectedGroup,
     onSelectUser,
@@ -235,4 +272,22 @@ const UserList = ({
     );
 };
 
+UserList.propTypes = {
+    selectedUser: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        avatar: PropTypes.string,
+        fullName: PropTypes.string,
+        lastMessage: PropTypes.string,
+    }),
+    selectedGroup: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        icon: PropTypes.string,
+        lastMessage: PropTypes.string,
+        members: PropTypes.array,
+    }),
+    onSelectUser: PropTypes.func,
+    onSelectGroup: PropTypes.func,
+};
 export default UserList;

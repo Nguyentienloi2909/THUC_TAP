@@ -1,8 +1,9 @@
 // src/contexts/NotificationContext.jsx
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import ApiService from 'src/service/ApiService';
-import { notificationConnection } from '../service/SignalR';
+import { notificationConnection as createNotificationConnection } from '../service/SignalR';
 import { useUser } from './UserContext';
+import PropTypes from 'prop-types';
 
 export const NotificationContext = createContext();
 
@@ -10,13 +11,16 @@ export const NotificationProvider = ({ children }) => {
     const { user } = useUser();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [connection, setConnection] = useState(null);
 
-    // Hàm sort notification mới nhất lên đầu
-    const sortNotifications = (arr) =>
-        [...arr].sort(
-            (a, b) =>
-                new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt)
-        );
+    const sortNotifications = useCallback(
+        (arr) =>
+            [...arr].sort(
+                (a, b) =>
+                    new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt)
+            ),
+        []
+    );
 
     const fetchNotifications = useCallback(async () => {
         if (!user.isAuthenticated) return;
@@ -29,48 +33,69 @@ export const NotificationProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [user.isAuthenticated]);
+    }, [user.isAuthenticated, sortNotifications]);
 
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
 
-    // Listen for SignalR events
     useEffect(() => {
+        if (!user.isAuthenticated) {
+            setConnection(null);
+            return;
+        }
+
+        const newConnection = createNotificationConnection();
+        setConnection(newConnection);
+
+        return () => {
+            if (newConnection && newConnection.state === 'Connected') {
+                newConnection.stop();
+            }
+        };
+    }, [user.isAuthenticated]);
+
+    useEffect(() => {
+        if (!connection || !user.isAuthenticated) return;
+
         let isMounted = true;
-        if (!user.isAuthenticated) return;
 
         const startConnection = async () => {
             try {
-                if (notificationConnection.state !== 'Connected') {
-                    await notificationConnection.start();
-                    console.log('SignalR Connected');
+                if (connection.state === 'Disconnected') {
+                    await connection.start();
+                    if (isMounted) {
+                        console.log('SignalR notification connection started');
+                    }
                 }
-                // Đăng ký event chỉ 1 lần
                 const handler = (notification) => {
                     if (!notification.role || notification.role === user.role) {
-                        setNotifications((prev) =>
-                            sortNotifications([notification, ...prev])
-                        );
+                        setNotifications((prev) => sortNotifications([notification, ...prev]));
                     }
                 };
-                notificationConnection.on('ReceiveNotification', handler);
+                connection.on('ReceiveNotification', handler);
 
-                // Không gọi fetchNotifications ở đây để tránh gọi lại API
+                return () => {
+                    if (isMounted) {
+                        connection.off('ReceiveNotification');
+                        if (connection.state === 'Connected') {
+                            connection.stop();
+                        }
+                    }
+                };
             } catch (error) {
-                console.error('SignalR notificationConnection Error:', error);
+                if (isMounted) {
+                    console.error('SignalR notification connection error:', error);
+                }
             }
         };
 
         startConnection();
 
         return () => {
-            // Chỉ hủy đăng ký event, không stop connection
-            notificationConnection.off('ReceiveNotification');
             isMounted = false;
         };
-        // Chỉ phụ thuộc user.isAuthenticated, user.role
-    }, [user.isAuthenticated, user.role]);
+    }, [connection, user.isAuthenticated, user.role, sortNotifications]);
 
     const markAsRead = useCallback(async (notificationId) => {
         try {
@@ -85,7 +110,7 @@ export const NotificationProvider = ({ children }) => {
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
-    }, []);
+    }, [sortNotifications]);
 
     const markAllAsRead = useCallback(async () => {
         try {
@@ -98,7 +123,7 @@ export const NotificationProvider = ({ children }) => {
         } catch (error) {
             console.error('Error marking all as read:', error);
         }
-    }, [notifications]);
+    }, [notifications, sortNotifications]);
 
     return (
         <NotificationContext.Provider
@@ -113,4 +138,8 @@ export const NotificationProvider = ({ children }) => {
             {children}
         </NotificationContext.Provider>
     );
+};
+
+NotificationProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 };

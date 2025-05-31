@@ -11,7 +11,7 @@ import AddMemberModal from './modal/AddUser';
 import Snackbar from '@mui/material/Snackbar';
 
 // Styled components
-const StyledContainer = styled(Box)(({ theme }) => ({
+const StyledContainer = styled(Box)(() => ({
     position: 'relative',
     overflow: 'hidden',
     '&::before': {
@@ -270,4 +270,5 @@ const GroupById = () => {
     );
 };
 
-export default React.memo(GroupById);
+const MemoizedGroupById = React.memo(GroupById);
+export default MemoizedGroupById;

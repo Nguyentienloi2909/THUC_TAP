@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 const MessageBadgeContext = createContext();
-
 export const MessageBadgeProvider = ({ children }) => {
     // { userId: true, groupId: true }
     const [unread, setUnread] = useState({});
@@ -31,5 +31,10 @@ export const MessageBadgeProvider = ({ children }) => {
         </MessageBadgeContext.Provider>
     );
 };
+
+MessageBadgeProvider.propTypes = {
+    children: PropTypes.node.isRequired,
+};
+
 
 export const useMessageBadge = () => useContext(MessageBadgeContext);

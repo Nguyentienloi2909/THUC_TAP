@@ -75,6 +75,8 @@ export const UserProvider = ({ children }) => {
 
     const login = async (username, password) => {
         try {
+            // Xóa cache profile trước khi login
+            localStorage.removeItem('userProfile');
             const response = await ApiService.loginUser({
                 Email: username,
                 PasswordHash: password
@@ -118,6 +120,8 @@ export const UserProvider = ({ children }) => {
         sessionStorage.removeItem('authToken');
         sessionStorage.removeItem('role');
         sessionStorage.removeItem('fullName');
+        // Xóa cache profile khi logout
+        localStorage.removeItem('userProfile');
         setUser({
             role: null,
             isAuthenticated: false,

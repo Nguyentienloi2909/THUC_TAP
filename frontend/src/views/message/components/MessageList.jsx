@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Box, Typography, Avatar, Paper, useTheme } from '@mui/material';
+import PropTypes from 'prop-types';
 import ApiService from '../../../service/ApiService';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg'; // Avatar mặc định
 
@@ -286,6 +287,32 @@ const MessageList = ({ messages = [], selectedUser, selectedGroup }) => {
             <div ref={messagesEndRef} />
         </Box>
     );
+};
+MessageList.propTypes = {
+    messages: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+            senderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+            senderName: PropTypes.string,
+            sentAt: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
+            content: PropTypes.string,
+        })
+    ),
+    selectedUser: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        avatar: PropTypes.string,
+        name: PropTypes.string,
+    }),
+    selectedGroup: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        members: PropTypes.arrayOf(
+            PropTypes.shape({
+                id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                avatar: PropTypes.string,
+                name: PropTypes.string,
+            })
+        ),
+    }),
 };
 
 export default MessageList;

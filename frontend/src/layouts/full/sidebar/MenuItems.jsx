@@ -1,6 +1,6 @@
 import {
-    IconLayoutDashboard, IconReport, IconBuilding, IconTournament, IconLicense, IconUsers, IconReportAnalytics,
-    IconCheckbox, IconInfoCircle, IconSettings, IconMessage, IconDeviceImacDollar, IconUsersGroup,
+    IconLayoutDashboard, IconReport, IconBuilding, IconTournament, IconLicense, IconReportAnalytics,
+    IconCheckbox, IconInfoCircle, IconMessage, IconDeviceImacDollar, IconUsersGroup,
     IconWallet, IconCalendarTime
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
@@ -109,6 +109,12 @@ const getMenuItems = (userRole) => {
         {
             navlabel: true,
             subheader: 'Chức năng',
+        },
+        {
+            id: uniqueId(),
+            title: 'Quản lý nhóm',
+            icon: IconUsersGroup,
+            href: '/manage/group',
         },
         {
             id: uniqueId(),

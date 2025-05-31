@@ -1,8 +1,8 @@
 // src/guard.js
-import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useUser } from './contexts/UserContext';
 import { CircularProgress } from '@mui/material';
+import PropTypes from 'prop-types';
 
 export const ProtectedRoute = ({ element: Component }) => {
     const { user } = useUser();
@@ -17,6 +17,10 @@ export const ProtectedRoute = ({ element: Component }) => {
     ) : (
         <Navigate to="/auth/login" replace state={{ from: location }} />
     );
+};
+
+ProtectedRoute.propTypes = {
+    element: PropTypes.elementType.isRequired,
 };
 
 export const AdminRoute = ({ element: Component }) => {
@@ -34,6 +38,10 @@ export const AdminRoute = ({ element: Component }) => {
     );
 };
 
+AdminRoute.propTypes = {
+    element: PropTypes.elementType.isRequired,
+};
+
 export const LeaderRoute = ({ element: Component }) => {
     const { user } = useUser();
     const location = useLocation();
@@ -49,6 +57,10 @@ export const LeaderRoute = ({ element: Component }) => {
     );
 };
 
+LeaderRoute.propTypes = {
+    element: PropTypes.elementType.isRequired,
+};
+
 export const UserRoute = ({ element: Component }) => {
     const { user } = useUser();
     const location = useLocation();
@@ -62,4 +74,8 @@ export const UserRoute = ({ element: Component }) => {
     ) : (
         <Navigate to="/auth/login" replace state={{ from: location }} />
     );
+};
+
+UserRoute.propTypes = {
+    element: PropTypes.elementType.isRequired,
 };

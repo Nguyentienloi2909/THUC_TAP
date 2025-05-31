@@ -1,14 +1,15 @@
 // src/layouts/header/ListNotification.jsx
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Box, Typography, Menu, MenuItem, Divider, Button } from '@mui/material';
 import { IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from '../../../contexts/NotificationContext';
 import { useUser } from 'src/contexts/UserContext'; // Thêm useUser
+import PropTypes from 'prop-types';
 
 const ListNotification = ({ anchorEl, open, onClose }) => {
     const navigate = useNavigate();
-    const { notifications, markAsRead, markAllAsRead } = useContext(NotificationContext);
+    const { notifications, markAsRead } = useContext(NotificationContext);
     const { user } = useUser(); // Lấy thông tin người dùng
 
     const handleNotificationClick = (notification) => {
@@ -102,6 +103,11 @@ const ListNotification = ({ anchorEl, open, onClose }) => {
             </Box>
         </Menu>
     );
+};
+ListNotification.propTypes = {
+    anchorEl: PropTypes.any,
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
 };
 
 export default ListNotification;

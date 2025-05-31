@@ -79,8 +79,23 @@ export default class ApiService {
         return this.handleRequest('get', '/User');
     }
 
-    static getUserProfile() {
-        return this.handleRequest('get', '/User/getProfile');
+    static async getUserProfile() {
+        const currentToken = sessionStorage.getItem('authToken');
+        const cachedProfile = localStorage.getItem('userProfile');
+        if (cachedProfile) {
+            try {
+                const profile = JSON.parse(cachedProfile);
+                if (profile?.token === currentToken) {
+                    return profile;
+                }
+            } catch {
+                // intentionally ignored JSON parse error
+            }
+        }
+        const response = await this.handleRequest('get', '/User/getProfile');
+        // Lưu kèm token vào cache
+        localStorage.setItem('userProfile', JSON.stringify({ ...response, token: currentToken }));
+        return response;
     }
 
     static getUser(userId) {
@@ -95,8 +110,14 @@ export default class ApiService {
     }
 
     /** DEPARTMENT MANAGEMENT */
-    static getAllDepartments() {
-        return this.handleRequest('get', '/Department');
+    static async getAllDepartments() {
+        const cachedDepartments = localStorage.getItem('departments');
+        if (cachedDepartments) {
+            return JSON.parse(cachedDepartments);
+        }
+        const response = await this.handleRequest('get', '/Department');
+        localStorage.setItem('departments', JSON.stringify(response));
+        return response;
     }
 
     static getDepartmentById(departmentId) {

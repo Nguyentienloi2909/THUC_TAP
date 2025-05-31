@@ -1,12 +1,11 @@
 // src/layouts/header/Profile.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from 'src/contexts/UserContext';
 import {
   Avatar,
   Box,
   Menu,
-  Button,
   IconButton,
   MenuItem,
   ListItemIcon,

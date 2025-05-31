@@ -1,8 +1,8 @@
 // src/routes/Router.jsx
-import React, { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
-import { ProtectedRoute, AdminRoute, LeaderRoute, UserRoute } from '../guard';
+import { ProtectedRoute, AdminRoute, LeaderRoute } from '../guard';
 import Message from '../views/message/Message';
 
 // Layouts
@@ -54,7 +54,6 @@ const AddTaskPage = Loadable(lazy(() => import('../views/task/Add')));
 const UpdateTaskPage = Loadable(lazy(() => import('../views/task/Update')));
 
 // Group Management Pages
-const Group = Loadable(lazy(() => import('../views/group/group')));
 const GroupById = Loadable(lazy(() => import('../views/group/groupbyid')));
 
 // Department Management Pages
@@ -80,7 +79,11 @@ const StatisticPayroll = Loadable(lazy(() => import('../views/statistics/Statist
 const Router = [
   {
     path: '/',
-    element: <ProtectedRoute element={FullLayout} />, // Sửa: truyền FullLayout thay vì <FullLayout />
+    element: (
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <ProtectedRoute element={FullLayout} />
+      </Suspense>
+    ),
     children: [
       { path: '/', element: <Navigate to="/home" /> },
       { path: '/home', element: <ProtectedRoute element={HomePage} /> },
@@ -138,12 +141,15 @@ const Router = [
       // Group Management
       { path: '/manage/group', element: <ProtectedRoute element={GroupById} /> },
 
+
       // Notification
       { path: '/notification/:id', element: <ProtectedRoute element={NotificationDetails} /> },
       { path: '/notification/add', element: <AdminRoute element={AddNotification} /> },
       { path: '/notification/edit', element: <AdminRoute element={EditNotification} /> },
-      { path: '/messages', element: <ProtectedRoute element={Message} /> },
 
+      // Messages
+      { path: '/messages/:userId?', element: <ProtectedRoute element={Message} /> },
+      { path: '/messages/group/:groupId?', element: <ProtectedRoute element={Message} /> },
       // Profile
       { path: '/profile', element: <ProtectedRoute element={Profile} /> },
       { path: '/edit-profile', element: <ProtectedRoute element={EditProfile} /> },

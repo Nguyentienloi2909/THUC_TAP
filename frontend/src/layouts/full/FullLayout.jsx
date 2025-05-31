@@ -1,7 +1,7 @@
 // src/layouts/FullLayout.jsx
-import React, { useState, useEffect, Suspense } from "react";
+import { useState, Suspense, memo } from "react";
 import { styled, Container, Box, Typography, useTheme } from "@mui/material";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext";
 import Header from "./header/Header";
 import Sidebar from "./sidebar/Sidebar";
@@ -31,17 +31,20 @@ const ContentBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
 }));
 
+// Bọc Header và Sidebar bằng memo
+const MemoHeader = memo(Header);
+const MemoSidebar = memo(Sidebar);
+
 const FullLayout = () => {
   const { user, logout } = useUser();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const location = useLocation();
   const theme = useTheme();
 
   return (
     <MainWrapper className="mainwrapper">
       {/* Sidebar */}
-      <Sidebar
+      <MemoSidebar
         isSidebarOpen={isSidebarOpen}
         isMobileSidebarOpen={isMobileSidebarOpen}
         onSidebarClose={() => setMobileSidebarOpen(false)}
@@ -51,7 +54,7 @@ const FullLayout = () => {
       {/* Main Wrapper */}
       <PageWrapper className="page-wrapper">
         {/* Header */}
-        <Header
+        <MemoHeader
           toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
           toggleMobileSidebar={() => setMobileSidebarOpen(true)}
           user={user}

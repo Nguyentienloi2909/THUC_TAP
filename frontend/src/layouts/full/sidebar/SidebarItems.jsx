@@ -1,10 +1,11 @@
-import React from 'react';
 import { useLocation } from 'react-router';
 import { Box, List } from '@mui/material';
 import NavItem from './NavItem';
 import NavGroup from './NavGroup/NavGroup';
+import PropTypes from 'prop-types';
+import { memo } from 'react';
 
-const SidebarItems = ({ items }) => {
+const SidebarItems = memo(({ items }) => {
     const { pathname } = useLocation();
     const pathDirect = pathname;
 
@@ -23,6 +24,10 @@ const SidebarItems = ({ items }) => {
             </List>
         </Box>
     );
+});
+SidebarItems.displayName = 'SidebarItems';
+SidebarItems.propTypes = {
+    items: PropTypes.array.isRequired,
 };
 
 export default SidebarItems;
