@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
     Paper, Grid, Typography, Box, Card, CardContent, Divider,
     Button, Stack, FormControl, InputLabel, Select, MenuItem,
-    CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme
+    CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme,
+    Tooltip
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import {
-    IconPrinter, IconDownload, IconMail, IconUser, IconId,
-    IconBuildingSkyscraper, IconBriefcase, IconReceipt2,
-    IconCalendarEvent, IconCalendarStats, IconClockHour4,
-    IconBeach, IconAward, IconCreditCard, IconBuildingBank,
+    IconPrinter, IconDownload, IconAward,
     IconAlertCircle
 } from '@tabler/icons-react';
 import ApiService from '../../service/ApiService';
@@ -19,6 +17,8 @@ const formatCurrency = value => (
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
         : 'N/A'
 );
+
+import PropTypes from 'prop-types';
 
 const InfoItem = ({ icon, label, value, bold = true }) => (
     <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
@@ -33,6 +33,13 @@ const InfoItem = ({ icon, label, value, bold = true }) => (
         </Box>
     </Stack>
 );
+
+InfoItem.propTypes = {
+    icon: PropTypes.element.isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.any,
+    bold: PropTypes.bool
+};
 
 const parseNote = (note) => {
     if (!note) return { lateDays: 0, absentDays: 0, deductions: [] };
@@ -52,7 +59,7 @@ const parseNote = (note) => {
 };
 
 const Payroll = () => {
-    const theme = useTheme ? useTheme() : {};
+    const theme = useTheme();
     const [profile, setProfile] = useState(null);
     const [salary, setSalary] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -226,8 +233,20 @@ const Payroll = () => {
                 <>
                     <Box mb={3} display="flex" justifyContent="flex-end">
                         <Stack direction="row" spacing={1.5}>
-                            <Button variant="outlined" startIcon={<IconPrinter size={18} />}>In phiếu lương</Button>
-                            <Button variant="outlined" startIcon={<IconDownload size={18} />}>Tải xuống</Button>
+                            <Tooltip title="Chức năng đang phát triển" arrow>
+                                <span>
+                                    <Button variant="outlined" startIcon={<IconPrinter size={18} />} disabled>
+                                        In phiếu lương
+                                    </Button>
+                                </span>
+                            </Tooltip>
+                            <Tooltip title="Chức năng đang phát triển" arrow>
+                                <span>
+                                    <Button variant="outlined" startIcon={<IconDownload size={18} />} disabled>
+                                        Tải xuống
+                                    </Button>
+                                </span>
+                            </Tooltip>
                         </Stack>
                     </Box>
 

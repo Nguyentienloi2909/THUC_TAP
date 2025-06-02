@@ -13,6 +13,8 @@ import {
     DialogContent,
     DialogActions,
     CircularProgress,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import { IconSend, IconEye, IconArrowLeft, IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -23,11 +25,13 @@ const AddNotification = () => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        senderName: '' // Add senderName field
+        senderName: ''
     });
     const [showPreview, setShowPreview] = useState(false);
-    const [openConfirm, setOpenConfirm] = useState(false);
+    const [openConfirmSend, setOpenConfirmSend] = useState(false);
+    const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,13 +40,13 @@ const AddNotification = () => {
                 const userProfile = await ApiService.getUserProfile();
                 setFormData(prev => ({
                     ...prev,
-                    senderName: userProfile.fullName // Set senderName from user profile
+                    senderName: userProfile.fullName
                 }));
             } catch (error) {
+                // Không cần alert, chỉ log
                 console.error('Failed to fetch user profile:', error);
             }
         };
-
         fetchUserProfile();
     }, []);
 
@@ -58,75 +62,112 @@ const AddNotification = () => {
     // Xử lý khi submit form
     const handleSubmit = (e) => {
         e.preventDefault();
-        setOpenConfirm(true); // Mở dialog xác nhận
+        setOpenConfirmSend(true); // Mở dialog xác nhận gửi
     };
 
     // Xử lý khi xác nhận gửi thông báo
     const handleConfirmSubmit = async () => {
-        setOpenConfirm(false); // Đóng dialog
-        setLoading(true); // Hiển thị loading
+        setOpenConfirmSend(false);
+        setLoading(true);
         try {
-            const response = await ApiService.sendNotification(formData);
-            console.log('Notification sent:', response);
-            alert('Thông báo gửi thành công!');
-            navigate('/home');
+            await ApiService.sendNotification(formData);
+            setSnackbar({ open: true, message: 'Thông báo gửi thành công!', severity: 'success' });
+            setTimeout(() => navigate('/home'), 1200);
         } catch (error) {
-            console.error('Error sending notification:', error);
-            alert('Có lỗi xảy ra khi gửi thông báo');
+            setSnackbar({ open: true, message: 'Có lỗi xảy ra khi gửi thông báo', severity: 'error' });
         } finally {
-            setLoading(false); // Tắt loading
+            setLoading(false);
         }
     };
 
     // Xử lý khi nhấn nút Hủy
     const handleCancel = () => {
         if (formData.title || formData.description) {
-            setOpenConfirm(true); // Mở dialog nếu có dữ liệu
+            setOpenConfirmCancel(true); // Mở dialog xác nhận hủy nếu có dữ liệu
         } else {
             navigate(-1); // Trở lại nếu không có dữ liệu
         }
     };
 
-    // Xử lý khi xác nhận hủy
+    // Xác nhận hủy tạo mới
     const handleConfirmCancel = () => {
-        setOpenConfirm(false);
+        setOpenConfirmCancel(false);
         navigate(-1);
     };
 
     return (
         <PageContainer title="Tạo thông báo" description="Tạo thông báo mới">
-            {/* Hiển thị CircularProgress khi đang loading */}
+            {/* Overlay loading */}
             {loading && (
                 <Box
                     sx={{
                         position: 'fixed',
                         top: 0,
                         left: 0,
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        zIndex: 1000,
+                        width: '100vw',
+                        height: '100vh',
+                        bgcolor: 'rgba(0,0,0,0.25)',
+                        zIndex: 2000,
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}
                 >
-                    <CircularProgress />
+                    <CircularProgress size={48} color="primary" />
                 </Box>
             )}
 
-            {/* Dialog xác nhận */}
-            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+            {/* Snackbar thông báo */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+
+            {/* Dialog xác nhận gửi */}
+            <Dialog open={openConfirmSend} onClose={() => setOpenConfirmSend(false)}>
                 <DialogTitle>Xác nhận gửi thông báo</DialogTitle>
                 <DialogContent>
                     <Typography>Bạn có chắc chắn muốn gửi thông báo này không?</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenConfirm(false)} color="error">
+                    <Button onClick={() => setOpenConfirmSend(false)} color="inherit">
                         Hủy
                     </Button>
-                    <Button onClick={handleConfirmSubmit} color="primary">
+                    <Button
+                        onClick={handleConfirmSubmit}
+                        color="primary"
+                        variant="contained"
+                        disabled={loading}
+                        autoFocus
+                    >
                         Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog xác nhận hủy */}
+            <Dialog open={openConfirmCancel} onClose={() => setOpenConfirmCancel(false)}>
+                <DialogTitle>Xác nhận hủy tạo thông báo</DialogTitle>
+                <DialogContent>
+                    <Typography>Bạn có chắc chắn muốn hủy tạo thông báo mới này không?</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirmCancel(false)} color="inherit">
+                        Không
+                    </Button>
+                    <Button
+                        onClick={handleConfirmCancel}
+                        color="error"
+                        variant="contained"
+                        autoFocus
+                    >
+                        Hủy tạo mới
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -138,6 +179,7 @@ const AddNotification = () => {
                     startIcon={<IconArrowLeft />}
                     onClick={handleCancel}
                     sx={{ fontSize: '0.95rem' }}
+                    disabled={loading}
                 >
                     Trở lại
                 </Button>
@@ -167,6 +209,7 @@ const AddNotification = () => {
                                             value={formData.title}
                                             onChange={handleChange}
                                             required
+                                            disabled={loading}
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
@@ -179,6 +222,7 @@ const AddNotification = () => {
                                             multiline
                                             rows={6}
                                             required
+                                            disabled={loading}
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
@@ -187,6 +231,7 @@ const AddNotification = () => {
                                                 variant="outlined"
                                                 onClick={() => setShowPreview(!showPreview)}
                                                 startIcon={<IconEye />}
+                                                disabled={loading}
                                             >
                                                 {showPreview ? 'Ẩn xem trước' : 'Xem trước'}
                                             </Button>
@@ -195,6 +240,7 @@ const AddNotification = () => {
                                                 color="error"
                                                 onClick={handleCancel}
                                                 startIcon={<IconX />}
+                                                disabled={loading}
                                             >
                                                 Hủy
                                             </Button>
@@ -202,6 +248,7 @@ const AddNotification = () => {
                                                 type="submit"
                                                 variant="contained"
                                                 startIcon={<IconSend />}
+                                                disabled={loading}
                                             >
                                                 Lưu và gửi
                                             </Button>

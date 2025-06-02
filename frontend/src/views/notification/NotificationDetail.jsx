@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Box, Typography, Divider, ButtonGroup, Button } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
@@ -110,7 +110,7 @@ const NotificationDetail = () => {
                         {notification.title || 'Tiêu đề thông báo'}
                     </Typography>
                     <Typography variant="h5" sx={{ textAlign: 'center' }} gutterBottom>
-                        --------------------------@@@------------------------
+                        --------------------------------------------------
                     </Typography>
                     {/* Add margin to create space between title and description */}
                     <Box sx={{ height: 20 }} /> {/* Adjust height as needed */}

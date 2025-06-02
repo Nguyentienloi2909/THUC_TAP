@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Typography, Box, TextField, Chip, Stack, FormControl, InputLabel, Select, MenuItem,
     CircularProgress, Tooltip, IconButton
@@ -6,7 +6,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import PageContainer from 'src/components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
-import { IconEdit, IconTrash, IconDownload } from '@tabler/icons-react';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ApiService from '../../service/ApiService';
 import { useNavigate } from 'react-router-dom';
 
@@ -54,6 +54,7 @@ const Tasks = () => {
             case 'in progress': return 'success';
             case 'pending': return 'warning';
             case 'late': return 'error';
+            case 'cancelled': return 'default'; // Thêm dòng này cho "Đã hủy"
             default: return 'default';
         }
     };
@@ -126,7 +127,11 @@ const Tasks = () => {
             renderCell: (params) => (
                 <Chip
                     size="small"
-                    label={params.value}
+                    label={
+                        params.value.toLowerCase() === 'cancelled'
+                            ? 'Đã hủy'
+                            : params.value
+                    }
                     color={getStatusColor(params.value)}
                     sx={{ borderRadius: 1, fontWeight: 500 }}
                 />
@@ -247,6 +252,7 @@ const Tasks = () => {
                                     <MenuItem value="in progress">Đang thực hiện</MenuItem>
                                     <MenuItem value="pending">Chờ xử lý</MenuItem>
                                     <MenuItem value="late">Trễ hạn</MenuItem>
+                                    <MenuItem value="cancelled">Đã hủy</MenuItem> {/* Thêm dòng này */}
                                 </Select>
                             </FormControl>
                         </Stack>

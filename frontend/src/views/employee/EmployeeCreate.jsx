@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -9,6 +9,11 @@ import {
     Typography,
     Card,
     CardContent,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import ApiService from 'src/service/ApiService';
@@ -43,6 +48,7 @@ const EmployeeCreate = () => {
     const [errors, setErrors] = useState({});
     const [departments, setDepartments] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [openConfirm, setOpenConfirm] = useState(false);
 
     useEffect(() => {
         const fetchDepartments = async () => {
@@ -119,10 +125,14 @@ const EmployeeCreate = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (!validate()) return;
+        setOpenConfirm(true);
+    };
 
+    const handleConfirmCreate = async () => {
+        setOpenConfirm(false);
         try {
             setLoading(true);
 
@@ -139,7 +149,7 @@ const EmployeeCreate = () => {
             // Default fields
             formData.append('phoneNumber', '');
             formData.append('address', '');
-            formData.append('gender', 'true');
+            formData.append('gender', form.gender);
             formData.append('birthDate', '');
             formData.append('bankName', '');
             formData.append('bankNumber', '');
@@ -277,6 +287,23 @@ const EmployeeCreate = () => {
                     </Box>
                 </CardContent>
             </Card>
+            {/* Modal xác nhận */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Xác nhận tạo mới nhân viên</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Bạn có chắc chắn muốn tạo mới nhân viên với thông tin này?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmCreate} color="primary" variant="contained" disabled={loading}>
+                        {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };

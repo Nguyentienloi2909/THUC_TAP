@@ -17,7 +17,7 @@ const About = () => {
                         style={{
                             width: '300px',
                             height: 'auto',
-                            backgroundColor: 'whitesmoke', // Use a lighter background color
+                            // backgroundColor: 'whitesmoke', // Use a lighter background color
                             padding: '10px', // Optional: Add padding for better appearance
                             borderRadius: '8px' // Optional: Add border-radius for a softer look
                         }}

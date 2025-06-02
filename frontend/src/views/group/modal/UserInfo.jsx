@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Avatar, Typography, Button, Divider, Box
@@ -28,7 +27,7 @@ const EmployeeInfoModal = ({ employee, open, onClose }) => {
                 alignItems: 'center',
                 pb: 2
             }}>
-                <Typography variant="h6" fontWeight="bold">
+                <Typography variant="subtitle1" fontWeight="bold" component="span">
                     Thông tin thành viên
                 </Typography>
                 <Button
@@ -149,28 +148,28 @@ EmployeeInfoModal.propTypes = {
 };
 
 // Cách sử dụng trong component chính
-const GroupMembers = () => {
-    const [selectedEmployee] = useState(null);
-    const [modalOpen, setModalOpen] = useState(false);
+// const GroupMembers = () => {
+//     const [selectedEmployee] = useState(null);
+//     const [modalOpen, setModalOpen] = useState(false);
 
-    // Hàm này sẽ được gọi khi click "Xem thông tin" từ menu dropdown
-    // const handleViewInfo = (employee) => {
-    //     setSelectedEmployee(employee);
-    //     setModalOpen(true);
-    // };
+//     // Hàm này sẽ được gọi khi click "Xem thông tin" từ menu dropdown
+//     // const handleViewInfo = (employee) => {
+//     //     setSelectedEmployee(employee);
+//     //     setModalOpen(true);
+//     // };
 
-    return (
-        <>
-            {/* ... Phần code hiển thị danh sách thành viên ... */}
+//     return (
+//         <>
+//             {/* ... Phần code hiển thị danh sách thành viên ... */}
 
-            {/* Modal hiển thị thông tin */}
-            <EmployeeInfoModal
-                employee={selectedEmployee}
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-            />
-        </>
-    );
-};
+//             {/* Modal hiển thị thông tin */}
+//             <EmployeeInfoModal
+//                 employee={selectedEmployee}
+//                 open={modalOpen}
+//                 onClose={() => setModalOpen(false)}
+//             />
+//         </>
+//     );
+// };
 
-export default GroupMembers;
+export default EmployeeInfoModal;

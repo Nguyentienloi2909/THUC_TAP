@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -85,7 +85,12 @@ const StatisticEmployee = () => {
         plotOptions: {
             bar: { horizontal: false, columnWidth: '55%' }
         },
-        dataLabels: { enabled: true }
+        dataLabels: {
+            enabled: true,
+            style: {
+                colors: ['#000'] // Số màu đen
+            }
+        }
     };
 
     if (loading) {

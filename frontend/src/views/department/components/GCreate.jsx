@@ -1,32 +1,35 @@
-import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, CircularProgress, Card, CardContent } from '@mui/material';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
+import { Box, TextField, Button, Typography, CircularProgress, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import ApiService from 'src/service/ApiService';
 
 const GCreate = ({ departmentId, departmentName, onCreated, onCancel }) => {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [openConfirm, setOpenConfirm] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
+        setError('');
+        if (!name.trim()) {
+            setError('Tên nhóm không được để trống');
+            return;
+        }
+        setOpenConfirm(true);
+    };
+
+    const handleConfirmCreate = async () => {
+        setOpenConfirm(false);
         setLoading(true);
         setError('');
         try {
-            console.log('Creating group with data:', { 
+            await ApiService.createGroup({
                 departmentId: departmentId,
-                groupName: name 
+                groupName: name
             });
-            
-            const response = await ApiService.createGroup({ 
-                departmentId: departmentId,
-                groupName: name 
-            });
-            
-            console.log('Group creation API response:', response);
             if (onCreated) onCreated();
         } catch (err) {
-            console.error('API error:', err);
-            console.error('Error details:', err.response?.data);
             setError(err.response?.data?.message || err.message || 'Create failed');
         } finally {
             setLoading(false);
@@ -64,8 +67,31 @@ const GCreate = ({ departmentId, departmentName, onCreated, onCancel }) => {
                     </Box>
                 </Box>
             </CardContent>
+            {/* Modal xác nhận */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Xác nhận tạo mới nhóm</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Bạn có chắc chắn muốn tạo mới nhóm với tên &quot;<b>{name}</b>&quot; trong phòng ban &quot;<b>{departmentName}</b>&quot;?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmCreate} color="primary" variant="contained" disabled={loading}>
+                        {loading ? <CircularProgress size={20} /> : 'Xác nhận'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Card>
     );
+};
+GCreate.propTypes = {
+    departmentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    departmentName: PropTypes.string.isRequired,
+    onCreated: PropTypes.func,
+    onCancel: PropTypes.func
 };
 
 export default GCreate;

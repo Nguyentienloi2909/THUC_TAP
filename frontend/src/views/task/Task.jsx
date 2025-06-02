@@ -7,7 +7,7 @@ import {
     IconButton, Tooltip, // Thêm Tooltip vào đây
 } from '@mui/material';
 import {
-    IconPlus, IconEdit, IconTrash, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
+    IconPlus, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
     IconDownload, // Thêm IconDownload vì đã sử dụng trong cột Tài liệu
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -41,7 +41,9 @@ const createStatusConfig = (statusList) => {
     return config;
 };
 
-const TaskStatusChip = React.memo(({ status, statusConfig }) => {
+import PropTypes from 'prop-types';
+
+const TaskStatusChip = React.memo(function TaskStatusChip({ status, statusConfig }) {
     const key = status?.toLowerCase().replace(/\s+/g, '');
     const config = (statusConfig && statusConfig[key]) || defaultStatusConfig[key] || {
         label: 'Không xác định',
@@ -59,6 +61,13 @@ const TaskStatusChip = React.memo(({ status, statusConfig }) => {
     );
 });
 
+TaskStatusChip.displayName = 'TaskStatusChip';
+
+TaskStatusChip.propTypes = {
+    status: PropTypes.string,
+    statusConfig: PropTypes.object,
+};
+
 const Task = () => {
     const navigate = useNavigate();
     const { user } = useUser();
@@ -68,6 +77,7 @@ const Task = () => {
     const [error, setError] = useState(null);
     const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
+    const [confirmUpdateDialog, setConfirmUpdateDialog] = useState({ open: false, task: null });
     const [statusList, setStatusList] = useState([]);
 
     // Memo hóa statusConfig
@@ -143,18 +153,9 @@ const Task = () => {
     }, [navigate]);
 
     // Hàm cập nhật trạng thái nhiệm vụ cho USER
-    const handleUpdateStatus = useCallback(async (task) => {
-        if (!task?.id) return;
-        try {
-            await ApiService.updateTaskStatus(task.id);
-            // Sau khi cập nhật trạng thái, reload lại danh sách nhiệm vụ
-            fetchTasks();
-            alert('Cập nhật trạng thái thành công!');
-        } catch (error) {
-            alert('Cập nhật trạng thái thất bại!');
-            console.error('Update status error:', error);
-        }
-    }, [fetchTasks]);
+    const handleUpdateStatus = useCallback((task) => {
+        setConfirmUpdateDialog({ open: true, task });
+    }, []);
 
     const confirmAction = useCallback(async () => {
         const { action, taskId } = confirmDialog;
@@ -206,6 +207,20 @@ const Task = () => {
             alert('Không thể thêm nhiệm vụ. Vui lòng thử lại.');
         }
     }, [user]);
+
+    const handleConfirmUpdateStatus = useCallback(async () => {
+        const task = confirmUpdateDialog.task;
+        if (!task?.id) return;
+        try {
+            await ApiService.updateTaskStatus(task.id);
+            fetchTasks();
+            alert('Cập nhật trạng thái thành công!');
+        } catch (error) {
+            alert('Cập nhật trạng thái thất bại!');
+            console.error('Update status error:', error);
+        }
+        setConfirmUpdateDialog({ open: false, task: null });
+    }, [confirmUpdateDialog.task, fetchTasks]);
 
     return (
         <PageContainer title="Nhiệm vụ của tôi" description="Danh sách nhiệm vụ được giao">
@@ -353,6 +368,24 @@ const Task = () => {
                         Hủy
                     </Button>
                     <Button onClick={confirmAction} color="primary" variant="contained">
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={confirmUpdateDialog.open}
+                onClose={() => setConfirmUpdateDialog({ open: false, task: null })}
+            >
+                <DialogTitle>Xác nhận cập nhật trạng thái</DialogTitle>
+                <DialogContent>
+                    Bạn có chắc chắn muốn cập nhật trạng thái nhiệm vụ này?
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmUpdateDialog({ open: false, task: null })} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmUpdateStatus} color="primary" variant="contained">
                         Xác nhận
                     </Button>
                 </DialogActions>

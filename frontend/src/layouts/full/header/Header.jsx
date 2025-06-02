@@ -1,4 +1,3 @@
-// src/layouts/header/Header.jsx
 import { useState, useContext } from 'react';
 import { Box, AppBar, Toolbar, styled, Stack, IconButton, Badge } from '@mui/material';
 import PropTypes from 'prop-types';
@@ -48,7 +47,7 @@ const Header = ({ toggleMobileSidebar }) => {
   const [notificationEl, setNotificationEl] = useState(null);
   const { notifications } = useContext(NotificationContext);
   const { user } = useUser();
-  const { unreadCount } = useMessageBadge();
+  const { hasNewMessage } = useMessageBadge(); // Thay unreadCount bằng hasNewMessage
 
   const unreadNotificationCount = notifications.filter((n) => !n.isRead).length;
 
@@ -95,7 +94,7 @@ const Header = ({ toggleMobileSidebar }) => {
             <Badge
               variant="dot"
               color="error"
-              invisible={unreadCount === 0}
+              invisible={!hasNewMessage} // Hiển thị chấm đỏ nếu có tin nhắn mới
             >
               <IconMessage size="30" stroke="1.5" />
             </Badge>

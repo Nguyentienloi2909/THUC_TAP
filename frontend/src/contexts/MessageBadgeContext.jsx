@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 const MessageBadgeContext = createContext();
@@ -8,13 +8,11 @@ export const MessageBadgeProvider = ({ children }) => {
 
     // Khi nhận tin nhắn mới
     const markUnread = useCallback((type, id) => {
-        console.log('Mark unread:', type, id);
         setUnread(prev => ({ ...prev, [`${type}_${id}`]: true }));
     }, []);
 
     // Khi user đọc (chọn) cuộc trò chuyện
     const markRead = useCallback((type, id) => {
-        console.log('Mark read:', type, id);
         setUnread(prev => {
             const copy = { ...prev };
             delete copy[`${type}_${id}`];
@@ -22,11 +20,11 @@ export const MessageBadgeProvider = ({ children }) => {
         });
     }, []);
 
-    // Tổng số badge chưa đọc
-    const unreadCount = Object.keys(unread).length;
+    // Có tin nhắn chưa đọc không?
+    const hasNewMessage = useMemo(() => Object.keys(unread).length > 0, [unread]);
 
     return (
-        <MessageBadgeContext.Provider value={{ unread, unreadCount, markUnread, markRead }}>
+        <MessageBadgeContext.Provider value={{ unread, hasNewMessage, markUnread, markRead }}>
             {children}
         </MessageBadgeContext.Provider>
     );
@@ -35,6 +33,5 @@ export const MessageBadgeProvider = ({ children }) => {
 MessageBadgeProvider.propTypes = {
     children: PropTypes.node.isRequired,
 };
-
 
 export const useMessageBadge = () => useContext(MessageBadgeContext);

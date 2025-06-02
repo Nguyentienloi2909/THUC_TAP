@@ -12,6 +12,13 @@ import {
     CardContent,
     Avatar,
     CircularProgress,
+    Snackbar,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import PageContainer from 'src/components/container/PageContainer';
@@ -387,6 +394,8 @@ const EmployeeEdit = () => {
     const { form, setForm, departments, banks, roles, errors, setErrors, loading } =
         useEmployeeData(id);
     const [saving, setSaving] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [openConfirm, setOpenConfirm] = useState(false);
 
     const genders = useMemo(() => [
         { label: 'Nam', value: 'true' },
@@ -444,7 +453,7 @@ const EmployeeEdit = () => {
 
     const handleSubmit = useCallback(
         async (e) => {
-            e.preventDefault();
+            if (e) e.preventDefault();
             if (!validate()) return;
             setSaving(true);
             try {
@@ -460,13 +469,17 @@ const EmployeeEdit = () => {
                     }
                 });
                 await ApiService.updateUser(id, formData);
-                navigate('/manage/employee/list', {
-                    state: { success: 'Cập nhật nhân viên thành công!' },
-                });
+                setSnackbar({ open: true, message: 'Cập nhật nhân viên thành công!', severity: 'success' });
+                setTimeout(() => {
+                    navigate('/manage/employee/list', {
+                        state: { success: 'Cập nhật nhân viên thành công!' },
+                    });
+                }, 1200);
             } catch (error) {
                 setErrors({
                     general: error.response?.data?.message || 'Lỗi khi cập nhật thông tin nhân viên.',
                 });
+                setSnackbar({ open: true, message: 'Lỗi khi cập nhật thông tin nhân viên.', severity: 'error' });
             } finally {
                 setSaving(false);
             }
@@ -517,11 +530,12 @@ const EmployeeEdit = () => {
                         />
                         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                             <Button
-                                type="submit"
+                                type="button"
                                 variant="contained"
                                 color="primary"
                                 disabled={saving}
                                 sx={{ mr: 2 }}
+                                onClick={() => setOpenConfirm(true)}
                             >
                                 {saving ? 'Đang cập nhật...' : 'Cập nhật'}
                             </Button>
@@ -537,6 +551,48 @@ const EmployeeEdit = () => {
                     </Box>
                 </CardContent>
             </Card>
+            <Dialog
+                open={openConfirm}
+                onClose={() => setOpenConfirm(false)}
+            >
+                <DialogTitle>Xác nhận cập nhật</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Bạn có chắc chắn muốn cập nhật thông tin nhân viên này không?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)} color="inherit">
+                        Hủy
+                    </Button>
+                    <Button
+                        onClick={async (e) => {
+                            setOpenConfirm(false);
+                            await handleSubmit(e);
+                        }}
+                        color="primary"
+                        variant="contained"
+                        autoFocus
+                        disabled={saving}
+                    >
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={2000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </PageContainer>
     );
 };

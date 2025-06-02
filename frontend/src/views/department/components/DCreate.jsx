@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, CircularProgress, Card, CardContent } from '@mui/material';
+import { useState } from 'react';
+import { Box, TextField, Button, Typography, CircularProgress, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import ApiService from 'src/service/ApiService';
+import PropTypes from 'prop-types';
 
 const DCreate = ({ onCreated, onCancel }) => {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [openConfirm, setOpenConfirm] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
+        setError('');
+        if (!name.trim()) {
+            setError('Tên phòng ban không được để trống');
+            return;
+        }
+        setOpenConfirm(true);
+    };
+
+    const handleConfirmCreate = async () => {
+        setOpenConfirm(false);
         setLoading(true);
         setError('');
         try {
@@ -52,8 +64,29 @@ const DCreate = ({ onCreated, onCancel }) => {
                     </Box>
                 </Box>
             </CardContent>
+            {/* Modal xác nhận */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Xác nhận tạo mới phòng ban</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Bạn có chắc chắn muốn tạo mới phòng ban với tên &quot;<b>{name}</b>&quot;?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmCreate} color="primary" variant="contained" disabled={loading}>
+                        {loading ? <CircularProgress size={20} /> : 'Xác nhận'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Card>
     );
+};
+DCreate.propTypes = {
+    onCreated: PropTypes.func,
+    onCancel: PropTypes.func.isRequired,
 };
 
 export default DCreate;

@@ -8,6 +8,7 @@ import { SignalRProvider } from './contexts/SignalRContext';
 import { UserProvider } from './contexts/UserContext';
 import { MessageBadgeProvider } from './contexts/MessageBadgeContext';
 import ApiService from './service/ApiService';
+import GlobalMessageListener from './contexts/GlobalMessageListener';
 
 function App() {
   const routing = useRoutes(Router);
@@ -38,6 +39,7 @@ function App() {
           <NotificationProvider>
             <MessageBadgeProvider>
               <CssBaseline />
+              <GlobalMessageListener />
               {routing}
             </MessageBadgeProvider>
           </NotificationProvider>

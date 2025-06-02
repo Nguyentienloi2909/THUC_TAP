@@ -140,7 +140,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                         />
                     </Box>
                     <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
-                        <Typography
+                        {/* <Typography
                             component={Link}
                             to="/forgot-password"
                             fontWeight="500"
@@ -150,7 +150,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
                             }}
                         >
                             Quên mật khẩu?
-                        </Typography>
+                        </Typography> */}
                     </Stack>
                 </Stack>
 

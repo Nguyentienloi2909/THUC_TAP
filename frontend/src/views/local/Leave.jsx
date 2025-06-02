@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     TextField,
     Button,
     Grid,
     Typography,
-    MenuItem,
     FormControlLabel,
     Checkbox,
     Paper,
     Snackbar,
     Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
@@ -43,20 +47,38 @@ const Leave = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+    const [openConfirm, setOpenConfirm] = useState(false);
 
-    const groups = [
-        'Nhóm đào tạo',
-        'Nhóm phát triển',
-        'Nhóm kinh doanh',
-        'Nhóm tài chính'
-    ];
+    // Lấy ngày hiện tại ở định dạng yyyy-mm-dd
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
 
-    const handleSubmit = async (e) => {
+    // Khi nhấn nút gửi, chỉ mở modal xác nhận
+    const handleSubmit = (e) => {
         e.preventDefault();
+        setError('');
+        // Kiểm tra ngày trước khi mở modal
+        if (formData.startDate < todayStr) {
+            setError('Ngày bắt đầu nghỉ không được nhỏ hơn ngày hiện tại.');
+            return;
+        }
+        if (formData.endDate < todayStr) {
+            setError('Ngày kết thúc nghỉ không được nhỏ hơn ngày hiện tại.');
+            return;
+        }
+        if (formData.endDate < formData.startDate) {
+            setError('Ngày kết thúc nghỉ không được nhỏ hơn ngày bắt đầu nghỉ.');
+            return;
+        }
+        setOpenConfirm(true);
+    };
+
+    // Khi xác nhận gửi đơn
+    const handleConfirmSend = async () => {
+        setOpenConfirm(false);
         setLoading(true);
         setError('');
         try {
-            // Gửi đúng 3 trường theo yêu cầu API
             const payload = {
                 startDate: formData.startDate,
                 endDate: formData.endDate,
@@ -66,7 +88,7 @@ const Leave = () => {
             setSuccess(true);
             setTimeout(() => {
                 navigate('/nleave');
-            }, 1200); // Chờ 1.2s để hiển thị snackbar rồi chuyển trang
+            }, 1200);
             setFormData({
                 fullName: sessionUser.fullName || '',
                 group: sessionUser.groupName || '',
@@ -84,6 +106,15 @@ const Leave = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Khi đóng snackbar thông báo thành công hoặc thất bại
+    const handleCloseSnackbar = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSuccess(false);
+        setError('');
     };
 
     return (
@@ -131,6 +162,7 @@ const Leave = () => {
                                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                                     InputLabelProps={{ shrink: true }}
                                     required
+                                    inputProps={{ min: todayStr }}
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
@@ -142,6 +174,7 @@ const Leave = () => {
                                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                                     InputLabelProps={{ shrink: true }}
                                     required
+                                    inputProps={{ min: formData.startDate || todayStr }}
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -195,10 +228,27 @@ const Leave = () => {
                             </Grid>
                         </Grid>
                     </form>
+                    {/* Dialog xác nhận gửi đơn */}
+                    <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                        <DialogTitle>Xác nhận gửi đơn</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                Bạn có chắc chắn muốn gửi đơn xin nghỉ phép này không?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setOpenConfirm(false)} color="inherit">
+                                Hủy
+                            </Button>
+                            <Button onClick={handleConfirmSend} color="primary" variant="contained" autoFocus>
+                                Xác nhận
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                     <Snackbar
                         open={!!success}
                         autoHideDuration={3000}
-                        onClose={() => setSuccess(false)}
+                        onClose={handleCloseSnackbar}
                         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                     >
                         <Alert severity="success" sx={{ width: '100%' }}>
@@ -208,7 +258,7 @@ const Leave = () => {
                     <Snackbar
                         open={!!error}
                         autoHideDuration={4000}
-                        onClose={() => setError('')}
+                        onClose={handleCloseSnackbar}
                         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                     >
                         <Alert severity="error" sx={{ width: '100%' }}>
