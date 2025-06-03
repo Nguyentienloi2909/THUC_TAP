@@ -253,7 +253,11 @@ namespace MyProject.Service.impl
             user.StartDate = dto.StartDate ?? user.StartDate;
             user.MonthSalary = dto.MonthSalary ?? user.MonthSalary;
 
-
+            int month = DateTime.Now.Month;
+            int year = DateTime.Now.Year;
+            var salary = await _dbContext.Salaries
+                .FirstOrDefaultAsync(s => s.UserId == id && s.Month == month && s.Year == year && s.Display);
+            salary.MonthSalary = dto.MonthSalary ?? user.MonthSalary;
 
             // Kiểm tra và xử lý ảnh nếu có
             if (dto.FileImage != null && dto.FileImage.Length > 0) // Thay đổi từ || sang &&
@@ -293,7 +297,8 @@ namespace MyProject.Service.impl
                 user.Avatar = uploadResult.SecureUrl.ToString();
             }
 
-                _dbContext.Users.Update(user);
+            _dbContext.Users.Update(user);
+            _dbContext.Salaries.Update(salary);
             await _dbContext.SaveChangesAsync();
 
             var resultDto = Mappers.MapperToDto.ToDto(user);
@@ -305,18 +310,17 @@ namespace MyProject.Service.impl
             var user = await _dbContext.Users
                 .Include(u => u.Role)
                 .Include(u => u.Group)
-                .Include(u => u.Attendances)
-                .Include(u => u.Salaries)
-                .Include(u => u.AssignedTasks)
-                .Include(u => u.SentTasks)
-                .Include(u => u.SentMessages)
-                .Include(u => u.ReceivedMessages)
                 .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found");
             }
+            if (user.Role != null && !user.Role.Display)
+                user.Role = null;
+
+            if (user.Group != null && !user.Group.Display)
+                user.Group = null;
 
             var userDto = MapperToDto.ToDto(user);
             userDto.Attendances = user.Attendances.Select(a => a.ToDto()).ToList();

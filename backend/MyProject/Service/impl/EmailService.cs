@@ -89,14 +89,16 @@ namespace MyProject.Service.impl
                 To = user.Email,
                 Subject = $"📝 Công việc mới: {task.Title}",
                 Description = $@"
-                    <strong>Mô tả:</strong> {task.Description}<br/>
-                    <strong>Bắt đầu:</strong> {task.StartTime:dd/MM/yyyy HH:mm}<br/>
-                    <strong>Kết thúc:</strong> {task.EndTime:dd/MM/yyyy HH:mm}<br/>
-                    {fileInfo}
-                    <strong>Người giao việc:</strong> {task.SenderName}<br/>
-                    <strong>Trạng thái:</strong> {task.Status.ToString()}
+                <table>
+                    <tr><td><strong>Tiêu đề:</strong></td><td>{task.Title}</td></tr>
+                    <tr><td><strong>Mô tả:</strong></td><td>{task.Description}</td></tr>
+                    <tr><td><strong>Bắt đầu:</strong></td><td>{task.StartTime:dd/MM/yyyy HH:mm}</td></tr>
+                    <tr><td><strong>Kết thúc:</strong></td><td>{task.EndTime:dd/MM/yyyy HH:mm}</td></tr>
+                    {(string.IsNullOrWhiteSpace(task.UrlFile) ? "" : $"<tr><td><strong>Tài liệu:</strong></td><td><a href='{task.UrlFile}' target='_blank'>Tải về</a></td></tr>")}
+                    <tr><td><strong>Người giao:</strong></td><td>{task.SenderName}</td></tr>
+                    <tr><td><strong>Trạng thái:</strong></td><td>{task.Status}</td></tr>
+                </table>"
 
-                "
             };
             await SendEmailAsync(request);
         }
@@ -110,17 +112,19 @@ namespace MyProject.Service.impl
                 To = user.Email,
                 Subject = $"📝 TIỀN LƯƠNG THÁNG {dto.Month}/{dto.Year}",
                 Description = $@"
-                    <strong>Người nhận:</strong> {dto.UserFullName}<br/>
-                    <strong>Tổng số ngày làm việc đúng giờ:</strong> {attendance.TotalPresentDays}<br/>
-                    <strong>Tổng số ngày làm việc đi trễ:</strong> {attendance.TotalLateDays}<br/>
-                    <strong>Tổng số ngày nghỉ phép:</strong> {attendance.TotalLeaveDays}<br/>
-                    <strong>Tổng số ngày vắng:</strong> {attendance.TotalAbsentDays}<br/>
-                    <strong>Tổng số giờ tăng ca:</strong> {attendance.TotalOvertimeHours}h<br/>
-                    <strong>Lương cơ bản:</strong> {dto.MonthSalary?.ToString("N0")} VND<br/>
-                    <strong>Khấu trừ:</strong> {((attendance.TotalLateDays + attendance.TotalAbsentDays) * 100000).ToString("N0")} VND<br/>
-                    <strong>Tăng ca:</strong> {((decimal)attendance.TotalOvertimeHours * 1.5m * (dto.MonthSalary / attendance.TotalWorkingDays / 9m))?.ToString("N2")} VND<br/>
-                    <strong>TỔNG TIỀN NHẬN ĐƯỢC:</strong> {dto.TotalSalary?.ToString("N0")} VND<br/>
-                "
+                    <table>
+                        <tr><td><strong>Người nhận:</strong></td><td>{dto.UserFullName}</td></tr>
+                        <tr><td><strong>Tổng số ngày làm việc đúng giờ:</strong></td><td>{attendance.TotalPresentDays}</td></tr>
+                        <tr><td><strong>Tổng số ngày đi trễ:</strong></td><td>{attendance.TotalLateDays}</td></tr>
+                        <tr><td><strong>Tổng số ngày nghỉ phép:</strong></td><td>{attendance.TotalLeaveDays}</td></tr>
+                        <tr><td><strong>Tổng số ngày vắng:</strong></td><td>{attendance.TotalAbsentDays}</td></tr>
+                        <tr><td><strong>Tổng số giờ tăng ca:</strong></td><td>{attendance.TotalOvertimeHours}h</td></tr>
+                        <tr><td><strong>Lương cơ bản:</strong></td><td>{dto.MonthSalary?.ToString("N0")} VND</td></tr>
+                        <tr><td><strong>Khấu trừ:</strong></td><td>{((attendance.TotalLateDays + attendance.TotalAbsentDays) * 100000).ToString("N0")} VND</td></tr>
+                        <tr><td><strong>Tiền tăng ca:</strong></td><td>{((decimal)attendance.TotalOvertimeHours * 1.5m * (dto.MonthSalary / attendance.TotalWorkingDays / 9m))?.ToString("N0")} VND</td></tr>
+                        <tr><td><strong><b>TỔNG NHẬN:</b></strong></td><td><strong>{dto.TotalSalary?.ToString("N0")} VND</strong></td></tr>
+                    </table>"
+
             };
             await SendEmailAsync(request);
         }
@@ -214,57 +218,78 @@ namespace MyProject.Service.impl
         private string BuildHtmlEmail(string title, string content)
         {
             return $@"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset='UTF-8'>
-                <style>
-                    body {{
-                        font-family: 'Segoe UI', sans-serif;
-                        background-color: #f4f4f4;
-                        padding: 20px;
-                    }}
-                    .container {{
-                        background-color: white;
-                        padding: 30px;
-                        border-radius: 10px;
-                        max-width: 600px;
-                        margin: auto;
-                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                    }}
-                    .header {{
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #2c3e50;
-                        margin-bottom: 20px;
-                    }}
-                    .content {{
-                        font-size: 16px;
-                        color: #333;
-                        line-height: 1.6;
-                    }}
-                    .footer {{
-                        font-size: 12px;
-                        color: #888;
-                        margin-top: 30px;
-                        text-align: center;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class='container'>
-                    <div class='header'>{title}</div>
-                    <div class='content'>
-                        {content}
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='UTF-8'>
+                    <style>
+                        body {{
+                            font-family: 'Segoe UI', sans-serif;
+                            background-color: #f0f2f5;
+                            padding: 20px;
+                        }}
+                        .container {{
+                            background-color: #ffffff;
+                            padding: 30px;
+                            border-radius: 12px;
+                            max-width: 700px;
+                            margin: auto;
+                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                            border: 1px solid #e0e0e0;
+                        }}
+                        .header {{
+                            font-size: 26px;
+                            font-weight: bold;
+                            color: #2e86de;
+                            margin-bottom: 25px;
+                            text-align: center;
+                            border-bottom: 2px solid #2e86de;
+                            padding-bottom: 10px;
+                        }}
+                        .content {{
+                            font-size: 15px;
+                            color: #333333;
+                            line-height: 1.8;
+                            margin-top: 10px;
+                        }}
+                        table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }}
+                        th, td {{
+                            text-align: left;
+                            padding: 10px 12px;
+                            border: 1px solid #dee2e6;
+                        }}
+                        th {{
+                            background-color: #f1f8ff;
+                            color: #2e86de;
+                            font-weight: 600;
+                        }}
+                        .footer {{
+                            font-size: 12px;
+                            color: #aaaaaa;
+                            margin-top: 40px;
+                            text-align: center;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>{title}</div>
+                        <div class='content'>
+                            {content}
+                        </div>
+                        <div class='footer'>
+                            Email này được gửi từ hệ thống tự động. Vui lòng không trả lời lại email này.
+                        </div>
                     </div>
-                    <div class='footer'>
-                        Email này được gửi từ hệ thống tự động. Vui lòng không trả lời.
-                    </div>
-                </div>
-            </body>
-            </html>
-            ";
+                </body>
+                </html>
+                ";
         }
+
 
     }
 }
