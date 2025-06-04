@@ -14,6 +14,7 @@ import {
     TableHead,
     TableRow,
     TablePagination,
+    Tooltip,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
@@ -251,7 +252,15 @@ const NLeave = () => {
                                                                 <TableCell>
                                                                     {request.endDate ? new Date(request.endDate).toLocaleDateString('vi-VN') : ''}
                                                                 </TableCell>
-                                                                <TableCell>{request.reason}</TableCell>
+                                                                <TableCell>
+                                                                    <Tooltip title={request.reason || ''}>
+                                                                        <span>
+                                                                            {request.reason && request.reason.length > 40
+                                                                                ? request.reason.slice(0, 40) + '...'
+                                                                                : request.reason}
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </TableCell>
                                                                 <TableCell>{request.acceptorName || '—'}</TableCell>
                                                                 <TableCell>{days}</TableCell>
                                                                 <TableCell>

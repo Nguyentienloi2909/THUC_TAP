@@ -4,7 +4,7 @@ import {
     Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-    IconButton, Tooltip, // Thêm Tooltip vào đây
+    IconButton, Tooltip, TablePagination,
 } from '@mui/material';
 import {
     IconPlus, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
@@ -79,6 +79,8 @@ const Task = () => {
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
     const [confirmUpdateDialog, setConfirmUpdateDialog] = useState({ open: false, task: null });
     const [statusList, setStatusList] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // Memo hóa statusConfig
     const statusConfig = useMemo(() => createStatusConfig(statusList), [statusList]);
@@ -136,6 +138,12 @@ const Task = () => {
         console.log('Filtered tasks:', filtered);
         return filtered;
     }, [tasks, tabs, selectedTab]);
+
+    // Phân trang dữ liệu nhiệm vụ đã lọc
+    const pagedTasks = useMemo(() => {
+        const start = page * rowsPerPage;
+        return filteredTasks.slice(start, start + rowsPerPage);
+    }, [filteredTasks, page, rowsPerPage]);
 
     const viewTaskDetails = useCallback((taskId) => {
         console.log('View task details:', taskId);
@@ -222,6 +230,22 @@ const Task = () => {
         setConfirmUpdateDialog({ open: false, task: null });
     }, [confirmUpdateDialog.task, fetchTasks]);
 
+    // Xử lý thay đổi trang
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    // Xử lý thay đổi số dòng/trang
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    // Reset về trang đầu khi filter thay đổi
+    useEffect(() => {
+        setPage(0);
+    }, [filteredTasks]);
+
     return (
         <PageContainer title="Nhiệm vụ của tôi" description="Danh sách nhiệm vụ được giao">
             <Box sx={{ mb: 4 }}>
@@ -279,79 +303,91 @@ const Task = () => {
                         Vui lòng đăng nhập để xem nhiệm vụ
                     </Box>
                 ) : (
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Tiêu đề</TableCell>
-                                    <TableCell>Người thực hiện</TableCell>
-                                    <TableCell align="center">Tài liệu</TableCell>
-                                    <TableCell align="center">Trạng thái</TableCell>
-                                    <TableCell>Ngày bắt đầu</TableCell>
-                                    <TableCell>Ngày kết thúc</TableCell>
-                                    <TableCell align="center">Thao tác</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredTasks.length === 0 ? (
+                    <>
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center">
-                                            Không có nhiệm vụ nào
-                                        </TableCell>
+                                        <TableCell>Tiêu đề</TableCell>
+                                        <TableCell>Người thực hiện</TableCell>
+                                        <TableCell align="center">Tài liệu</TableCell>
+                                        <TableCell align="center">Trạng thái</TableCell>
+                                        <TableCell>Ngày bắt đầu</TableCell>
+                                        <TableCell>Ngày kết thúc</TableCell>
+                                        <TableCell align="center">Thao tác</TableCell>
                                     </TableRow>
-                                ) : (
-                                    filteredTasks.map((task) => (
-                                        <TableRow
-                                            key={task.id}
-                                            hover
-                                            onClick={() => viewTaskDetails(task.id)}
-                                            sx={{ cursor: 'pointer' }}
-                                        >
-                                            <TableCell>
-                                                <Typography variant="subtitle2">{task.title}</Typography>
-                                            </TableCell>
-                                            <TableCell>{task.assignedToName}</TableCell>
-                                            <TableCell align="center">
-                                                {task.urlFile ? (
-                                                    <Tooltip title="Tải tài liệu">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                window.open(task.urlFile, '_blank');
-                                                            }}
-                                                        >
-                                                            <IconDownload size={18} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                ) : (
-                                                    'Không có'
-                                                )}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <TaskStatusChip status={task.status} statusConfig={statusConfig} />
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(task.startTime).toLocaleDateString('vi-VN')}
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(task.endTime).toLocaleDateString('vi-VN')}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <TaskActions
-                                                    task={task}
-                                                    onEdit={handleEdit}
-                                                    onDelete={handleDelete}
-                                                    onUpdateStatus={handleUpdateStatus}
-                                                    role={user.role}
-                                                />
+                                </TableHead>
+                                <TableBody>
+                                    {pagedTasks.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center">
+                                                Không có nhiệm vụ nào
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                    ) : (
+                                        pagedTasks.map((task) => (
+                                            <TableRow
+                                                key={task.id}
+                                                hover
+                                                onClick={() => viewTaskDetails(task.id)}
+                                                sx={{ cursor: 'pointer' }}
+                                            >
+                                                <TableCell>
+                                                    <Typography variant="subtitle2">{task.title}</Typography>
+                                                </TableCell>
+                                                <TableCell>{task.assignedToName}</TableCell>
+                                                <TableCell align="center">
+                                                    {task.urlFile ? (
+                                                        <Tooltip title="Tải tài liệu">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    window.open(task.urlFile, '_blank');
+                                                                }}
+                                                            >
+                                                                <IconDownload size={18} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    ) : (
+                                                        'Không có'
+                                                    )}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <TaskStatusChip status={task.status} statusConfig={statusConfig} />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(task.startTime).toLocaleDateString('vi-VN')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(task.endTime).toLocaleDateString('vi-VN')}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <TaskActions
+                                                        task={task}
+                                                        onEdit={handleEdit}
+                                                        onDelete={handleDelete}
+                                                        onUpdateStatus={handleUpdateStatus}
+                                                        role={user.role}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            component="div"
+                            count={filteredTasks.length}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            rowsPerPage={rowsPerPage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Số dòng mỗi trang"
+                            rowsPerPageOptions={[5, 10, 20, 50]}
+                        />
+                    </>
                 )}
             </Card>
 

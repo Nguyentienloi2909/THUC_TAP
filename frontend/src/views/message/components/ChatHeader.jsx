@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, Avatar, useTheme, Badge, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
-import { IconCircleFilled, IconMenu2 } from '@tabler/icons-react';
+import { IconMenu2 } from '@tabler/icons-react';
 import ApiService from 'src/service/ApiService';
 import CreateGroupChat from './creategroupchat';
 import AddUserToGroup from './addusertogroup';
@@ -99,30 +99,16 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
         >
             {/* Phần avatar và thông tin */}
             <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                <Badge
-                    overlap="circular"
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    variant="dot"
-                    color={displayStatus === 'Online' ? 'success' : 'error'}
+                {/* Bỏ Badge để không hiện chấm đỏ/trạng thái */}
+                <Avatar
+                    alt={displayName}
+                    src={avatarSrc}
                     sx={{
-                        '& .MuiBadge-dot': {
-                            border: `2px solid ${theme.palette.background.paper}`,
-                            height: 12,
-                            minWidth: 12,
-                            borderRadius: '50%',
-                        },
+                        width: 48,
+                        height: 48,
+                        border: `2px solid ${theme.palette.divider}`,
                     }}
-                >
-                    <Avatar
-                        alt={displayName}
-                        src={avatarSrc}
-                        sx={{
-                            width: 48,
-                            height: 48,
-                            border: `2px solid ${theme.palette.divider}`,
-                        }}
-                    />
-                </Badge>
+                />
                 <Box sx={{ ml: 2, flexGrow: 1 }}>
                     <Typography
                         variant="h6"
@@ -133,24 +119,6 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                         }}
                     >
                         {displayName}
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            color: theme.palette.text.secondary,
-                            fontSize: 14,
-                            mt: 0.5,
-                        }}
-                    >
-                        {displayStatus === 'Online' ? (
-                            <IconCircleFilled size={12} color={theme.palette.success.main} />
-                        ) : (
-                            <IconCircleFilled size={12} color={theme.palette.error.main} />
-                        )}
-                        {displayStatus}
                     </Typography>
                 </Box>
             </Box>
