@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export default class ApiService {
-    static BASE_URL = "http://192.168.1.126:7247/api";
-    // static BASE_URL = "http://localhost:7247/api";
+    // static BASE_URL = "http://192.168.1.126:7247/api";
+    static BASE_URL = "http://localhost:7247/api";
 
     static getHeader() {
         const token = sessionStorage.getItem('authToken');
@@ -111,12 +111,7 @@ export default class ApiService {
 
     /** DEPARTMENT MANAGEMENT */
     static async getAllDepartments() {
-        const cachedDepartments = localStorage.getItem('departments');
-        if (cachedDepartments) {
-            return JSON.parse(cachedDepartments);
-        }
         const response = await this.handleRequest('get', '/Department');
-        localStorage.setItem('departments', JSON.stringify(response));
         return response;
     }
 
@@ -174,6 +169,7 @@ export default class ApiService {
         }
         return this.handleRequest('get', `/Attendance/attendance?month=${month}&year=${year}`);
     }
+
 
     static getAllAttendance(month, year) {
         if (!month || !year || month < 1 || month > 12 || year < 2000) {

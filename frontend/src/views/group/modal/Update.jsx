@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import ApiService from 'src/service/ApiService';
+import PropTypes from 'prop-types';
 
 const UpdateGroupModal = ({ open, onClose, group, onUpdate }) => {
     const [groupName, setGroupName] = useState('');
@@ -57,6 +58,17 @@ const UpdateGroupModal = ({ open, onClose, group, onUpdate }) => {
             </DialogActions>
         </Dialog>
     );
+};
+UpdateGroupModal.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    group: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        groupName: PropTypes.string,
+        departmentName: PropTypes.string,
+        departmentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    }),
+    onUpdate: PropTypes.func.isRequired,
 };
 
 export default UpdateGroupModal;

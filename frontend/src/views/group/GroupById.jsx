@@ -219,24 +219,26 @@ const GroupById = () => {
                     <Typography variant="h5" color="inherit" gutterBottom>
                         {groupData.departmentName} | {groupData.users.length} thành viên
                     </Typography>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<IconUserPlus size={20} />}
-                        onClick={() => setOpenAddModal(true)}
-                        sx={{
-                            mt: 2,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 'medium',
-                            background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
-                            '&:hover': {
-                                background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
-                            },
-                        }}
-                    >
-                        Thêm thành viên
-                    </Button>
+                    {isLeader && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<IconUserPlus size={20} />}
+                            onClick={() => setOpenAddModal(true)}
+                            sx={{
+                                mt: 2,
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 'medium',
+                                background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                                },
+                            }}
+                        >
+                            Thêm thành viên
+                        </Button>
+                    )}
                 </StyledHeader>
 
                 <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.12)' }} />

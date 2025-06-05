@@ -1,4 +1,3 @@
-// src/layouts/FullLayout.jsx
 import { useState, Suspense, memo } from "react";
 import { styled, Container, Box, Typography, useTheme } from "@mui/material";
 import { Outlet } from "react-router-dom";
@@ -26,9 +25,20 @@ const ContentBox = styled(Box)(({ theme }) => ({
   flexGrow: 1,
   display: "flex",
   flexDirection: "column",
-  minHeight: "calc(100vh - 64px)",
   width: "100%",
   backgroundColor: theme.palette.background.paper,
+  paddingTop: "70px", // Bù cho chiều cao của header (70px)
+}));
+
+const HeaderWrapper = styled("div")(({ theme }) => ({
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  zIndex: 1100,
+  width: "100%",
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.shadows[2],
 }));
 
 // Bọc Header và Sidebar bằng memo
@@ -48,18 +58,20 @@ const FullLayout = () => {
         isSidebarOpen={isSidebarOpen}
         isMobileSidebarOpen={isMobileSidebarOpen}
         onSidebarClose={() => setMobileSidebarOpen(false)}
-        userRole={user.role} // Truyền role để hiển thị menu phù hợp
+        userRole={user.role}
       />
 
       {/* Main Wrapper */}
       <PageWrapper className="page-wrapper">
-        {/* Header */}
-        <MemoHeader
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-          toggleMobileSidebar={() => setMobileSidebarOpen(true)}
-          user={user}
-          logout={logout}
-        />
+        {/* Fixed Header */}
+        <HeaderWrapper>
+          <MemoHeader
+            toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+            toggleMobileSidebar={() => setMobileSidebarOpen(true)}
+            user={user}
+            logout={logout}
+          />
+        </HeaderWrapper>
 
         {/* PageContent */}
         <ContentBox>

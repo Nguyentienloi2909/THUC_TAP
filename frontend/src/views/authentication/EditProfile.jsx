@@ -112,13 +112,15 @@ const EditProfile = () => {
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (file && file.type.startsWith('image/')) {
             setAvatarFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatarPreview(reader.result);
             };
             reader.readAsDataURL(file);
+        } else {
+            setErrors({ avatar: 'Vui lòng chọn một tệp ảnh hợp lệ' });
         }
     };
 
@@ -155,33 +157,33 @@ const EditProfile = () => {
         setOpenConfirm(false);
         try {
             const formData = new FormData();
-            formData.append('Id', String(form.id));
-            formData.append('fullName', form.fullName || '');
-            formData.append('phoneNumber', form.phoneNumber || '');
-            formData.append('email', form.email || '');
-            formData.append('gender', form.gender || '');
-            formData.append('address', form.address || '');
-            formData.append('birthDate', form.birthDate || '');
-            formData.append('bankNumber', form.bankNumber || '');
-            formData.append('bankName', form.bankName || '');
-            formData.append('status', form.status || '');
-            formData.append('roleId', form.roleId || '');
+            formData.append('FullName', form.fullName || '');
+            formData.append('PhoneNumber', form.phoneNumber || '');
+            formData.append('Email', form.email || '');
+            formData.append('Gender', form.gender || '');
+            formData.append('Address', form.address || '');
+            formData.append('BirthDate', form.birthDate || '');
+            formData.append('BankNumber', form.bankNumber || '');
+            formData.append('BankName', form.bankName || '');
             formData.append('groupId', form.groupId || '');
-            formData.append('startDate', form.startDate || '');
-            formData.append('monthSalary', form.monthSalary || '');
             if (avatarFile) {
-                formData.append('avatar', avatarFile);
+                formData.append('FileImage', avatarFile); // Đúng tên trường backend yêu cầu
             }
+            // Log kiểm tra dữ liệu gửi đi
+            const logObj = {};
+            for (let pair of formData.entries()) {
+                logObj[pair[0]] = pair[1];
+            }
+            console.log('Dữ liệu gửi đi khi cập nhật:', logObj);
+
             await ApiService.updateUser(form.id, formData);
-            // Xóa cache userProfile để buộc lấy lại dữ liệu mới
             localStorage.removeItem('userProfile');
-            // Lấy lại dữ liệu mới nhất từ API và cập nhật vào context
             const newProfile = await ApiService.getUserProfile();
             setUser(prev => ({ ...prev, ...newProfile, userId: newProfile.id }));
             navigate('/profile');
         } catch (error) {
             console.error('Update profile error:', error, error?.response);
-            setErrors({ general: error?.response?.data?.message || error.message || 'Không thể cập nhật hồ sơ' });
+            setErrors({ general: error?.response?.data?.message || 'Không thể cập nhật hồ sơ' });
         } finally {
             setSaving(false);
         }

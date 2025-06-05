@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     Grid, Typography, Button, List, ListItem, IconButton,
-    Divider, Box, TextField, Chip, Stack, Dialog,
+    Divider, Box, Chip, Stack, Dialog,
     DialogTitle, DialogContent, DialogActions, Avatar,
-    AvatarGroup, Card, CardContent
+    AvatarGroup, Card, CardContent, CircularProgress
 } from '@mui/material';
 import { IconPlus, IconEdit, IconTrash, IconUsers, IconUserPlus } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -32,7 +32,6 @@ const Group = () => {
     const [groupToDelete, setGroupToDelete] = useState(null);
     const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
     const [groupIdToAddMember, setGroupIdToAddMember] = useState(null);
-    const [fetchError, setFetchError] = useState(false);
 
     const [loading, setLoading] = useState(true);
 
@@ -43,11 +42,10 @@ const Group = () => {
                 console.log('Fetching groups...');
                 const groupData = await ApiService.getAllGroups();
                 console.log('Groups fetched:', groupData);
+
                 setGroups(groupData);
-                setFetchError(false);
             } catch (error) {
                 console.error('Failed to fetch groups:', error);
-                setFetchError(true);
             } finally {
                 setLoading(false);
             }

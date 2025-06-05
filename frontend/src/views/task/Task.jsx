@@ -81,6 +81,11 @@ const Task = () => {
     const [statusList, setStatusList] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [notify, setNotify] = useState({
+        open: false,
+        type: 'success', // 'success' | 'error'
+        message: '',
+    });
 
     // Memo hóa statusConfig
     const statusConfig = useMemo(() => createStatusConfig(statusList), [statusList]);
@@ -165,6 +170,11 @@ const Task = () => {
         setConfirmUpdateDialog({ open: true, task });
     }, []);
 
+    const showNotify = useCallback((type, message) => {
+        setNotify({ open: true, type, message });
+    }, []);
+
+    // Các callback sử dụng showNotify phải nằm sau đây!
     const confirmAction = useCallback(async () => {
         const { action, taskId } = confirmDialog;
         if (action === 'delete') {
@@ -175,17 +185,18 @@ const Task = () => {
                     console.log('Tasks after delete:', updated);
                     return updated;
                 });
+                showNotify('success', 'Xóa nhiệm vụ thành công!');
             } catch {
-                alert('Không thể xóa nhiệm vụ. Vui lòng thử lại.');
+                showNotify('error', 'Không thể xóa nhiệm vụ. Vui lòng thử lại.');
             }
         }
         setConfirmDialog({ open: false, action: null, taskId: null });
-    }, [confirmDialog]);
+    }, [confirmDialog, showNotify]);
 
     const handleAddTask = useCallback(async (newTask) => {
         try {
             if (!newTask.title || !newTask.description || !newTask.startTime || !newTask.endTime || !newTask.assignedToId) {
-                alert('Vui lòng điền đầy đủ thông tin.');
+                showNotify('error', 'Vui lòng điền đầy đủ thông tin.');
                 return;
             }
             // Lấy senderId và senderName từ sessionStorage hoặc context
@@ -204,17 +215,13 @@ const Task = () => {
             formData.append('SenderName', senderName);
 
             const createdTask = await ApiService.createTask(formData);
-            setTasks(prev => {
-                const updated = [...prev, createdTask];
-                console.log('Tasks after add:', updated);
-                return updated;
-            });
+            setTasks(prev => [...prev, createdTask]);
             setOpenAddTaskDialog(false);
-            alert('Thêm nhiệm vụ thành công!');
+            showNotify('success', 'Thêm nhiệm vụ thành công!');
         } catch {
-            alert('Không thể thêm nhiệm vụ. Vui lòng thử lại.');
+            showNotify('error', 'Không thể thêm nhiệm vụ. Vui lòng thử lại.');
         }
-    }, [user]);
+    }, [user, showNotify]);
 
     const handleConfirmUpdateStatus = useCallback(async () => {
         const task = confirmUpdateDialog.task;
@@ -222,13 +229,13 @@ const Task = () => {
         try {
             await ApiService.updateTaskStatus(task.id);
             fetchTasks();
-            alert('Cập nhật trạng thái thành công!');
+            showNotify('success', 'Cập nhật trạng thái thành công!');
         } catch (error) {
-            alert('Cập nhật trạng thái thất bại!');
+            showNotify('error', 'Cập nhật trạng thái thất bại!');
             console.error('Update status error:', error);
         }
         setConfirmUpdateDialog({ open: false, task: null });
-    }, [confirmUpdateDialog.task, fetchTasks]);
+    }, [confirmUpdateDialog.task, fetchTasks, showNotify]);
 
     // Xử lý thay đổi trang
     const handleChangePage = (event, newPage) => {
@@ -432,6 +439,30 @@ const Task = () => {
                 onClose={() => setOpenAddTaskDialog(false)}
                 onAdd={handleAddTask}
             />
+
+            {/* Chỉ giữ lại modal notify */}
+            <Dialog
+                open={notify.open}
+                onClose={() => setNotify(n => ({ ...n, open: false }))}
+            >
+                <DialogTitle>
+                    {notify.type === 'success' ? 'Thông báo' : 'Lỗi'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography color={notify.type === 'success' ? 'green' : 'error'}>
+                        {notify.message}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setNotify(n => ({ ...n, open: false }))}
+                        variant="contained"
+                        color={notify.type === 'success' ? 'primary' : 'error'}
+                    >
+                        Đóng
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };
