@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Grid,
     Paper,
@@ -14,15 +14,15 @@ import {
     TableHead,
     TableRow,
     TablePagination,
+    Tooltip,
 } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import PageContainer from '../../components/container/PageContainer';
 import DashboardCard from '../../components/shared/DashboardCard';
 import { Button } from '@mui/material';
 import { IconPlus, IconClipboardCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { ResponsiveContainer } from 'recharts';
 import ApiService from '../../service/ApiService';
+import LeaveRequestDetail from '../attendance/LeaveRequestDetail'; // Đường dẫn tùy cấu trúc dự án
 
 const NLeave = () => {
     const navigate = useNavigate();
@@ -30,7 +30,7 @@ const NLeave = () => {
     const [loading, setLoading] = useState(true);
 
     // Thống kê động
-    const [totalDays, setTotalDays] = useState(0);
+    // const [totalDays, setTotalDays] = useState(0);
     const [pendingCount, setPendingCount] = useState(0);
     const [approvedCount, setApprovedCount] = useState(0);
     const [rejectedCount, setRejectedCount] = useState(0);
@@ -44,6 +44,9 @@ const NLeave = () => {
     const sessionUser = JSON.parse(sessionStorage.getItem('userProfile')) || {};
     const isLeader = sessionUser.roleName === 'LEADER';
 
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [openDetail, setOpenDetail] = useState(false);
+
     useEffect(() => {
         const fetchLeaves = async () => {
             try {
@@ -54,17 +57,10 @@ const NLeave = () => {
                     setLeaveRequests(userRequests);
                     setTotalRequests(userRequests.length);
 
-                    let total = 0;
                     let pending = 0;
                     let approved = 0;
                     let rejected = 0;
                     userRequests.forEach(r => {
-                        if (r.startDate && r.endDate && r.status?.toLowerCase() === 'approved') {
-                            const start = new Date(r.startDate);
-                            const end = new Date(r.endDate);
-                            const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
-                            total += days;
-                        }
                         if (r.status?.toLowerCase() === 'pending') {
                             pending++;
                         }
@@ -75,7 +71,6 @@ const NLeave = () => {
                             rejected++;
                         }
                     });
-                    setTotalDays(total);
                     setPendingCount(pending);
                     setApprovedCount(approved);
                     setRejectedCount(rejected);
@@ -83,7 +78,7 @@ const NLeave = () => {
             } catch (err) {
                 setLeaveRequests([]);
                 setTotalRequests(0);
-                setTotalDays(0);
+                // setTotalDays(0);
                 setPendingCount(0);
                 setApprovedCount(0);
                 setRejectedCount(0);
@@ -242,14 +237,30 @@ const NLeave = () => {
                                                             days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1);
                                                         }
                                                         return (
-                                                            <TableRow key={request.id}>
+                                                            <TableRow
+                                                                key={request.id}
+                                                                hover
+                                                                sx={{ cursor: 'pointer' }}
+                                                                onClick={() => {
+                                                                    setSelectedRequest(request);
+                                                                    setOpenDetail(true);
+                                                                }}
+                                                            >
                                                                 <TableCell>
                                                                     {request.startDate ? new Date(request.startDate).toLocaleDateString('vi-VN') : ''}
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {request.endDate ? new Date(request.endDate).toLocaleDateString('vi-VN') : ''}
                                                                 </TableCell>
-                                                                <TableCell>{request.reason}</TableCell>
+                                                                <TableCell>
+                                                                    <Tooltip title={request.reason || ''}>
+                                                                        <span>
+                                                                            {request.reason && request.reason.length > 40
+                                                                                ? request.reason.slice(0, 40) + '...'
+                                                                                : request.reason}
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                </TableCell>
                                                                 <TableCell>{request.acceptorName || '—'}</TableCell>
                                                                 <TableCell>{days}</TableCell>
                                                                 <TableCell>
@@ -282,6 +293,11 @@ const NLeave = () => {
                     </Grid>
                 </Grid>
             </DashboardCard>
+            <LeaveRequestDetail
+                open={openDetail}
+                onClose={() => setOpenDetail(false)}
+                request={selectedRequest}
+            />
         </PageContainer>
     );
 };

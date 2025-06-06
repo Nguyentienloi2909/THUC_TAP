@@ -10,26 +10,26 @@ import PageContainer from 'src/components/container/PageContainer';
 import { useUser } from 'src/contexts/UserContext';
 
 const Profile = () => {
-    const { user: contextUser, setUser: setContextUser } = useUser();
-    const [user, setUser] = useState(contextUser);
-    const [loading, setLoading] = useState(!contextUser?.userId); // Nếu context đã có userId thì không loading
+    // Không lấy user từ context, chỉ dùng setContextUser để cập nhật lại context nếu cần
+    const { setUser: setContextUser } = useUser();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '' });
     const navigate = useNavigate();
 
+    // Log mỗi lần render
+    console.log('Profile: user state at render:', user);
+
     useEffect(() => {
-        // Nếu context đã có user chi tiết thì không cần gọi lại API
-        if (contextUser && contextUser.userId) {
-            setUser(contextUser);
-            setLoading(false);
-            return;
-        }
-        // Nếu chưa có, gọi API lấy profile
+        // Luôn lấy dữ liệu mới nhất từ API
         const fetchUserProfile = async () => {
             try {
                 setLoading(true);
                 const userData = await ApiService.getUserProfile();
+                console.log('Profile: userData from API:', userData);
                 setUser(userData);
+                // Nếu muốn đồng bộ lại context thì cập nhật, nhưng không dùng context để hiển thị
                 if (setContextUser) {
                     setContextUser(prev => ({
                         ...prev,
@@ -51,7 +51,7 @@ const Profile = () => {
 
         fetchUserProfile();
         // eslint-disable-next-line
-    }, [contextUser?.userId]);
+    }, []);
 
     const handleLogout = () => {
         ApiService.logout();
@@ -97,8 +97,12 @@ const Profile = () => {
         );
     }
 
+    if (!user) return null;
+
     return (
         <PageContainer title="Thông tin nhân viên" description="Trang chi tiết hồ sơ cá nhân">
+            {/* Log dữ liệu user để kiểm tra */}
+            {console.log('Profile: user state:', user)}
             <Box
                 sx={{
                     minHeight: '100vh',
@@ -148,14 +152,14 @@ const Profile = () => {
                                     >
                                         Sửa hồ sơ
                                     </Button>
-                                    <Button
+                                    {/* <Button
                                         variant="outlined"
                                         startIcon={<IconLogout />}
                                         sx={{ borderColor: 'white', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
                                         onClick={handleLogout}
                                     >
                                         Đăng xuất
-                                    </Button>
+                                    </Button> */}
                                 </Box>
                             </Box>
 
@@ -208,6 +212,8 @@ const Profile = () => {
     );
 };
 
+import PropTypes from 'prop-types';
+
 const InfoItem = ({ label, value }) => (
     <ListItem sx={{ py: 2, '&:hover': { bgcolor: 'grey.100' }, borderRadius: 1, boxShadow: 1, mb: 2 }}>
         <ListItemText
@@ -218,6 +224,11 @@ const InfoItem = ({ label, value }) => (
         />
     </ListItem>
 );
+
+InfoItem.propTypes = {
+    label: PropTypes.string.isRequired,
+    value: PropTypes.string,
+};
 
 const formatDate = (dateStr) => {
     if (!dateStr) return '---';

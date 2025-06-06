@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     TextField,
@@ -10,13 +10,14 @@ import {
     Typography,
     CircularProgress,
     Grid,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import { IconUpload } from '@tabler/icons-react';
-import PageContainer from 'src/components/container/PageContainer';
 import ApiService from '../../service/ApiService';
-import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { useUser } from 'src/contexts/UserContext';
+import PropTypes from 'prop-types';
 
 const AddTaskPage = ({ open = false, onClose, onAdd }) => {
     const { user } = useUser(); // Lấy thông tin người gửi (LEADER)
@@ -43,6 +44,7 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false); // Thêm trạng thái loading cho submit
+    const [successOpen, setSuccessOpen] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -120,7 +122,6 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
 
         setIsSubmitting(true);
         try {
-            // Bổ sung senderId, senderName vào newTask
             await onAdd({
                 ...newTask,
                 senderId: user.userId,
@@ -128,7 +129,11 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
             });
             setNewTask(initialTaskState);
             setFileInfo({ name: '', size: '' });
-            onClose();
+            setSuccessOpen(true); // Hiện thông báo thành công
+            setTimeout(() => {
+                setSuccessOpen(false);
+                onClose();
+            }, 1500); // Đóng modal sau 1.5s
         } catch (error) {
             console.error('Error adding task:', error);
             alert('Không thể thêm nhiệm vụ');
@@ -138,148 +143,165 @@ const AddTaskPage = ({ open = false, onClose, onAdd }) => {
     };
 
     return (
-        <Dialog
-            open={Boolean(open)}
-            onClose={isSubmitting ? null : onClose} // Vô hiệu hóa đóng khi đang submit
-            maxWidth="md"
-            fullWidth
-        >
-            <DialogTitle>
-                Giao nhiệm vụ mới
-            </DialogTitle>
-            <DialogContent>
-                <Box component="form" sx={{ mt: 2 }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Tiêu đề nhiệm vụ"
-                                name="title"
-                                value={newTask.title}
-                                onChange={handleChange}
-                                fullWidth
-                                required
-                                variant="outlined"
-                                disabled={isSubmitting} // Vô hiệu hóa khi đang submit
-                            />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Mô tả chi tiết"
-                                name="description"
-                                value={newTask.description}
-                                onChange={handleChange}
-                                fullWidth
-                                multiline
-                                rows={4}
-                                variant="outlined"
-                                disabled={isSubmitting}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Thời gian bắt đầu"
-                                name="startTime"
-                                type="datetime-local"
-                                value={newTask.startTime}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                                variant="outlined"
-                                inputProps={{
-                                    min: getCurrentDateTime()
-                                }}
-                                disabled={isSubmitting}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Thời gian kết thúc"
-                                name="endTime"
-                                type="datetime-local"
-                                value={newTask.endTime}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                                variant="outlined"
-                                inputProps={{
-                                    min: newTask.startTime
-                                }}
-                                disabled={isSubmitting}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel>Người thực hiện</InputLabel>
-                                <Select
-                                    name="assignedToId"
-                                    value={newTask.assignedToId}
-                                    onChange={handleEmployeeSelect}
-                                    label="Người thực hiện"
-                                    disabled={loading || isSubmitting}
-                                >
-                                    {loading ? (
-                                        <MenuItem disabled>
-                                            <CircularProgress size={20} sx={{ mr: 1 }} /> Đang tải...
-                                        </MenuItem>
-                                    ) : employees.map((emp) => (
-                                        <MenuItem key={emp.id} value={emp.id}>
-                                            {emp.fullName}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Button
+        <>
+            <Dialog
+                open={Boolean(open)}
+                onClose={isSubmitting ? null : onClose}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    Giao nhiệm vụ mới
+                </DialogTitle>
+                <DialogContent>
+                    <Box component="form" sx={{ mt: 2 }}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Tiêu đề nhiệm vụ"
+                                    name="title"
+                                    value={newTask.title}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    required
                                     variant="outlined"
-                                    component="label"
-                                    startIcon={<IconUpload />}
+                                    disabled={isSubmitting} // Vô hiệu hóa khi đang submit
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Mô tả chi tiết"
+                                    name="description"
+                                    value={newTask.description}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    variant="outlined"
                                     disabled={isSubmitting}
-                                >
-                                    Tải lên tài liệu
-                                    <input type="file" hidden onChange={handleFileChange} />
-                                </Button>
-                                {fileInfo.name && (
-                                    <Typography variant="body2" color="textSecondary">
-                                        {fileInfo.name} ({fileInfo.size})
-                                    </Typography>
-                                )}
-                            </Box>
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Thời gian bắt đầu"
+                                    name="startTime"
+                                    type="datetime-local"
+                                    value={newTask.startTime}
+                                    onChange={handleChange}
+                                    InputLabelProps={{ shrink: true }}
+                                    fullWidth
+                                    variant="outlined"
+                                    inputProps={{
+                                        min: getCurrentDateTime()
+                                    }}
+                                    disabled={isSubmitting}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Thời gian kết thúc"
+                                    name="endTime"
+                                    type="datetime-local"
+                                    value={newTask.endTime}
+                                    onChange={handleChange}
+                                    InputLabelProps={{ shrink: true }}
+                                    fullWidth
+                                    variant="outlined"
+                                    inputProps={{
+                                        min: newTask.startTime
+                                    }}
+                                    disabled={isSubmitting}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel>Người thực hiện</InputLabel>
+                                    <Select
+                                        name="assignedToId"
+                                        value={newTask.assignedToId}
+                                        onChange={handleEmployeeSelect}
+                                        label="Người thực hiện"
+                                        disabled={loading || isSubmitting}
+                                    >
+                                        {loading ? (
+                                            <MenuItem disabled>
+                                                <CircularProgress size={20} sx={{ mr: 1 }} /> Đang tải...
+                                            </MenuItem>
+                                        ) : employees.map((emp) => (
+                                            <MenuItem key={emp.id} value={emp.id}>
+                                                {emp.fullName}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<IconUpload />}
+                                        disabled={isSubmitting}
+                                    >
+                                        Tải lên tài liệu
+                                        <input type="file" hidden onChange={handleFileChange} />
+                                    </Button>
+                                    {fileInfo.name && (
+                                        <Typography variant="body2" color="textSecondary">
+                                            {fileInfo.name} ({fileInfo.size})
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </Box>
-            </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-                <Button
-                    variant="outlined"
-                    onClick={onClose}
-                    disabled={isSubmitting}
-                >
-                    Hủy
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleAdd}
-                    disabled={isSubmitting}
-                    startIcon={isSubmitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
-                >
-                    {isSubmitting ? 'Đang giao...' : 'Giao nhiệm vụ'}
-                </Button>
-            </DialogActions>
-        </Dialog>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        Hủy
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAdd}
+                        disabled={isSubmitting}
+                        startIcon={isSubmitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+                    >
+                        {isSubmitting ? 'Đang giao...' : 'Giao nhiệm vụ'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Snackbar
+                open={successOpen}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                autoHideDuration={1500}
+                onClose={() => setSuccessOpen(false)}
+            >
+                <Alert severity="success" sx={{ width: '100%' }}>
+                    Thêm nhiệm vụ thành công!
+                </Alert>
+            </Snackbar>
+        </>
     );
 };
-
 AddTaskPage.defaultProps = {
     open: false,
     onClose: () => { },
     onAdd: () => { },
+};
+
+AddTaskPage.propTypes = {
+    open: PropTypes.bool,
+    onClose: PropTypes.func,
+    onAdd: PropTypes.func,
 };
 
 export default AddTaskPage;

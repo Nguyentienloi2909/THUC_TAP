@@ -1,5 +1,6 @@
 // src/contexts/UserContext.jsx
-import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import { createContext, useState, useEffect, useContext, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import ApiService from '../service/ApiService';
 
 export const UserContext = createContext();
@@ -30,9 +31,7 @@ export const UserProvider = ({ children }) => {
 
                     // Loại bỏ các trường lương và tin nhắn trước khi lưu vào sessionStorage
                     const {
-                        salaries,
-                        sentMessages,
-                        receivedMessages,
+                        // receivedMessages, // removed because it's unused
                         ...profileToStore
                     } = profile;
 
@@ -71,10 +70,13 @@ export const UserProvider = ({ children }) => {
         };
 
         fetchUserProfile();
-    }, [user.isAuthenticated, user.token]);
+    }, [user.isAuthenticated, user.token, user.userId]);
 
     const login = async (username, password) => {
         try {
+            // Xóa cache profile trước khi login
+            localStorage.removeItem('userProfile');
+            sessionStorage.removeItem('groupName');
             const response = await ApiService.loginUser({
                 Email: username,
                 PasswordHash: password
@@ -86,7 +88,7 @@ export const UserProvider = ({ children }) => {
                 return { error: 'Tài khoản của bạn đã bị khóa hoặc bị xóa. Vui lòng liên hệ quản trị viên.' };
             }
 
-            const { role, token, fullName } = response;
+            const { role, token, fullName, groupName } = response;
             if (!token) {
                 return { error: 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.' };
             }
@@ -100,11 +102,13 @@ export const UserProvider = ({ children }) => {
                 email: null,
                 fullName: null,
                 phoneNumber: null,
+                groupName: null,
             };
             setUser(newUser);
             sessionStorage.setItem('authToken', token);
             sessionStorage.setItem('role', role);
             sessionStorage.setItem('fullName', fullName);
+            if (groupName) sessionStorage.setItem('groupName', groupName);
             console.log('User set after login:', newUser);
             return true;
         } catch (error) {
@@ -118,6 +122,9 @@ export const UserProvider = ({ children }) => {
         sessionStorage.removeItem('authToken');
         sessionStorage.removeItem('role');
         sessionStorage.removeItem('fullName');
+        sessionStorage.removeItem('groupName');
+        // Xóa cache profile khi logout
+        localStorage.removeItem('userProfile');
         setUser({
             role: null,
             isAuthenticated: false,
@@ -127,13 +134,18 @@ export const UserProvider = ({ children }) => {
             email: null,
             fullName: null,
             phoneNumber: null,
+            groupName: null,
         });
     };
 
-    const value = useMemo(() => ({ user, login, logout }), [user]);
-
+    const value = useMemo(() => ({ user, login, logout, setUser }), [user]);
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
+
+UserProvider.propTypes = {
+    children: PropTypes.node.isRequired,
+};
+
 
 export const useUser = () => {
     const context = useContext(UserContext);

@@ -1,6 +1,6 @@
 // src/layouts/header/ListMessage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Box,
     Menu,
@@ -16,9 +16,10 @@ import {
 import { IconChevronRight } from '@tabler/icons-react';
 import ApiService from 'src/service/ApiService';
 import { useSignalR } from 'src/contexts/SignalRContext';
-import { useUser } from 'src/contexts/UserContext'; // Thêm useUser
+import { useUser } from 'src/contexts/UserContext';
 import { useMessageBadge } from 'src/contexts/MessageBadgeContext';
 import Tooltip from '@mui/material/Tooltip';
+import PropTypes from 'prop-types';
 
 const ListMessage = ({ anchorEl, open, onClose }) => {
     const [groups, setGroups] = useState([]);
@@ -26,14 +27,11 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const { chatConnection, connectionState } = useSignalR();
-    const { user } = useUser(); // Lấy user từ UserContext
-    const { unread } = useMessageBadge();
-    const navigate = useNavigate();
+    const { user } = useUser();
+    const { unread, markRead } = useMessageBadge();
 
-    // Lấy danh sách group chat
     useEffect(() => {
         const fetchGroups = async () => {
-
             if (!open || !user.isAuthenticated || !user.userId) return;
             try {
                 setLoading(true);
@@ -44,9 +42,6 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                         try {
                             const messages = await ApiService.getChatGroupById(group.id);
                             const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-                            const unreadCount = messages.filter(
-                                (msg) => !msg.isRead && msg.senderId !== user.userId
-                            ).length;
                             return {
                                 ...group,
                                 lastMessage: lastMessage
@@ -57,11 +52,11 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                         senderName: lastMessage.senderName,
                                     }
                                     : null,
-                                unreadCount,
+                                hasNewMessage: unread[`group_${group.id}`] || false,
                             };
                         } catch (err) {
                             console.error(`Lỗi khi lấy tin nhắn cho group ${group.id}:`, err);
-                            return { ...group, lastMessage: null, unreadCount: 0 };
+                            return { ...group, lastMessage: null, hasNewMessage: false };
                         }
                     })
                 );
@@ -75,15 +70,13 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
         };
 
         fetchGroups();
-    }, [open, user.isAuthenticated, user.userId]);
+    }, [open, user.isAuthenticated, user.userId, unread]);
 
-    // Lấy danh sách người dùng
     useEffect(() => {
         const fetchUsers = async () => {
             if (!open || !user.isAuthenticated || !user.userId) return;
             try {
                 const allUsers = await ApiService.getAllUsers();
-                // Loại bỏ chính mình
                 setUsers(allUsers.filter(u => u.id !== user.userId));
             } catch (err) {
                 setUsers([]);
@@ -92,7 +85,6 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
         fetchUsers();
     }, [open, user.isAuthenticated, user.userId]);
 
-    // Tích hợp SignalR để nhận tin nhắn nhóm mới
     useEffect(() => {
         if (!chatConnection || connectionState !== 'Connected' || !user.userId) return;
 
@@ -131,7 +123,6 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
         };
     }, [chatConnection, connectionState, user.userId]);
 
-    // Sắp xếp groups theo thời gian tin nhắn mới nhất và chỉ lấy 3 cái đầu tiên
     const sortedGroups = useMemo(() => {
         return [...groups]
             .sort((a, b) => {
@@ -142,14 +133,6 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
             .slice(0, 3);
     }, [groups]);
 
-    // Xử lý khi nhấp vào group
-    const handleGroupClick = (group) => {
-        navigate('/messages', { state: { selectedGroup: group } });
-        onClose();
-        setGroups((prev) => prev.map(g => g.id === group.id ? { ...g, hasNewMessage: false } : g));
-    };
-
-    // Style dùng lại nhiều lần
     const nameStyle = {
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -193,15 +176,30 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                     <Typography color="text.secondary">Không có nhóm hoặc tin nhắn nào.</Typography>
                 </Box>
             ) : (
-                <>
-                    {sortedGroups.map((group) => (
+                [
+                    ...sortedGroups.map((group) => (
                         <MenuItem
-                            key={group.id}
-                            onClick={() => handleGroupClick(group)}
+                            key={`group-${group.id}`}
+                            component={Link}
+                            to={{
+                                pathname: `/messages/group/${group.id}`,
+                                state: { selectedGroup: group },
+                            }}
+                            onClick={() => {
+                                markRead('group', group.id);
+                                onClose();
+                            }}
                             sx={{ py: 1.5, position: 'relative' }}
                         >
                             <ListItemAvatar>
-                                <Avatar alt={group.name} src={group.icon || '/default-group-icon.jpg'} />
+                                <Avatar
+                                    alt={group.name}
+                                    src={
+                                        group.icon && typeof group.icon === 'string' && group.icon.trim()
+                                            ? group.icon
+                                            : 'https://as1.ftcdn.net/jpg/02/15/15/40/1000_F_215154008_oWtNLNPoeWjsrsPYhRPRxp4w0h0TOVg2.jpg'
+                                    }
+                                />
                             </ListItemAvatar>
                             <Box sx={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
                                 <Tooltip title={group.name || 'Nhóm không tên'} arrow>
@@ -209,7 +207,7 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                         variant="subtitle2"
                                         sx={{
                                             ...nameStyle,
-                                            fontWeight: group.hasNewMessage || unread[`group_${group.id}`] ? 'bold' : 'normal',
+                                            fontWeight: group.hasNewMessage ? 'bold' : 'normal',
                                         }}
                                     >
                                         {group.name || 'Nhóm không tên'}
@@ -240,11 +238,10 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                     </>
                                 )}
                             </Box>
-                            {(unread[`group_${group.id}`] || group.unreadCount > 0) && (
+                            {group.hasNewMessage && (
                                 <Badge
                                     color="error"
-                                    badgeContent={group.unreadCount > 0 ? group.unreadCount : null}
-                                    variant={group.unreadCount > 0 ? 'standard' : 'dot'}
+                                    variant="dot"
                                     sx={{
                                         position: 'absolute',
                                         right: 16,
@@ -254,17 +251,26 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                 />
                             )}
                         </MenuItem>
-                    ))}
-                    {users.length > 0 && (
-                        <>
-                            <Typography variant="subtitle2" sx={{ px: 2, pt: 1, pb: 0.5, color: 'text.secondary' }}>
+                    )),
+                    ...(users.length > 0
+                        ? [
+                            <Typography
+                                key="private-title"
+                                variant="subtitle2"
+                                sx={{ px: 2, pt: 1, pb: 0.5, color: 'text.secondary' }}
+                            >
                                 Tin nhắn riêng
-                            </Typography>
-                            {users.slice(0, 3).map((u) => (
+                            </Typography>,
+                            ...users.slice(0, 3).map((u) => (
                                 <MenuItem
-                                    key={u.id}
+                                    key={`user-${u.id}`}
+                                    component={Link}
+                                    to={{
+                                        pathname: `/messages/${u.id}`,
+                                        state: { selectedUser: u },
+                                    }}
                                     onClick={() => {
-                                        navigate('/messages', { state: { selectedUser: u } });
+                                        markRead('user', u.id);
                                         onClose();
                                     }}
                                     sx={{ py: 1.5, position: 'relative' }}
@@ -298,11 +304,11 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
                                         />
                                     )}
                                 </MenuItem>
-                            ))}
-                            <Divider sx={{ my: 1 }} />
-                        </>
-                    )}
-                </>
+                            )),
+                            <Divider key="private-divider" sx={{ my: 1 }} />,
+                        ]
+                        : [])
+                ]
             )}
             <Box mt={1} py={1} px={2}>
                 <Button
@@ -319,6 +325,12 @@ const ListMessage = ({ anchorEl, open, onClose }) => {
             </Box>
         </Menu>
     );
+};
+
+ListMessage.propTypes = {
+    anchorEl: PropTypes.any,
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
 };
 
 export default ListMessage;

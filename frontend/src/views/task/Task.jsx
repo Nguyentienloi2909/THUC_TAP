@@ -4,10 +4,10 @@ import {
     Card, Typography, Box, Chip, Tabs, Tab,
     Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-    IconButton, Tooltip, // Thêm Tooltip vào đây
+    IconButton, Tooltip, TablePagination,
 } from '@mui/material';
 import {
-    IconPlus, IconEdit, IconTrash, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
+    IconPlus, IconCheck, IconClockHour4, IconClock, IconAlertCircle,
     IconDownload, // Thêm IconDownload vì đã sử dụng trong cột Tài liệu
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -41,7 +41,9 @@ const createStatusConfig = (statusList) => {
     return config;
 };
 
-const TaskStatusChip = React.memo(({ status, statusConfig }) => {
+import PropTypes from 'prop-types';
+
+const TaskStatusChip = React.memo(function TaskStatusChip({ status, statusConfig }) {
     const key = status?.toLowerCase().replace(/\s+/g, '');
     const config = (statusConfig && statusConfig[key]) || defaultStatusConfig[key] || {
         label: 'Không xác định',
@@ -59,6 +61,13 @@ const TaskStatusChip = React.memo(({ status, statusConfig }) => {
     );
 });
 
+TaskStatusChip.displayName = 'TaskStatusChip';
+
+TaskStatusChip.propTypes = {
+    status: PropTypes.string,
+    statusConfig: PropTypes.object,
+};
+
 const Task = () => {
     const navigate = useNavigate();
     const { user } = useUser();
@@ -68,7 +77,15 @@ const Task = () => {
     const [error, setError] = useState(null);
     const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, taskId: null });
+    const [confirmUpdateDialog, setConfirmUpdateDialog] = useState({ open: false, task: null });
     const [statusList, setStatusList] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [notify, setNotify] = useState({
+        open: false,
+        type: 'success', // 'success' | 'error'
+        message: '',
+    });
 
     // Memo hóa statusConfig
     const statusConfig = useMemo(() => createStatusConfig(statusList), [statusList]);
@@ -127,6 +144,12 @@ const Task = () => {
         return filtered;
     }, [tasks, tabs, selectedTab]);
 
+    // Phân trang dữ liệu nhiệm vụ đã lọc
+    const pagedTasks = useMemo(() => {
+        const start = page * rowsPerPage;
+        return filteredTasks.slice(start, start + rowsPerPage);
+    }, [filteredTasks, page, rowsPerPage]);
+
     const viewTaskDetails = useCallback((taskId) => {
         console.log('View task details:', taskId);
         navigate(`/manage/task/${taskId}`);
@@ -143,19 +166,15 @@ const Task = () => {
     }, [navigate]);
 
     // Hàm cập nhật trạng thái nhiệm vụ cho USER
-    const handleUpdateStatus = useCallback(async (task) => {
-        if (!task?.id) return;
-        try {
-            await ApiService.updateTaskStatus(task.id);
-            // Sau khi cập nhật trạng thái, reload lại danh sách nhiệm vụ
-            fetchTasks();
-            alert('Cập nhật trạng thái thành công!');
-        } catch (error) {
-            alert('Cập nhật trạng thái thất bại!');
-            console.error('Update status error:', error);
-        }
-    }, [fetchTasks]);
+    const handleUpdateStatus = useCallback((task) => {
+        setConfirmUpdateDialog({ open: true, task });
+    }, []);
 
+    const showNotify = useCallback((type, message) => {
+        setNotify({ open: true, type, message });
+    }, []);
+
+    // Các callback sử dụng showNotify phải nằm sau đây!
     const confirmAction = useCallback(async () => {
         const { action, taskId } = confirmDialog;
         if (action === 'delete') {
@@ -166,17 +185,18 @@ const Task = () => {
                     console.log('Tasks after delete:', updated);
                     return updated;
                 });
+                showNotify('success', 'Xóa nhiệm vụ thành công!');
             } catch {
-                alert('Không thể xóa nhiệm vụ. Vui lòng thử lại.');
+                showNotify('error', 'Không thể xóa nhiệm vụ. Vui lòng thử lại.');
             }
         }
         setConfirmDialog({ open: false, action: null, taskId: null });
-    }, [confirmDialog]);
+    }, [confirmDialog, showNotify]);
 
     const handleAddTask = useCallback(async (newTask) => {
         try {
             if (!newTask.title || !newTask.description || !newTask.startTime || !newTask.endTime || !newTask.assignedToId) {
-                alert('Vui lòng điền đầy đủ thông tin.');
+                showNotify('error', 'Vui lòng điền đầy đủ thông tin.');
                 return;
             }
             // Lấy senderId và senderName từ sessionStorage hoặc context
@@ -195,17 +215,43 @@ const Task = () => {
             formData.append('SenderName', senderName);
 
             const createdTask = await ApiService.createTask(formData);
-            setTasks(prev => {
-                const updated = [...prev, createdTask];
-                console.log('Tasks after add:', updated);
-                return updated;
-            });
+            setTasks(prev => [...prev, createdTask]);
             setOpenAddTaskDialog(false);
-            alert('Thêm nhiệm vụ thành công!');
+            showNotify('success', 'Thêm nhiệm vụ thành công!');
         } catch {
-            alert('Không thể thêm nhiệm vụ. Vui lòng thử lại.');
+            showNotify('error', 'Không thể thêm nhiệm vụ. Vui lòng thử lại.');
         }
-    }, [user]);
+    }, [user, showNotify]);
+
+    const handleConfirmUpdateStatus = useCallback(async () => {
+        const task = confirmUpdateDialog.task;
+        if (!task?.id) return;
+        try {
+            await ApiService.updateTaskStatus(task.id);
+            fetchTasks();
+            showNotify('success', 'Cập nhật trạng thái thành công!');
+        } catch (error) {
+            showNotify('error', 'Cập nhật trạng thái thất bại!');
+            console.error('Update status error:', error);
+        }
+        setConfirmUpdateDialog({ open: false, task: null });
+    }, [confirmUpdateDialog.task, fetchTasks, showNotify]);
+
+    // Xử lý thay đổi trang
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    // Xử lý thay đổi số dòng/trang
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    // Reset về trang đầu khi filter thay đổi
+    useEffect(() => {
+        setPage(0);
+    }, [filteredTasks]);
 
     return (
         <PageContainer title="Nhiệm vụ của tôi" description="Danh sách nhiệm vụ được giao">
@@ -264,79 +310,91 @@ const Task = () => {
                         Vui lòng đăng nhập để xem nhiệm vụ
                     </Box>
                 ) : (
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Tiêu đề</TableCell>
-                                    <TableCell>Người thực hiện</TableCell>
-                                    <TableCell align="center">Tài liệu</TableCell>
-                                    <TableCell align="center">Trạng thái</TableCell>
-                                    <TableCell>Ngày bắt đầu</TableCell>
-                                    <TableCell>Ngày kết thúc</TableCell>
-                                    <TableCell align="center">Thao tác</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredTasks.length === 0 ? (
+                    <>
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center">
-                                            Không có nhiệm vụ nào
-                                        </TableCell>
+                                        <TableCell>Tiêu đề</TableCell>
+                                        <TableCell>Người thực hiện</TableCell>
+                                        <TableCell align="center">Tài liệu</TableCell>
+                                        <TableCell align="center">Trạng thái</TableCell>
+                                        <TableCell>Ngày bắt đầu</TableCell>
+                                        <TableCell>Ngày kết thúc</TableCell>
+                                        <TableCell align="center">Thao tác</TableCell>
                                     </TableRow>
-                                ) : (
-                                    filteredTasks.map((task) => (
-                                        <TableRow
-                                            key={task.id}
-                                            hover
-                                            onClick={() => viewTaskDetails(task.id)}
-                                            sx={{ cursor: 'pointer' }}
-                                        >
-                                            <TableCell>
-                                                <Typography variant="subtitle2">{task.title}</Typography>
-                                            </TableCell>
-                                            <TableCell>{task.assignedToName}</TableCell>
-                                            <TableCell align="center">
-                                                {task.urlFile ? (
-                                                    <Tooltip title="Tải tài liệu">
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                window.open(task.urlFile, '_blank');
-                                                            }}
-                                                        >
-                                                            <IconDownload size={18} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                ) : (
-                                                    'Không có'
-                                                )}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <TaskStatusChip status={task.status} statusConfig={statusConfig} />
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(task.startTime).toLocaleDateString('vi-VN')}
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(task.endTime).toLocaleDateString('vi-VN')}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <TaskActions
-                                                    task={task}
-                                                    onEdit={handleEdit}
-                                                    onDelete={handleDelete}
-                                                    onUpdateStatus={handleUpdateStatus}
-                                                    role={user.role}
-                                                />
+                                </TableHead>
+                                <TableBody>
+                                    {pagedTasks.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center">
+                                                Không có nhiệm vụ nào
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                    ) : (
+                                        pagedTasks.map((task) => (
+                                            <TableRow
+                                                key={task.id}
+                                                hover
+                                                onClick={() => viewTaskDetails(task.id)}
+                                                sx={{ cursor: 'pointer' }}
+                                            >
+                                                <TableCell>
+                                                    <Typography variant="subtitle2">{task.title}</Typography>
+                                                </TableCell>
+                                                <TableCell>{task.assignedToName}</TableCell>
+                                                <TableCell align="center">
+                                                    {task.urlFile ? (
+                                                        <Tooltip title="Tải tài liệu">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    window.open(task.urlFile, '_blank');
+                                                                }}
+                                                            >
+                                                                <IconDownload size={18} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    ) : (
+                                                        'Không có'
+                                                    )}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <TaskStatusChip status={task.status} statusConfig={statusConfig} />
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(task.startTime).toLocaleDateString('vi-VN')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(task.endTime).toLocaleDateString('vi-VN')}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <TaskActions
+                                                        task={task}
+                                                        onEdit={handleEdit}
+                                                        onDelete={handleDelete}
+                                                        onUpdateStatus={handleUpdateStatus}
+                                                        role={user.role}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            component="div"
+                            count={filteredTasks.length}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            rowsPerPage={rowsPerPage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Số dòng mỗi trang"
+                            rowsPerPageOptions={[5, 10, 20, 50]}
+                        />
+                    </>
                 )}
             </Card>
 
@@ -358,11 +416,53 @@ const Task = () => {
                 </DialogActions>
             </Dialog>
 
+            <Dialog
+                open={confirmUpdateDialog.open}
+                onClose={() => setConfirmUpdateDialog({ open: false, task: null })}
+            >
+                <DialogTitle>Xác nhận cập nhật trạng thái</DialogTitle>
+                <DialogContent>
+                    Bạn có chắc chắn muốn cập nhật trạng thái nhiệm vụ này?
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmUpdateDialog({ open: false, task: null })} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmUpdateStatus} color="primary" variant="contained">
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <AddTaskPage
                 open={openAddTaskDialog}
                 onClose={() => setOpenAddTaskDialog(false)}
                 onAdd={handleAddTask}
             />
+
+            {/* Chỉ giữ lại modal notify */}
+            <Dialog
+                open={notify.open}
+                onClose={() => setNotify(n => ({ ...n, open: false }))}
+            >
+                <DialogTitle>
+                    {notify.type === 'success' ? 'Thông báo' : 'Lỗi'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography color={notify.type === 'success' ? 'green' : 'error'}>
+                        {notify.message}
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setNotify(n => ({ ...n, open: false }))}
+                        variant="contained"
+                        color={notify.type === 'success' ? 'primary' : 'error'}
+                    >
+                        Đóng
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };

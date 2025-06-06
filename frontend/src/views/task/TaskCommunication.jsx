@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -10,6 +10,7 @@ import {
     Button,
 } from '@mui/material';
 import { IconPaperclip, IconSend } from '@tabler/icons-react';
+import PropTypes from 'prop-types';
 
 const TaskCommunication = ({ comments: initialComments, currentUser = 'User' }) => {
     const [comments, setComments] = useState(initialComments || []);
@@ -172,6 +173,10 @@ const TaskCommunication = ({ comments: initialComments, currentUser = 'User' }) 
             )}
         </Box>
     );
+};
+TaskCommunication.propTypes = {
+    comments: PropTypes.array,
+    currentUser: PropTypes.string
 };
 
 export default TaskCommunication;

@@ -21,6 +21,8 @@ const scrollbarStyles = {
   }
 };
 
+import PropTypes from 'prop-types';
+
 const DrawerContent = ({ loading, sidebarContent, children }) => {
   if (loading) {
     return (
@@ -37,6 +39,12 @@ const DrawerContent = ({ loading, sidebarContent, children }) => {
   return children || sidebarContent;
 };
 
+DrawerContent.propTypes = {
+  loading: PropTypes.bool.isRequired,
+  sidebarContent: PropTypes.node,
+  children: PropTypes.node
+};
+
 const MSidebar = ({
   isSidebarOpen,
   isMobileSidebarOpen,
@@ -50,17 +58,41 @@ const MSidebar = ({
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await ApiService.getUserProfile();
-
-        const role = ['admin', 'leader', 'user'].includes(
-          response?.roleName?.toLowerCase()?.trim()
-        ) ? response.roleName.toLowerCase().trim() : 'user';
-
-        setUserData({
-          role,
-          name: response?.fullName || '',
-          email: response?.email || ''
-        });
+        // Lấy token hiện tại
+        const currentToken = sessionStorage.getItem('authToken');
+        // Lấy profile và token đã cache
+        const cachedProfile = localStorage.getItem('userProfile');
+        let profile = null;
+        let cachedToken = null;
+        if (cachedProfile) {
+          try {
+            profile = JSON.parse(cachedProfile);
+            cachedToken = profile?.token;
+          } catch (e) { /* intentionally empty */ }
+        }
+        // Nếu có profile cache và token khớp thì dùng cache, ngược lại gọi API và cập nhật cache
+        if (cachedProfile && currentToken && cachedToken === currentToken) {
+          const role = ['admin', 'leader', 'user'].includes(
+            profile?.roleName?.toLowerCase()?.trim()
+          ) ? profile.roleName.toLowerCase().trim() : 'user';
+          setUserData({
+            role,
+            name: profile?.fullName || '',
+            email: profile?.email || ''
+          });
+        } else {
+          const response = await ApiService.getUserProfile();
+          // Lưu token vào profile cache để kiểm tra lần sau
+          localStorage.setItem('userProfile', JSON.stringify({ ...response, token: currentToken }));
+          const role = ['admin', 'leader', 'user'].includes(
+            response?.roleName?.toLowerCase()?.trim()
+          ) ? response.roleName.toLowerCase().trim() : 'user';
+          setUserData({
+            role,
+            name: response?.fullName || '',
+            email: response?.email || ''
+          });
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setUserData(prev => ({ ...prev, role: 'user' }));
@@ -129,6 +161,12 @@ const MSidebar = ({
       <DrawerContent loading={loading} sidebarContent={sidebarContent} />
     </Drawer>
   );
+};
+
+MSidebar.propTypes = {
+  isSidebarOpen: PropTypes.bool.isRequired,
+  isMobileSidebarOpen: PropTypes.bool.isRequired,
+  onSidebarClose: PropTypes.func.isRequired
 };
 
 export default MSidebar;

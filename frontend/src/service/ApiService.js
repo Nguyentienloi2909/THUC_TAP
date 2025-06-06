@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export default class ApiService {
-    static BASE_URL = "http://192.168.1.126:7247/api";
-    // static BASE_URL = "http://localhost:7247/api";
+    // static BASE_URL = "http://192.168.1.126:7247/api";
+    static BASE_URL = "http://localhost:7247/api";
 
     static getHeader() {
         const token = sessionStorage.getItem('authToken');
@@ -79,8 +79,23 @@ export default class ApiService {
         return this.handleRequest('get', '/User');
     }
 
-    static getUserProfile() {
-        return this.handleRequest('get', '/User/getProfile');
+    static async getUserProfile() {
+        const currentToken = sessionStorage.getItem('authToken');
+        const cachedProfile = localStorage.getItem('userProfile');
+        if (cachedProfile) {
+            try {
+                const profile = JSON.parse(cachedProfile);
+                if (profile?.token === currentToken) {
+                    return profile;
+                }
+            } catch {
+                // intentionally ignored JSON parse error
+            }
+        }
+        const response = await this.handleRequest('get', '/User/getProfile');
+        // Lưu kèm token vào cache
+        localStorage.setItem('userProfile', JSON.stringify({ ...response, token: currentToken }));
+        return response;
     }
 
     static getUser(userId) {
@@ -95,8 +110,9 @@ export default class ApiService {
     }
 
     /** DEPARTMENT MANAGEMENT */
-    static getAllDepartments() {
-        return this.handleRequest('get', '/Department');
+    static async getAllDepartments() {
+        const response = await this.handleRequest('get', '/Department');
+        return response;
     }
 
     static getDepartmentById(departmentId) {
@@ -153,6 +169,7 @@ export default class ApiService {
         }
         return this.handleRequest('get', `/Attendance/attendance?month=${month}&year=${year}`);
     }
+
 
     static getAllAttendance(month, year) {
         if (!month || !year || month < 1 || month > 12 || year < 2000) {
@@ -554,5 +571,30 @@ export default class ApiService {
 
     static getStatisticEmployee() {
         return this.handleRequest('get', '/User/statistics');
+    }
+
+    /**
+     * Gửi email lương cho tất cả nhân viên
+     * @param {number} month 
+     * @param {number} year 
+     */
+    static sendGmailSalaryAll(month, year) {
+        if (!month || !year) {
+            throw new Error('Tháng và năm không được để trống');
+        }
+        return this.handleRequest('post', `/Salary/send-salary-emails?month=${month}&year=${year}`);
+    }
+
+    /**
+     * Gửi email lương cho một nhân viên
+     * @param {number} userId 
+     * @param {number} month 
+     * @param {number} year 
+     */
+    static sendGmailSalaryByUser(userId, month, year) {
+        if (!userId || !month || !year) {
+            throw new Error('ID, tháng và năm không được để trống');
+        }
+        return this.handleRequest('post', `/Salary/send-salary-email/${userId}?month=${month}&year=${year}`);
     }
 }

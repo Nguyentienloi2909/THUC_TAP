@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -10,10 +10,16 @@ import {
     Card,
     CardContent,
     Avatar,
-    CircularProgress
+    CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import ApiService from 'src/service/ApiService';
+import { useUser } from 'src/contexts/UserContext';
 
 const genders = [
     { label: 'Nam', value: 'true' },
@@ -22,6 +28,7 @@ const genders = [
 
 const EditProfile = () => {
     const navigate = useNavigate();
+    const { setUser } = useUser();
 
     const [form, setForm] = useState({
         id: '',
@@ -46,6 +53,7 @@ const EditProfile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
+    const [openConfirm, setOpenConfirm] = useState(false);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -104,13 +112,15 @@ const EditProfile = () => {
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (file && file.type.startsWith('image/')) {
             setAvatarFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAvatarPreview(reader.result);
             };
             reader.readAsDataURL(file);
+        } else {
+            setErrors({ avatar: 'Vui lòng chọn một tệp ảnh hợp lệ' });
         }
     };
 
@@ -130,38 +140,50 @@ const EditProfile = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    // Khi nhấn nút lưu, chỉ mở modal xác nhận
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (!form.id) {
             setErrors({ general: 'Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.' });
             return;
         }
         if (!validate()) return;
+        setOpenConfirm(true);
+    };
 
+    // Khi xác nhận cập nhật
+    const handleConfirmUpdate = async () => {
         setSaving(true);
+        setOpenConfirm(false);
         try {
             const formData = new FormData();
-            formData.append('Id', String(form.id));
-            formData.append('fullName', form.fullName || '');
-            formData.append('phoneNumber', form.phoneNumber || '');
-            formData.append('email', form.email || '');
-            formData.append('gender', form.gender || '');
-            formData.append('address', form.address || '');
-            formData.append('birthDate', form.birthDate || ''); // Fixed key from birthDay to birthDate
-            formData.append('bankNumber', form.bankNumber || '');
-            formData.append('bankName', form.bankName || '');
-            formData.append('status', form.status || '');
-            formData.append('roleId', form.roleId || '');
+            formData.append('FullName', form.fullName || '');
+            formData.append('PhoneNumber', form.phoneNumber || '');
+            formData.append('Email', form.email || '');
+            formData.append('Gender', form.gender || '');
+            formData.append('Address', form.address || '');
+            formData.append('BirthDate', form.birthDate || '');
+            formData.append('BankNumber', form.bankNumber || '');
+            formData.append('BankName', form.bankName || '');
             formData.append('groupId', form.groupId || '');
-            formData.append('startDate', form.startDate || '');
-            formData.append('monthSalary', form.monthSalary || '');
             if (avatarFile) {
-                formData.append('FileImage', avatarFile);
+                formData.append('FileImage', avatarFile); // Đúng tên trường backend yêu cầu
             }
+            // Log kiểm tra dữ liệu gửi đi
+            const logObj = {};
+            for (let pair of formData.entries()) {
+                logObj[pair[0]] = pair[1];
+            }
+            console.log('Dữ liệu gửi đi khi cập nhật:', logObj);
+
             await ApiService.updateUser(form.id, formData);
+            localStorage.removeItem('userProfile');
+            const newProfile = await ApiService.getUserProfile();
+            setUser(prev => ({ ...prev, ...newProfile, userId: newProfile.id }));
             navigate('/profile');
         } catch (error) {
-            setErrors({ general: error.response?.data?.message || 'Không thể cập nhật hồ sơ' });
+            console.error('Update profile error:', error, error?.response);
+            setErrors({ general: error?.response?.data?.message || 'Không thể cập nhật hồ sơ' });
         } finally {
             setSaving(false);
         }
@@ -324,6 +346,23 @@ const EditProfile = () => {
                     </Box>
                 </CardContent>
             </Card>
+            {/* Modal xác nhận cập nhật */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Xác nhận cập nhật</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Bạn có chắc chắn muốn cập nhật thông tin hồ sơ không?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)} color="inherit">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmUpdate} color="primary" variant="contained" autoFocus>
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };

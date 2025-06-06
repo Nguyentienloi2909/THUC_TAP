@@ -13,6 +13,8 @@ import {
     IconCalendar, IconGenderBigender, IconBuildingBank, IconUsers, IconCalendarEvent
 } from '@tabler/icons-react';
 
+import PropTypes from 'prop-types';
+
 const InfoItem = ({ icon, label, value }) => (
     <TableRow sx={{ '&:nth-of-type(odd)': { backgroundColor: '#fafafa' }, '&:nth-of-type(even)': { backgroundColor: '#ffffff' }, '&:hover': { backgroundColor: '#f5f5f5', cursor: 'default' } }}>
         <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)', padding: '16px', width: '30%' }}>
@@ -28,6 +30,16 @@ const InfoItem = ({ icon, label, value }) => (
         </TableCell>
     </TableRow>
 );
+
+InfoItem.propTypes = {
+    icon: PropTypes.element.isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.node
+    ])
+};
 
 const EmployeesInfo = () => {
     const { id } = useParams();

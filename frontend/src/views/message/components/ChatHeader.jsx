@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, Avatar, useTheme, Badge, IconButton, Tooltip, Menu, MenuItem } from '@mui/material';
-import { IconCircleFilled, IconMenu2, IconUsers } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { IconMenu2 } from '@tabler/icons-react';
 import ApiService from 'src/service/ApiService';
 import CreateGroupChat from './creategroupchat';
 import AddUserToGroup from './addusertogroup';
@@ -11,7 +10,6 @@ import UsersToGroup from './UsersToGroup'; // import modal hiển thị user gro
 
 const ChatHeader = ({ selectedUser, selectedGroup }) => {
     const theme = useTheme();
-    const navigate = useNavigate();
     const [openCreateGroupModal, setOpenCreateGroupModal] = useState(false);
     const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
     const [openRemoveMemberModal, setOpenRemoveMemberModal] = useState(false);
@@ -81,7 +79,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
     // Determine the display name and status based on the selection
     const displayName = selectedUser?.fullName || selectedGroup?.name || 'Chọn user hoặc nhóm';
     const displayStatus = selectedUser ? selectedUser.status || 'Offline' : selectedGroup ? 'Nhóm' : 'Offline';
-    const avatarSrc = selectedUser?.avatar || selectedGroup?.avatar || 'https://www.bootdey.com/img/Content/avatar/avatar1.png';
+    const avatarSrc = selectedUser?.avatar || selectedGroup?.avatar || 'https://as1.ftcdn.net/jpg/02/15/15/40/1000_F_215154008_oWtNLNPoeWjsrsPYhRPRxp4w0h0TOVg2.jpg';
 
     return (
         <Box
@@ -101,30 +99,16 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
         >
             {/* Phần avatar và thông tin */}
             <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                <Badge
-                    overlap="circular"
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    variant="dot"
-                    color={displayStatus === 'Online' ? 'success' : 'error'}
+                {/* Bỏ Badge để không hiện chấm đỏ/trạng thái */}
+                <Avatar
+                    alt={displayName}
+                    src={avatarSrc}
                     sx={{
-                        '& .MuiBadge-dot': {
-                            border: `2px solid ${theme.palette.background.paper}`,
-                            height: 12,
-                            minWidth: 12,
-                            borderRadius: '50%',
-                        },
+                        width: 48,
+                        height: 48,
+                        border: `2px solid ${theme.palette.divider}`,
                     }}
-                >
-                    <Avatar
-                        alt={displayName}
-                        src={avatarSrc}
-                        sx={{
-                            width: 48,
-                            height: 48,
-                            border: `2px solid ${theme.palette.divider}`,
-                        }}
-                    />
-                </Badge>
+                />
                 <Box sx={{ ml: 2, flexGrow: 1 }}>
                     <Typography
                         variant="h6"
@@ -135,24 +119,6 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                         }}
                     >
                         {displayName}
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            color: theme.palette.text.secondary,
-                            fontSize: 14,
-                            mt: 0.5,
-                        }}
-                    >
-                        {displayStatus === 'Online' ? (
-                            <IconCircleFilled size={12} color={theme.palette.success.main} />
-                        ) : (
-                            <IconCircleFilled size={12} color={theme.palette.error.main} />
-                        )}
-                        {displayStatus}
                     </Typography>
                 </Box>
             </Box>
@@ -205,7 +171,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                     },
                 }}
             >
-                {/* Chỉ hiển thị nếu KHÔNG chọn nhóm (tức là đang chọn user hoặc chưa chọn gì) */}
+                {/* Chỉ hiển thị nếu KHÔNG chọn nhóm */}
                 {!selectedGroup && (
                     <MenuItem onClick={handleCreateGroup}>
                         Thêm mới nhóm
@@ -213,19 +179,17 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
                 )}
 
                 {/* Chỉ hiển thị nếu đang chọn nhóm */}
-                {selectedGroup && (
-                    <>
-                        <MenuItem onClick={handleAddMember}>
-                            Thêm thành viên nhóm
-                        </MenuItem>
-                        <MenuItem onClick={handleRemoveMember}>
-                            Xóa thành viên khỏi nhóm
-                        </MenuItem>
-                        <MenuItem onClick={handleShowUsers}>
-                            Xem danh sách thành viên
-                        </MenuItem>
-                    </>
-                )}
+                {selectedGroup && [
+                    <MenuItem key="add" onClick={handleAddMember}>
+                        Thêm thành viên nhóm
+                    </MenuItem>,
+                    <MenuItem key="remove" onClick={handleRemoveMember}>
+                        Xóa thành viên khỏi nhóm
+                    </MenuItem>,
+                    <MenuItem key="users" onClick={handleShowUsers}>
+                        Xem danh sách thành viên
+                    </MenuItem>
+                ]}
             </Menu>
 
 
@@ -269,6 +233,7 @@ const ChatHeader = ({ selectedUser, selectedGroup }) => {
 ChatHeader.propTypes = {
     selectedUser: PropTypes.shape({
         name: PropTypes.string,
+        fullName: PropTypes.string,
         status: PropTypes.string,
         avatar: PropTypes.string,
     }),

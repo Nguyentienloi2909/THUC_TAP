@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Paper, Box, useTheme } from '@mui/material';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Paper, Box, useTheme, Alert, Button, CircularProgress } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import UserList from './components/UserList';
 import ChatHeader from './components/ChatHeader';
@@ -19,28 +20,115 @@ const Message = () => {
     const [groupMessages, setGroupMessages] = useState({});
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const [users, setUsers] = useState([]);
+    const [isSending, setIsSending] = useState(false);
+    const [error, setError] = useState('');
+    const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+    const messagesEndRef = useRef(null);
     const { chatConnection, connectionState } = useSignalR();
+    const { userId, groupId } = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    // Lấy danh sách users thực tế từ API
+    // Lấy danh sách users và loggedInUserId
     useEffect(() => {
         const fetchUsers = async () => {
             try {
+                setIsLoadingUsers(true);
                 const userProfile = await ApiService.getUserProfile();
                 setLoggedInUserId(userProfile.id);
                 const allUsers = await ApiService.getAllUsers();
-                // Loại bỏ chính mình khỏi danh sách chat
-                setUsers(allUsers.filter(u => u.id !== userProfile.id));
+                const filteredUsers = allUsers.filter(u => u.id !== userProfile.id);
+                setUsers(filteredUsers);
             } catch (error) {
                 console.error('Failed to fetch users:', error);
+                setError('Không thể tải danh sách người dùng');
+            } finally {
+                setIsLoadingUsers(false);
             }
         };
         fetchUsers();
     }, []);
 
-    const filteredUsers = useMemo(() =>
-        users.filter((user) =>
-            (user.fullName || user.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-        ), [users, searchQuery]
+    // Xử lý chọn user
+    const handleSelectUser = useCallback((user) => {
+        setSelectedUser(user);
+        setSelectedGroup(null);
+        markRead('user', user.id);
+        setError('');
+        navigate(`/messages/${user.id}`, { replace: true });
+    }, [markRead, navigate]);
+
+    // Xử lý chọn group
+    const handleSelectGroup = useCallback((group) => {
+        setSelectedGroup(group && !Array.isArray(group) ? group : null);
+        setSelectedUser(null);
+        if (group && group.id) {
+            markRead('group', group.id);
+            setError('');
+            navigate(`/messages/group/${group.id}`, { replace: true });
+        }
+    }, [markRead, navigate]);
+
+    // Tự động chọn user hoặc group từ URL hoặc state
+    useEffect(() => {
+        if (isLoadingUsers || users.length === 0) return;
+
+        const state = location.state;
+        if (state?.selectedUser) {
+            const targetUser = users.find(user => user.id === state.selectedUser.id);
+            if (targetUser) {
+                handleSelectUser(targetUser);
+                return;
+            }
+        } else if (state?.selectedGroup && typeof state.selectedGroup === 'object' && !Array.isArray(state.selectedGroup)) {
+            setSelectedGroup(state.selectedGroup);
+            setSelectedUser(null);
+            markRead('group', state.selectedGroup.id);
+            return;
+        }
+
+        if (userId) {
+            const targetUserId = Number(userId);
+            const targetUser = users.find(user => Number(user.id) === targetUserId);
+            if (targetUser) {
+                handleSelectUser(targetUser);
+            } else {
+                setError('Người dùng không tồn tại hoặc không có trong danh sách');
+            }
+        } else if (groupId) {
+            const fetchGroup = async () => {
+                try {
+                    const groupList = await ApiService.getChatGroups();
+                    const group = Array.isArray(groupList)
+                        ? groupList.find(g => String(g.id) === String(groupId))
+                        : null;
+                    if (group) {
+                        handleSelectGroup(group);
+                    } else {
+                        setError('Nhóm không tồn tại');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi lấy thông tin nhóm:', error);
+                    setError('Không thể tải thông tin nhóm');
+                }
+            };
+            fetchGroup();
+        }
+    }, [userId, groupId, users, isLoadingUsers, location.state, handleSelectUser, handleSelectGroup, markRead]);
+
+    const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    const filteredUsers = useMemo(
+        () =>
+            users.filter((user) =>
+                (user.fullName || user.name || '').toLowerCase().includes(debouncedQuery.toLowerCase())
+            ),
+        [users, debouncedQuery]
     );
 
     // Lắng nghe tin nhắn mới qua SignalR
@@ -49,12 +137,10 @@ const Message = () => {
 
         const handleReceiveMessage = (messageDto) => {
             const userId = messageDto.senderId === loggedInUserId ? messageDto.receiverId : messageDto.senderId;
-            // Nếu user này không phải đang được chọn thì markUnread
             if (!selectedUser || selectedUser.id !== userId) {
                 markUnread('user', userId);
             }
 
-            // Thêm chấm đỏ cho user có tin mới
             setUsers((prev) =>
                 prev.map((u) =>
                     u.id === userId && userId !== selectedUser?.id
@@ -65,10 +151,14 @@ const Message = () => {
 
             setUserMessages((prev) => {
                 const userMsgList = prev[userId] || [];
-                if (!userMsgList.some((msg) => msg.id === messageDto.id)) {
+                const filtered = userMsgList.filter(
+                    (msg) =>
+                        !(msg.isTemp && msg.content === messageDto.content && Math.abs(new Date(msg.sentAt) - new Date(messageDto.sentAt)) < 5000)
+                );
+                if (!filtered.some((msg) => msg.id === messageDto.id)) {
                     return {
                         ...prev,
-                        [userId]: [...userMsgList, messageDto],
+                        [userId]: [...filtered, messageDto],
                     };
                 }
                 return prev;
@@ -80,22 +170,15 @@ const Message = () => {
             if (!selectedGroup || selectedGroup.id !== groupId) {
                 markUnread('group', groupId);
             }
-
-            // Thêm chấm đỏ cho group có tin mới
-            setGroups((prev) =>
-                prev.map((g) =>
-                    g.id === groupId && groupId !== selectedGroup?.id
-                        ? { ...g, hasNewMessage: true }
-                        : g
-                )
-            );
-
             setGroupMessages((prev) => {
                 const groupMsgList = prev[groupId] || [];
-                if (!groupMsgList.some((msg) => msg.id === messageDto.id)) {
+                const filtered = groupMsgList.filter(
+                    (msg) => !(msg.isTemp && msg.content === messageDto.content && msg.senderId === messageDto.senderId && msg.senderId === loggedInUserId)
+                );
+                if (!filtered.some((msg) => msg.id === messageDto.id)) {
                     return {
                         ...prev,
-                        [groupId]: [...groupMsgList, messageDto],
+                        [groupId]: [...filtered, messageDto],
                     };
                 }
                 return prev;
@@ -111,7 +194,7 @@ const Message = () => {
         };
     }, [chatConnection, connectionState, loggedInUserId, selectedUser, selectedGroup, markUnread]);
 
-    // Chỉ fetch messages khi chưa có
+    // Fetch messages khi chọn user/group
     useEffect(() => {
         const fetchMessages = async () => {
             try {
@@ -130,6 +213,7 @@ const Message = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch messages:', error);
+                setError('Không thể tải tin nhắn');
             }
         };
         fetchMessages();
@@ -137,10 +221,10 @@ const Message = () => {
 
     // Gửi tin nhắn
     const handleSendMessage = async (content) => {
-        if (!loggedInUserId || connectionState !== 'Connected') {
-            console.error('Cannot send message: Not connected or user not logged in');
+        if (!loggedInUserId || connectionState !== 'Connected' || isSending) {
             return;
         }
+        setIsSending(true);
         try {
             if (selectedUser?.id) {
                 await chatConnection.invoke('SendPrivateMessage', loggedInUserId, selectedUser.id, content);
@@ -149,134 +233,151 @@ const Message = () => {
             }
         } catch (error) {
             console.error('Gửi tin nhắn thất bại:', error);
+            setError('Gửi tin nhắn thất bại');
+        } finally {
+            setIsSending(false);
         }
     };
 
-    // Chỉ render messages của user/group đang chọn
     const displayedMessages = useMemo(() => {
         if (selectedUser?.id) return userMessages[selectedUser.id] || [];
         if (selectedGroup?.id) return groupMessages[selectedGroup.id] || [];
         return [];
-    }, [selectedUser, selectedGroup, userMessages, groupMessages]);
-
-    const handleSelectUser = (user) => {
-        setSelectedUser(user);
-        setSelectedGroup(null);
-        markRead('user', user.id);
-    };
-
-    const handleSelectGroup = (group) => {
-        setSelectedGroup(group);
-        setSelectedUser(null);
-        markRead('group', group.id);
-    };
-
+    }, [userMessages, groupMessages, selectedUser?.id, selectedGroup?.id]);
 
     return (
         <PageContainer title="Tin nhắn" description="Trò chuyện">
-            <Paper
-                sx={{
-                    height: 'calc(100vh - 100px)',
-                    display: 'flex',
-                    bgcolor: theme.palette.background.default,
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: theme.shadows[3],
-                }}
-            >
-                <Box
-                    sx={{
-                        width: 320,
-                        borderRight: `1px solid ${theme.palette.divider}`,
-                        bgcolor: theme.palette.background.paper,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
-                    <Box
-                        sx={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            '&::-webkit-scrollbar': {
-                                width: '6px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                backgroundColor: theme.palette.divider,
-                                borderRadius: '6px',
-                            },
-                        }}
-                    >
-                        <UserList
-                            users={filteredUsers}
-                            selectedUser={selectedUser}
-                            selectedGroup={selectedGroup}
-                            onSelectUser={handleSelectUser}
-                            onSelectGroup={handleSelectGroup}
-                        />
-                    </Box>
+            {isLoadingUsers && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress aria-label="Đang tải danh sách người dùng" />
                 </Box>
-
-                <Box
+            )}
+            {error && !isLoadingUsers && (
+                <Alert
+                    severity="error"
+                    sx={{ mb: 2 }}
+                    onClose={() => setError('')}
+                    action={
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={() => navigate('/messages')}
+                        >
+                            Quay lại
+                        </Button>
+                    }
+                >
+                    {error}
+                </Alert>
+            )}
+            {!isLoadingUsers && !error && (
+                <Paper
                     sx={{
-                        flex: 1,
+                        height: 'calc(100vh - 100px)',
                         display: 'flex',
-                        flexDirection: 'column',
                         bgcolor: theme.palette.background.default,
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: theme.shadows[3],
                     }}
                 >
                     <Box
                         sx={{
-                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            width: 320,
+                            borderRight: `1px solid ${theme.palette.divider}`,
                             bgcolor: theme.palette.background.paper,
-                            height: '72px',
                             display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
+                            flexDirection: 'column',
                         }}
                     >
-                        <ChatHeader selectedUser={selectedUser} selectedGroup={selectedGroup} />
+                        <Box
+                            sx={{
+                                flex: 1,
+                                overflowY: 'auto',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                '&::-webkit-scrollbar': {
+                                    width: '6px',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: theme.palette.divider,
+                                    borderRadius: '6px',
+                                },
+                            }}
+                        >
+                            <UserList
+                                users={filteredUsers}
+                                selectedUser={selectedUser}
+                                selectedGroup={selectedGroup && !Array.isArray(selectedGroup) ? selectedGroup : null}
+                                onSelectUser={handleSelectUser}
+                                onSelectGroup={handleSelectGroup}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                            />
+                        </Box>
                     </Box>
+
                     <Box
                         sx={{
                             flex: 1,
-                            overflowY: 'auto',
                             display: 'flex',
                             flexDirection: 'column',
-                            '&::-webkit-scrollbar': {
-                                width: '6px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                backgroundColor: theme.palette.divider,
-                                borderRadius: '6px',
-                            },
+                            bgcolor: theme.palette.background.default,
                         }}
                     >
-                        <MessageList
-                            messages={displayedMessages}
-                            selectedUser={selectedUser}
-                            selectedGroup={selectedGroup}
-                        />
+                        <Box
+                            sx={{
+                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                bgcolor: theme.palette.background.paper,
+                                height: '72px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                width: '100%',
+                            }}
+                        >
+                            <ChatHeader selectedUser={selectedUser} selectedGroup={selectedGroup && !Array.isArray(selectedGroup) ? selectedGroup : null} />
+                        </Box>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                overflowY: 'auto',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                '&::-webkit-scrollbar': {
+                                    width: '6px',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    backgroundColor: theme.palette.divider,
+                                    borderRadius: '6px',
+                                },
+                            }}
+                        >
+                            <MessageList
+                                messages={displayedMessages}
+                                selectedUser={selectedUser}
+                                selectedGroup={selectedGroup && !Array.isArray(selectedGroup) ? selectedGroup : null}
+                            />
+                            <div ref={messagesEndRef} />
+                        </Box>
+                        <Box
+                            sx={{
+                                borderTop: `1px solid ${theme.palette.divider}`,
+                                bgcolor: theme.palette.background.paper,
+                                display: 'flex',
+                                width: '100%',
+                                padding: 0,
+                                minHeight: '72px',
+                            }}
+                        >
+                            <MessageInput
+                                onSendMessage={handleSendMessage}
+                                disabled={!selectedUser && !selectedGroup || isSending || connectionState !== 'Connected'}
+                                sx={{ width: '100%' }}
+                            />
+                        </Box>
                     </Box>
-                    <Box
-                        sx={{
-                            borderTop: `1px solid ${theme.palette.divider}`,
-                            bgcolor: theme.palette.background.paper,
-                            display: 'flex',
-                            width: '100%',
-                            padding: 0,
-                            minHeight: '72px',
-                        }}
-                    >
-                        <MessageInput
-                            onSendMessage={handleSendMessage}
-                            disabled={!selectedUser && !selectedGroup}
-                            sx={{ width: '100%' }}
-                        />
-                    </Box>
-                </Box>
-            </Paper>
+                </Paper>
+            )}
         </PageContainer>
     );
 };

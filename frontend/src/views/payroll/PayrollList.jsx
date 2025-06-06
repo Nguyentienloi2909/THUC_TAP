@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Box,
     CircularProgress,
@@ -18,7 +18,9 @@ import {
     Chip,
     IconButton,
     Paper,
-    InputAdornment
+    InputAdornment,
+    Snackbar,
+    Alert
 } from '@mui/material';
 import { IconSearch, IconEye, IconCheck, IconEdit, IconMail } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +44,8 @@ const PayrollList = () => {
     const [monthFilter, setMonthFilter] = useState(new Date().getMonth() + 1);
     const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
     const [emailLoading, setEmailLoading] = useState(false);
+    const [emailSuccess, setEmailSuccess] = useState('');
+    const [emailError, setEmailError] = useState('');
 
     useEffect(() => {
         let isMounted = true;
@@ -144,8 +148,9 @@ const PayrollList = () => {
     if (loading) {
         return (
             <PageContainer>
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 6 }}>
                     <CircularProgress />
+                    <Typography sx={{ mt: 2 }}>Đang tải dữ liệu lương...</Typography>
                 </Box>
             </PageContainer>
         );
@@ -169,13 +174,19 @@ const PayrollList = () => {
                     <Typography variant="h5" fontWeight="bold">Quản lý lương</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <Modal open={emailLoading}>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: '100vh',
+                                bgcolor: 'rgba(255,255,255,0.7)'
+                            }}>
                                 <CircularProgress />
                                 <Typography sx={{ mt: 2 }}>Đang gửi thông báo lương qua Email...</Typography>
                             </Box>
                         </Modal>
                         <button
-                            startIcon={<IconMail />}
                             style={{
                                 background: '#1976d2',
                                 color: '#fff',
@@ -183,17 +194,25 @@ const PayrollList = () => {
                                 borderRadius: 4,
                                 padding: '8px 16px',
                                 fontWeight: 'bold',
-                                cursor: 'pointer'
+                                cursor: emailLoading ? 'not-allowed' : 'pointer',
+                                opacity: emailLoading ? 0.7 : 1
                             }}
-
-                            disabled={loading}
+                            disabled={loading || emailLoading}
                             onClick={async () => {
                                 setEmailLoading(true);
-                                setTimeout(() => {
+                                setEmailSuccess('');
+                                setEmailError('');
+                                try {
+                                    await ApiService.sendGmailSalaryAll(monthFilter, yearFilter);
+                                    setEmailSuccess('Đã gửi thông báo lương qua email cho tất cả nhân viên!');
+                                } catch (err) {
+                                    setEmailError('Gửi email thất bại. Vui lòng thử lại.');
+                                } finally {
                                     setEmailLoading(false);
-                                }, 3000);
+                                }
                             }}
                         >
+                            <IconMail style={{ verticalAlign: 'middle', marginRight: 8 }} />
                             Gửi thông báo lương qua Email
                         </button>
                     </Box>
@@ -303,6 +322,32 @@ const PayrollList = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                         <Pagination count={Math.ceil(filteredPayrolls.length / ITEMS_PER_PAGE)} page={page} onChange={handlePageChange} color="primary" />
                     </Box>
+                )}
+
+                {/* Notifications */}
+                {emailSuccess && (
+                    <Snackbar
+                        open={!!emailSuccess}
+                        autoHideDuration={3000}
+                        onClose={() => setEmailSuccess('')}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert severity="success" sx={{ width: '100%' }}>
+                            {emailSuccess}
+                        </Alert>
+                    </Snackbar>
+                )}
+                {emailError && (
+                    <Snackbar
+                        open={!!emailError}
+                        autoHideDuration={4000}
+                        onClose={() => setEmailError('')}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    >
+                        <Alert severity="error" sx={{ width: '100%' }}>
+                            {emailError}
+                        </Alert>
+                    </Snackbar>
                 )}
             </DashboardCard>
         </PageContainer>

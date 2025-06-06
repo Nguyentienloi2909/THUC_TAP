@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     TextField,
@@ -54,6 +54,13 @@ const UpdateTaskPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [open, setOpen] = useState(true);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [notify, setNotify] = useState({
+        open: false,
+        type: 'success', // 'success' | 'error'
+        message: '',
+    });
+    const [pendingRedirect, setPendingRedirect] = useState(false);
 
     useEffect(() => {
         console.log('taskId from useParams:', taskId); // Log để kiểm tra taskId
@@ -167,7 +174,7 @@ const UpdateTaskPage = () => {
     const handleUpdate = async () => {
         const validationError = validateForm();
         if (validationError) {
-            setError(validationError);
+            setNotify({ open: true, type: 'error', message: validationError });
             return;
         }
 
@@ -206,17 +213,31 @@ const UpdateTaskPage = () => {
             }
 
             await ApiService.updateTask(taskId, formData);
-            setOpen(false);
-            navigate('/manage/task');
+            setNotify({ open: true, type: 'success', message: 'Cập nhật nhiệm vụ thành công!' });
+            setPendingRedirect(true); // Đánh dấu sẽ chuyển trang sau khi đóng thông báo
         } catch (error) {
-            console.error('Failed to update task:', error);
-            const message =
-                error?.response?.data?.message ||
-                error?.message ||
-                'Không thể cập nhật nhiệm vụ. Vui lòng thử lại.';
-            setError(message);
+            setNotify({
+                open: true,
+                type: 'error',
+                message: error?.response?.data?.message ||
+                    error?.message ||
+                    'Không thể cập nhật nhiệm vụ. Vui lòng thử lại.'
+            });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleConfirmUpdate = () => {
+        setConfirmOpen(false);
+        handleUpdate();
+    };
+
+    const handleCloseNotify = () => {
+        setNotify(n => ({ ...n, open: false }));
+        if (pendingRedirect) {
+            setOpen(false);
+            navigate('/manage/task');
         }
     };
 
@@ -227,9 +248,6 @@ const UpdateTaskPage = () => {
         }
     };
 
-    const handleCloseSnackbar = () => {
-        setError(null);
-    };
 
     return (
         <PageContainer title="Cập nhật nhiệm vụ" description="Giao diện cập nhật nhiệm vụ">
@@ -383,7 +401,7 @@ const UpdateTaskPage = () => {
                     </Button>
                     <Button
                         variant="contained"
-                        onClick={handleUpdate}
+                        onClick={() => setConfirmOpen(true)}
                         disabled={isSubmitting}
                         startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
                     >
@@ -392,9 +410,29 @@ const UpdateTaskPage = () => {
                 </DialogActions>
             </Dialog>
 
-            <Snackbar open={!!error} autoHideDuration={5000} onClose={handleCloseSnackbar}>
-                <Alert severity="error" onClose={handleCloseSnackbar}>
-                    {error}
+            {/* Modal xác nhận cập nhật */}
+            <Dialog
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+            >
+                <DialogTitle>Xác nhận cập nhật</DialogTitle>
+                <DialogContent>
+                    <Typography>Bạn có chắc chắn muốn cập nhật nhiệm vụ này?</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmOpen(false)} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleConfirmUpdate} color="primary" variant="contained">
+                        Xác nhận
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Thông báo thành công/thất bại */}
+            <Snackbar open={notify.open} autoHideDuration={2500} onClose={handleCloseNotify}>
+                <Alert severity={notify.type} onClose={handleCloseNotify}>
+                    {notify.message}
                 </Alert>
             </Snackbar>
         </PageContainer>

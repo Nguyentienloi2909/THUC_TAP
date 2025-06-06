@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box, Button, Typography, Card, CardContent, CardActions, Grid, CircularProgress, Alert,
-    Avatar, Divider, IconButton
+    Avatar, Divider, IconButton, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+    Menu, MenuItem
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { IconUserPlus, IconTrash } from '@tabler/icons-react';
+import { IconUserPlus, IconTrash, IconDotsVertical, IconInfoCircle, IconMessage } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import AddMemberModal from './modal/AddUser';
 import Snackbar from '@mui/material/Snackbar';
+import EmployeeInfoModal from './modal/UserInfo';
+import PageContainer from '../../components/container/PageContainer';
 
 // Styled components
-const StyledContainer = styled(Box)(({ theme }) => ({
+const StyledContainer = styled(Box)(() => ({
     position: 'relative',
     overflow: 'hidden',
     '&::before': {
@@ -63,6 +66,12 @@ const GroupById = () => {
     const [removingUserId, setRemovingUserId] = useState(null);
     const [removeError, setRemoveError] = useState('');
     const [removeSuccess, setRemoveSuccess] = useState('');
+    const [confirmRemoveUserId, setConfirmRemoveUserId] = useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isLeader, setIsLeader] = useState(false);
+    const [employeeInfoOpen, setEmployeeInfoOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     // Lấy groupId từ API getUserProfile
     const fetchGroupId = useCallback(async () => {
@@ -72,8 +81,8 @@ const GroupById = () => {
             const userProfile = await ApiService.getUserProfile();
             if (!userProfile?.groupId) throw new Error('Bạn chưa gia nhập vào nhóm nào');
             setGroupId(userProfile.groupId);
+            setIsLeader(userProfile.roleId === 2); // Giả sử roleId === 2 là Leader
         } catch (err) {
-            // Nếu là lỗi 404 hoặc lỗi khác, hiển thị thông báo tiếng Việt
             if (err?.response?.status === 404) {
                 setError('Bạn chưa gia nhập vào nhóm nào');
             } else {
@@ -95,7 +104,6 @@ const GroupById = () => {
             if (!data?.id) throw new Error('Dữ liệu nhóm không hợp lệ');
             setGroupData(data);
         } catch (err) {
-            // Nếu là lỗi 404 hoặc lỗi khác, hiển thị thông báo tiếng Việt
             if (err?.response?.status === 404) {
                 setError('Bạn chưa gia nhập vào nhóm nào');
             } else {
@@ -115,16 +123,19 @@ const GroupById = () => {
         setGroupData(updatedGroup);
     }, []);
 
-    const handleRemoveMember = useCallback(async (userId) => {
+    // Đổi handleRemoveMember: chỉ mở modal xác nhận
+    const handleRemoveMember = useCallback((userId) => {
+        setConfirmRemoveUserId(userId);
+    }, []);
+
+    // Hàm xác nhận xóa thực sự
+    const handleConfirmRemove = useCallback(async () => {
+        if (!confirmRemoveUserId) return;
         setRemoveError('');
         setRemoveSuccess('');
-        if (!window.confirm('Bạn có chắc chắn muốn xóa thành viên này?')) return;
-        setRemovingUserId(userId);
+        setRemovingUserId(confirmRemoveUserId);
         try {
-            // Gọi API xóa thành viên khỏi nhóm
-            await ApiService.removeUserFromGroup(groupData.id, userId);
-
-            // Lấy lại thông tin nhóm mới nhất
+            await ApiService.removeUserFromGroup(groupData.id, confirmRemoveUserId);
             const updatedGroup = await ApiService.getGroup(groupData.id);
             setGroupData(updatedGroup);
             setRemoveSuccess('Xóa thành viên thành công!');
@@ -137,137 +148,255 @@ const GroupById = () => {
             );
         } finally {
             setRemovingUserId(null);
+            setConfirmRemoveUserId(null);
+        }
+    }, [confirmRemoveUserId, groupData]);
+
+    // Mở/đóng dropdown
+    const handleMenuOpen = (event, userId) => {
+        setAnchorEl(event.currentTarget);
+        setSelectedUserId(userId);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedUserId(null);
+    };
+
+    // Xử lý xem thông tin: mở modal
+    const handleViewInfo = useCallback((userId) => {
+        handleMenuClose(); // Đóng menu trước
+        const user = groupData?.users?.find(u => u.id === userId);
+        if (user) {
+            setSelectedEmployee(user);
+            setEmployeeInfoOpen(true);
+        } else {
+            console.error('Không tìm thấy thông tin thành viên với ID:', userId);
+            setRemoveError('Không thể tải thông tin thành viên.');
         }
     }, [groupData]);
 
+    // Xử lý nhắn tin
+    const handleMessage = (userId) => {
+        handleMenuClose();
+        navigate(`/messages/${userId}`);
+    };
+
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }} aria-label="Đang tải dữ liệu">
-                <CircularProgress />
-            </Box>
+            <PageContainer title="Quản lý nhóm" description="Chi tiết nhóm và thành viên">
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }} aria-label="Đang tải dữ liệu">
+                    <CircularProgress />
+                </Box>
+            </PageContainer>
         );
     }
 
     if (error) {
         return (
-            <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-                <Alert severity="error" action={
-                    <Button color="inherit" size="small" onClick={() => navigate(-1)}>
-                        Quay lại
-                    </Button>
-                }>
-                    {error}
-                </Alert>
-            </Box>
+            <PageContainer title="Quản lý nhóm" description="Chi tiết nhóm và thành viên">
+                <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+                    <Alert severity="error" action={
+                        <Button color="inherit" size="small" onClick={() => navigate(-1)}>
+                            Quay lại
+                        </Button>
+                    }>
+                        {error}
+                    </Alert>
+                </Box>
+            </PageContainer>
         );
     }
 
     return (
-        <StyledContainer sx={{ p: 4, maxWidth: 1200, mx: 'auto', borderRadius: 2, boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' }}>
-            {/* Header nhóm */}
-            <StyledHeader sx={{ mb: 4 }}>
-                <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
-                    {groupData.groupName}
+        <PageContainer title="Quản lý nhóm" description="Chi tiết nhóm và thành viên">
+            <StyledContainer sx={{ p: 4, maxWidth: 1200, mx: 'auto', borderRadius: 2, boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' }}>
+                {/* Header nhóm */}
+                <StyledHeader sx={{ mb: 4 }}>
+                    <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
+                        {groupData.groupName}
+                    </Typography>
+                    <Typography variant="h5" color="inherit" gutterBottom>
+                        {groupData.departmentName} | {groupData.users.length} thành viên
+                    </Typography>
+                    {isLeader && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<IconUserPlus size={20} />}
+                            onClick={() => setOpenAddModal(true)}
+                            sx={{
+                                mt: 2,
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: 'medium',
+                                background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+                                },
+                            }}
+                        >
+                            Thêm thành viên
+                        </Button>
+                    )}
+                </StyledHeader>
+
+                <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.12)' }} />
+
+                {/* Danh sách thành viên */}
+                <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
+                    Danh sách thành viên
                 </Typography>
-                <Typography variant="h5" color="inherit" gutterBottom>
-                    {groupData.departmentName} | {groupData.users.length} thành viên
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<IconUserPlus size={20} />}
-                    onClick={() => setOpenAddModal(true)}
-                    sx={{
-                        mt: 2,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 'medium',
-                        background: 'linear-gradient(45deg, #2196f3, #21cbf3)',
-                        '&:hover': {
-                            background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
-                        },
-                    }}
+                {removeError && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {removeError}
+                    </Alert>
+                )}
+                <Snackbar
+                    open={!!removeSuccess}
+                    autoHideDuration={3000}
+                    onClose={() => setRemoveSuccess('')}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    message={removeSuccess}
+                />
+                <Grid container spacing={4}>
+                    {groupData.users.map(user => (
+                        <Grid item key={user.id} xs={12} sm={6} md={4}>
+                            <MemberCard>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, position: 'relative' }}>
+                                    <Avatar
+                                        alt={user.fullName}
+                                        src={user.avatar}
+                                        sx={{ width: 60, height: 60, mr: 2, border: '2px solid #1976d2' }}
+                                    />
+                                    <CardContent sx={{ flexGrow: 1, p: 0, minWidth: 0 }}>
+                                        <Typography
+                                            variant="h6"
+                                            fontWeight="bold"
+                                            color="text.primary"
+                                            sx={{
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                maxWidth: { xs: 120, sm: 160, md: 180 }
+                                            }}
+                                            title={user.fullName}
+                                        >
+                                            {user.fullName}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            sx={{
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                maxWidth: { xs: 120, sm: 160, md: 180 }
+                                            }}
+                                            title={user.email}
+                                        >
+                                            {user.email}
+                                        </Typography>
+                                    </CardContent>
+                                    <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+                                        <IconButton
+                                            aria-label="Tùy chọn"
+                                            onClick={(event) => handleMenuOpen(event, user.id)}
+                                            size="small"
+                                        >
+                                            <IconDotsVertical size={20} />
+                                        </IconButton>
+                                    </Box>
+                                </Box>
+                                <CardActions sx={{ justifyContent: 'flex-end', p: 0, minHeight: 36 }}>
+                                    {/* Để trống hoặc thêm các action khác nếu cần */}
+                                </CardActions>
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl) && selectedUserId === user.id}
+                                    onClose={handleMenuClose}
+                                    PaperProps={{
+                                        sx: {
+                                            borderRadius: 2,
+                                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                                            minWidth: 180,
+                                        },
+                                    }}
+                                >
+                                    <MenuItem onClick={() => handleViewInfo(user.id)}>
+                                        <IconInfoCircle size={18} style={{ marginRight: 8 }} />
+                                        Xem thông tin
+                                    </MenuItem>
+                                    <MenuItem onClick={() => handleMessage(user.id)}>
+                                        <IconMessage size={18} style={{ marginRight: 8 }} />
+                                        Nhắn tin
+                                    </MenuItem>
+                                    {isLeader && user.roleId !== 2 && (
+                                        <MenuItem
+                                            onClick={() => {
+                                                handleRemoveMember(user.id);
+                                                handleMenuClose();
+                                            }}
+                                            disabled={removingUserId === user.id}
+                                            sx={{ color: '#f44336' }}
+                                        >
+                                            <IconTrash size={18} style={{ marginRight: 8 }} />
+                                            {removingUserId === user.id ? 'Đang xóa...' : 'Xóa khỏi nhóm'}
+                                        </MenuItem>
+                                    )}
+                                </Menu>
+                            </MemberCard>
+                        </Grid>
+                    ))}
+                </Grid>
+
+                {/* Modal xác nhận xóa thành viên */}
+                <Dialog
+                    open={!!confirmRemoveUserId}
+                    onClose={() => setConfirmRemoveUserId(null)}
                 >
-                    Thêm thành viên
-                </Button>
-            </StyledHeader>
+                    <DialogTitle>Xác nhận xóa thành viên</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setConfirmRemoveUserId(null)} color="primary">
+                            Hủy
+                        </Button>
+                        <Button
+                            onClick={handleConfirmRemove}
+                            color="error"
+                            variant="contained"
+                            disabled={removingUserId === confirmRemoveUserId}
+                        >
+                            {removingUserId === confirmRemoveUserId ? 'Đang xóa...' : 'Xác nhận'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
-            <Divider sx={{ my: 4, borderColor: 'rgba(0, 0, 0, 0.12)' }} />
+                {/* Modal Thêm thành viên */}
+                <AddMemberModal
+                    open={openAddModal}
+                    onClose={() => setOpenAddModal(false)}
+                    groupId={groupData?.id}
+                    onAdd={handleAddMember}
+                />
 
-            {/* Danh sách thành viên */}
-            <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
-                Danh sách thành viên
-            </Typography>
-            {removeError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {removeError}
-                </Alert>
-            )}
-            <Snackbar
-                open={!!removeSuccess}
-                autoHideDuration={3000}
-                onClose={() => setRemoveSuccess('')}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                message={removeSuccess}
-            />
-            <Grid container spacing={4}>
-                {groupData.users.map(user => (
-                    <Grid item key={user.id} xs={12} sm={6} md={4}>
-                        <MemberCard>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Avatar
-                                    alt={user.fullName}
-                                    src={user.avatar}
-                                    sx={{ width: 60, height: 60, mr: 2, border: '2px solid #1976d2' }}
-                                />
-                                <CardContent sx={{ flexGrow: 1, p: 0 }}>
-                                    <Typography variant="h6" fontWeight="bold" color="text.primary">
-                                        {user.fullName}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {user.email}
-                                    </Typography>
-                                </CardContent>
-                            </Box>
-                            <CardActions sx={{ justifyContent: 'center', p: 0 }}>
-                                <IconButton color="primary" aria-label="Xem chi tiết">
-                                    {/* Thêm logic chi tiết nếu cần */}
-                                </IconButton>
-                                {/* Ẩn nút xóa nếu user là LEADER */}
-                                {user.roleId !== 2 && (
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        startIcon={<IconTrash size={18} />}
-                                        onClick={() => handleRemoveMember(user.id)}
-                                        disabled={removingUserId === user.id}
-                                        sx={{
-                                            borderRadius: 1,
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                backgroundColor: '#f44336',
-                                                color: '#fff',
-                                            },
-                                        }}
-                                    >
-                                        {removingUserId === user.id ? 'Đang xóa...' : 'Xóa'}
-                                    </Button>
-                                )}
-                            </CardActions>
-                        </MemberCard>
-                    </Grid>
-                ))}
-            </Grid>
-
-            {/* Modal Thêm thành viên */}
-            <AddMemberModal
-                open={openAddModal}
-                onClose={() => setOpenAddModal(false)}
-                groupId={groupData.id}
-                onAdd={handleAddMember}
-            />
-        </StyledContainer>
+                {/* Modal hiển thị thông tin thành viên */}
+                <EmployeeInfoModal
+                    employee={selectedEmployee}
+                    open={employeeInfoOpen}
+                    onClose={() => {
+                        setEmployeeInfoOpen(false);
+                        setSelectedEmployee(null);
+                    }}
+                />
+            </StyledContainer>
+        </PageContainer>
     );
 };
 
-export default React.memo(GroupById);
+const MemoizedGroupById = React.memo(GroupById);
+export default MemoizedGroupById;

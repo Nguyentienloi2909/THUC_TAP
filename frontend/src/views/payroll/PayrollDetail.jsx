@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Paper,
     Grid,
@@ -18,8 +18,15 @@ import {
     useTheme,
     CircularProgress,
     Tooltip,
+    Snackbar,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
-import { IconPrinter, IconDownload, IconArrowBack, IconAward, IconMail } from '@tabler/icons-react';
+import { IconDownload, IconArrowBack, IconAward, IconMail } from '@tabler/icons-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ApiService from 'src/service/ApiService';
 import PageContainer from 'src/components/container/PageContainer';
@@ -36,6 +43,10 @@ const PayrollDetail = () => {
     const [attendanceSummary, setAttendanceSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [mailLoading, setMailLoading] = useState(false);
+    const [mailSuccess, setMailSuccess] = useState('');
+    const [mailError, setMailError] = useState('');
+    const [openConfirmMail, setOpenConfirmMail] = useState(false);
 
     // Parse note string to extract late/absent/deductions
     const parseNote = useCallback((note) => {
@@ -170,31 +181,19 @@ const PayrollDetail = () => {
                         <Button
                             variant="contained"
                             startIcon={<IconMail />}
-                            disabled={loading}
-                            onClick={async () => {
-                                try {
-                                    setLoading(true);
-                                    await ApiService.sendSalaryNotification(userId, month, year);
-                                    alert('Gửi thông báo lương qua email thành công!');
-                                } catch (err) {
-                                    alert('Gửi thông báo thất bại. Vui lòng thử lại.');
-                                } finally {
-                                    setLoading(false);
-                                }
-                            }}
+                            disabled={loading || mailLoading}
+                            onClick={() => setOpenConfirmMail(true)}
                             sx={{
                                 backgroundColor: '#1976d2',
                                 color: '#fff',
-                                '&:hover': {
-                                    backgroundColor: '#1565c0',
-                                },
+                                '&:hover': { backgroundColor: '#1565c0' },
                                 textTransform: 'none',
                                 fontWeight: 'bold',
                                 padding: '8px 16px',
                                 borderRadius: 4,
                             }}
                         >
-                            Gửi Email
+                            {mailLoading ? <CircularProgress size={22} color="inherit" /> : 'Gửi Email'}
                         </Button>
                         <Button
                             variant="contained"
@@ -417,6 +416,66 @@ const PayrollDetail = () => {
                         </Paper>
                     </Box>
                 </Paper>
+
+                <Snackbar
+                    open={!!mailSuccess}
+                    autoHideDuration={3000}
+                    onClose={() => setMailSuccess('')}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert severity="success" sx={{ width: '100%' }}>
+                        {mailSuccess}
+                    </Alert>
+                </Snackbar>
+                <Snackbar
+                    open={!!mailError}
+                    autoHideDuration={4000}
+                    onClose={() => setMailError('')}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert severity="error" sx={{ width: '100%' }}>
+                        {mailError}
+                    </Alert>
+                </Snackbar>
+
+                <Dialog
+                    open={openConfirmMail}
+                    onClose={() => setOpenConfirmMail(false)}
+                >
+                    <DialogTitle>Xác nhận gửi email</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Bạn có chắc chắn muốn gửi phiếu lương này qua email cho nhân viên?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenConfirmMail(false)} color="inherit">
+                            Hủy
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                setOpenConfirmMail(false);
+                                try {
+                                    setMailLoading(true);
+                                    setMailSuccess('');
+                                    setMailError('');
+                                    await ApiService.sendGmailSalaryByUser(userId, month, year);
+                                    setMailSuccess('Gửi thông báo lương qua email thành công!');
+                                } catch (err) {
+                                    setMailError('Gửi thông báo thất bại. Vui lòng thử lại.');
+                                } finally {
+                                    setMailLoading(false);
+                                }
+                            }}
+                            color="primary"
+                            variant="contained"
+                            autoFocus
+                            disabled={mailLoading}
+                        >
+                            Xác nhận
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </DashboardCard>
         </PageContainer>
     );
