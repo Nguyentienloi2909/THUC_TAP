@@ -51,28 +51,42 @@ namespace MyProject.Service.impl
         public async Task<SalaryDto?> CalculateSalaryByUserId(int userId, int monthDto, int yearDto, decimal tienPhat = 100000)
         {
             var now = DateTime.Now;
-            int month = monthDto != 0 ? monthDto:now.Month;
-            int year = yearDto != 0 ? yearDto: now.Year;
+            int month = monthDto != 0 ? monthDto : now.Month;
+            int year = yearDto != 0 ? yearDto : now.Year;
+
             int totalWorkingDaysInMonth = await GetTotalWorkingDaysInMonth(month, year);
-            // Lấy danh sách Attendance trong tháng và năm
+
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return new SalaryDto
+                {
+                    UserId = userId,
+                    Month = month,
+                    Year = year,
+                    Note = "User không tồn tại trong hệ thống"
+                };
+            }
+
             var attendances = await _dbContext.Attendances
                 .Where(a => a.UserId == userId &&
                             a.Workday.Month == month &&
-                            a.Workday.Year == year
-                      )
+                            a.Workday.Year == year)
+                .GroupBy(a => a.Workday.Date)
+                .Select(g => g.First())
                 .ToListAsync();
 
+
             var salary = await _dbContext.Salaries
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.Month == month && s.Year == year && s.Display==true);
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.Month == month && s.Year == year && s.Display);
 
             if ((attendances == null || !attendances.Any()) && salary == null)
             {
                 return null;
             }
+
             if (salary == null)
             {
-                // Có điểm danh nhưng chưa có salary => tạo mới
-                var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
                 salary = new Salary
                 {
                     UserId = userId,
@@ -80,7 +94,7 @@ namespace MyProject.Service.impl
                     Year = year,
                     NumberOfWorkingDays = 0,
                     TotalSalary = 0,
-                    MonthSalary = user?.MonthSalary ?? 0,
+                    MonthSalary = user.MonthSalary ?? 0,
                     Display = true,
                 };
                 _dbContext.Salaries.Add(salary);
@@ -90,12 +104,11 @@ namespace MyProject.Service.impl
             int validWorkDays = 0;
             int lateCount = 0;
             int absentCount = 0;
-            double? overTime = 0;
+            double? totalOverTime = 0;
 
-            // Duyệt qua tất cả các bản ghi Attendance để phân loại
             foreach (var attendance in attendances)
             {
-                overTime += attendance.Overtime;
+                totalOverTime += attendance.Overtime;
                 switch (attendance.Status)
                 {
                     case StatusAttendance.Present:
@@ -105,43 +118,41 @@ namespace MyProject.Service.impl
                         validWorkDays++;
                         lateCount++;
                         break;
-                    case StatusAttendance.Pending:
-                        break;
                     case StatusAttendance.Absent:
                         absentCount++;
                         break;
-                    case StatusAttendance.Leave:
-                        break;
+                        // Pending và Leave thì bỏ qua
                 }
             }
-            
+
             if (salary.MonthSalary.HasValue && totalWorkingDaysInMonth > 20)
             {
-                decimal rawSalary = salary.MonthSalary.Value / totalWorkingDaysInMonth *
-                                    validWorkDays ;
+                decimal baseSalary = salary.MonthSalary.Value / totalWorkingDaysInMonth * validWorkDays;
                 decimal penalty = CalculatePenalty(lateCount, absentCount, tienPhat);
-                decimal overTimeSalary = CalculateOverTime(overTime, totalWorkingDaysInMonth, salary.MonthSalary.Value);
+                decimal overTimeBonus = CalculateOverTime(totalOverTime, totalWorkingDaysInMonth, salary.MonthSalary.Value);
 
-                decimal finalSalary = rawSalary - penalty + overTimeSalary;
+                decimal finalSalary = baseSalary - penalty + overTimeBonus;
+                finalSalary = Math.Max(0, finalSalary); // Không cho âm
 
-                if (finalSalary < 0) finalSalary = 0;
                 salary.NumberOfWorkingDays = validWorkDays;
-                salary.TotalSalary = (decimal)Math.Round(finalSalary, 2);
+                salary.TotalSalary = Math.Round(finalSalary, 2);
                 salary.Note = $"Trễ: {lateCount}, Vắng: {absentCount}, Số tiền trừ: {penalty:N0}";
-
             }
             else
             {
                 salary.NumberOfWorkingDays = validWorkDays;
                 salary.TotalSalary = 0;
-                salary.Note = $"Tiền lương đang được điều chỉnh";
+                salary.Note = "Tiền lương đang được điều chỉnh";
             }
-            
+
             await _dbContext.SaveChangesAsync();
+
             var result = Mappers.MapperToDto.ToDto(salary);
-            result.UserFullName = (await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId)).FullName;
+            result.UserFullName = user.FullName;
+
             return result;
         }
+
 
         public async Task<List<SalaryDto>> CalculateSalariesByQuarter(int year, int quarter)
         {

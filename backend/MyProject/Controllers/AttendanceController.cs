@@ -27,21 +27,13 @@ namespace MyProject.Controllers
         {
             var email = GetUsernameFromToken();
             var user = await _userService.GetMyInfo(email);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Người dùng không tồn tại." });
-            }
-
             try
             {
-                var targetMonth = month ?? DateTime.Now.Month;
-                var targetYear = year ?? DateTime.Now.Year;
-
-                var attendances = await _attendanceService.GetAttendanceByUserIdInMonthAsync(user.Id ?? 0, targetMonth, targetYear);
+                var attendances = await _attendanceService.GetAttendanceByUserIdInMonthAsync(user.Id ?? 0, month ?? 5, year ?? 2025);
 
                 if (attendances == null || !attendances.Any())
                 {
-                    return NotFound(new { message = $"Không tìm thấy chấm công cho user: {user.FullName} trong tháng {targetMonth}/{targetYear}." });
+                    return NotFound(new { message = $"Không tìm thấy chấm công cho user: {user.FullName} trong tháng {month}/{year}." });
                 }
 
                 return Ok(attendances);

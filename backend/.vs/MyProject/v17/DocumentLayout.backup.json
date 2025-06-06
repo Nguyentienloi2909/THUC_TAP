@@ -3,36 +3,20 @@
   "WorkspaceRootPath": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\messageservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\messageservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\salarycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\salarycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\notificationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\attendanceservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\service\\impl\\salaryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\service\\impl\\salaryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\dto\\salarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\dto\\salarydto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|d:\\documents\\working\\thuc_tap\\backend\\myproject\\entity\\enum\\statusattendance.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92AD1117-3447-4D75-9C2D-B81D3531C9C0}|MyProject\\MyProject.csproj|solutionrelative:myproject\\entity\\enum\\statusattendance.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,99 +26,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 115,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 2,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "NotificationService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\NotificationService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\NotificationService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\NotificationService.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAAgwCwAAABuAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T04:27:32.354Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "NotificationController.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\NotificationController.cs",
-              "RelativeDocumentMoniker": "MyProject\\Controllers\\NotificationController.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\NotificationController.cs",
-              "RelativeToolTip": "MyProject\\Controllers\\NotificationController.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T04:26:56.941Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "AttendanceController.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\AttendanceController.cs",
-              "RelativeDocumentMoniker": "MyProject\\Controllers\\AttendanceController.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\AttendanceController.cs",
-              "RelativeToolTip": "MyProject\\Controllers\\AttendanceController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAA/AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T04:14:34.932Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "SalaryController.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\SalaryController.cs",
-              "RelativeDocumentMoniker": "MyProject\\Controllers\\SalaryController.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Controllers\\SalaryController.cs",
-              "RelativeToolTip": "MyProject\\Controllers\\SalaryController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T04:06:16.585Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "AttendanceService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\AttendanceService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\AttendanceService.cs",
-              "ViewState": "AgIAAHsAAAAAAAAAAAAAAAIBAABKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T03:57:28.454Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "SalaryService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\SalaryService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\SalaryService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAA9AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T03:51:13.192Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "EmailService.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\EmailService.cs",
-              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\EmailService.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\EmailService.cs",
-              "RelativeToolTip": "MyProject\\Service\\impl\\EmailService.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAQwGgAAAByAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T03:23:19.505Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
@@ -145,16 +38,52 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "SalaryDto.cs",
-              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\SalaryDto.cs",
-              "RelativeDocumentMoniker": "MyProject\\Dto\\SalaryDto.cs",
-              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Dto\\SalaryDto.cs",
-              "RelativeToolTip": "MyProject\\Dto\\SalaryDto.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAUAAAAmAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "MessageService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\MessageService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\MessageService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\MessageService.cs",
+              "RelativeToolTip": "MyProject\\Service\\impl\\MessageService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-28T03:39:27.806Z",
+              "WhenOpened": "2025-06-03T02:29:23.462Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "UserService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\UserService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\UserService.cs",
+              "RelativeToolTip": "MyProject\\Service\\impl\\UserService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOwAAAB7AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T03:38:09.767Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "StatusAttendance.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Entity\\Enum\\StatusAttendance.cs",
+              "RelativeDocumentMoniker": "MyProject\\Entity\\Enum\\StatusAttendance.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Entity\\Enum\\StatusAttendance.cs",
+              "RelativeToolTip": "MyProject\\Entity\\Enum\\StatusAttendance.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAzwAsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T02:40:06.633Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "SalaryService.cs",
+              "DocumentMoniker": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
+              "RelativeDocumentMoniker": "MyProject\\Service\\impl\\SalaryService.cs",
+              "ToolTip": "D:\\Documents\\WORKING\\THUC_TAP\\backend\\MyProject\\Service\\impl\\SalaryService.cs",
+              "RelativeToolTip": "MyProject\\Service\\impl\\SalaryService.cs",
+              "ViewState": "AgIAAEYAAAAAAAAAAAAwwFAAAABxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T01:48:58.244Z"
             }
           ]
         },

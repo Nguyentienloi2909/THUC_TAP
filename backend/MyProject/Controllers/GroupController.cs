@@ -8,6 +8,7 @@ namespace MyProject.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class GroupController : ControllerBase
     {
         private readonly IGroupService _groupService;
@@ -33,7 +34,6 @@ namespace MyProject.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMIN, LEADER")]
         public async Task<IActionResult> GetById(int id)
         {
             try
